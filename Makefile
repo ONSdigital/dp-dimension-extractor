@@ -1,4 +1,4 @@
-DIRECTORIES?=dimension service s3
+DIRECTORIES?=dimension service
 
 BUILD=build
 HASH?=$(shell make hash)
