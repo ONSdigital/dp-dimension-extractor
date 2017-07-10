@@ -21,6 +21,12 @@
 			"revisionTime": "2017-07-10T07:49:38Z"
 		},
 		{
+			"checksumSHA1": "lB3cWXfMw7z9VBmhPim3aSQsTx4=",
+			"path": "github.com/ONSdigital/go-ns/s3",
+			"revision": "0b7f9aea575e03bd3f0c33b18a1a00a8fcaaf7a2",
+			"revisionTime": "2017-07-10T07:49:38Z"
+		},
+		{
 			"checksumSHA1": "+Jp0tVXfQ1TM8T+oun82oJtME5U=",
 			"path": "github.com/Shopify/sarama",
 			"revision": "2fd980e23bdcbb8edeb78fc704de0c39a6567ffc",
@@ -60,6 +66,20 @@
 			"checksumSHA1": "I6MnUzkLJt+sh73CodD0NKswFrs=",
 			"origin": "github.com/ONSdigital/go-ns/vendor/github.com/go-avro/avro",
 			"path": "github.com/go-avro/avro",
+			"revision": "0b7f9aea575e03bd3f0c33b18a1a00a8fcaaf7a2",
+			"revisionTime": "2017-07-10T07:49:38Z"
+		},
+		{
+			"checksumSHA1": "27kaxcKYfEk52ZVUU5wtfndQVAY=",
+			"origin": "github.com/ONSdigital/go-ns/vendor/github.com/goamz/goamz/aws",
+			"path": "github.com/goamz/goamz/aws",
+			"revision": "0b7f9aea575e03bd3f0c33b18a1a00a8fcaaf7a2",
+			"revisionTime": "2017-07-10T07:49:38Z"
+		},
+		{
+			"checksumSHA1": "hAxHwewBLl3xg9DFxWrz697htI8=",
+			"origin": "github.com/ONSdigital/go-ns/vendor/github.com/goamz/goamz/s3",
+			"path": "github.com/goamz/goamz/s3",
 			"revision": "0b7f9aea575e03bd3f0c33b18a1a00a8fcaaf7a2",
 			"revisionTime": "2017-07-10T07:49:38Z"
 		},
@@ -155,16 +175,11 @@
 			"revisionTime": "2017-06-02T16:46:21Z"
 		},
 		{
-			"checksumSHA1": "Wgg12N5XhSfpwPNF6KqjaAe6UsQ=",
-			"path": "gopkg.in/amz.v1/aws",
-			"revision": "ad23e96a31d28364dc0290f44b1a922aba379e18",
-			"revisionTime": "2015-01-11T12:32:59Z"
-		},
-		{
-			"checksumSHA1": "zTaGxe6Zq98GIRDolA2kWhAk94g=",
-			"path": "gopkg.in/amz.v1/s3",
-			"revision": "ad23e96a31d28364dc0290f44b1a922aba379e18",
-			"revisionTime": "2015-01-11T12:32:59Z"
+			"checksumSHA1": "sFD8LpJPQtWLwGda3edjf5mNUbs=",
+			"origin": "github.com/ONSdigital/go-ns/vendor/github.com/vaughan0/go-ini",
+			"path": "github.com/vaughan0/go-ini",
+			"revision": "0b7f9aea575e03bd3f0c33b18a1a00a8fcaaf7a2",
+			"revisionTime": "2017-07-10T07:49:38Z"
 		}
 	],
 	"rootPath": "github.com/ONSdigital/dp-dimension-extractor"

@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
-	"github.com/ONSdigital/dp-dimension-extractor/s3"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	"github.com/ONSdigital/go-ns/avro"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/go-ns/s3"
 )
 
 // Service represents the necessary config for dp-dimension-extractor
@@ -20,6 +20,7 @@ type Service struct {
 	ConsumerGroup *kafka.ConsumerGroup
 	ImportAPIURL  string
 	Producer      kafka.Producer
+	S3            *s3.S3
 }
 
 type inputFileAvailable struct {
@@ -50,9 +51,10 @@ func (svc *Service) Start() {
 				log.Info("received message", log.Data{"file-url": m.FileURL, "instance-id": m.InstanceID})
 
 				// Get csv from S3 bucket using m.S3URL
-				file, err := s3.GetCSV(m.FileURL)
+				//s3Value := svc.s3Value
+				file, err := (svc.S3).Get(m.FileURL)
 				if err != nil {
-					log.Error(err, nil)
+					log.ErrorC("encountered error retrieving csv file", err, nil)
 					continue
 				}
 

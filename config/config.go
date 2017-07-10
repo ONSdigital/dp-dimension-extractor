@@ -9,6 +9,7 @@ import (
 
 // Config is the filing resource handler config
 type Config struct {
+	AWSRegion                string   `env:"AWS_REGION" flag:"aws-region" flagDesc:"The AWS region to use"`
 	BindAddr                 string   `env:"BIND_ADDR" flag:"bind-addr" flagDesc:"The port to bind to"`
 	Brokers                  []string `env:"KAFKA_ADDR" flag:"kafka-addr" flagDesc:"The kafka broker addresses"`
 	DimensionsExtractedTopic string   `env:"DIMENSIONS_EXTRACTED_TOPIC" flag:"dimensions-extracted-topic" flagDesc:"The Kafka topic to write dimension messages to"`
@@ -31,6 +32,7 @@ func Get() *Config {
 	brokers = append(brokers, "localhost:9092")
 
 	cfg = &Config{
+		AWSRegion:                "eu-west-1",
 		BindAddr:                 ":8080",
 		Brokers:                  brokers,
 		DimensionsExtractedTopic: "dimensions-extracted",
