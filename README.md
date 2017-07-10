@@ -29,6 +29,7 @@ In order to run the service locally you will need the following:
 
 | Environment variable         | Default                | Description
 | ---------------------------- | ---------------------- | -----------
+| AWS_REGION                   | eu-west-1              | The AWS region to use
 | BIND_ADDR                    | :8080                  | The host and port to bind to
 | DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted   | The kafka topic to write messages to
 | IMPORT_API_URL               | http://localhost:21800 | The import api url
