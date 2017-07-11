@@ -1,11 +1,6 @@
 package config
 
-import (
-	"os"
-
-	"github.com/ONSdigital/go-ns/log"
-	"github.com/ian-kent/gofigure"
-)
+import "github.com/ian-kent/gofigure"
 
 // Config is the filing resource handler config
 type Config struct {
@@ -22,9 +17,9 @@ type Config struct {
 var cfg *Config
 
 // Get configures the application and returns the configuration
-func Get() *Config {
+func Get() (*Config, error) {
 	if cfg != nil {
-		return cfg
+		return cfg, nil
 	}
 
 	var brokers []string
@@ -33,7 +28,7 @@ func Get() *Config {
 
 	cfg = &Config{
 		AWSRegion:                "eu-west-1",
-		BindAddr:                 ":8080",
+		BindAddr:                 ":21400",
 		Brokers:                  brokers,
 		DimensionsExtractedTopic: "dimensions-extracted",
 		ImportAPIURL:             "http://localhost:21800",
@@ -43,9 +38,8 @@ func Get() *Config {
 	}
 
 	if err := gofigure.Gofigure(cfg); err != nil {
-		log.Error(err, nil)
-		os.Exit(1)
+		return cfg, err
 	}
 
-	return cfg
+	return cfg, nil
 }

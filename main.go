@@ -12,7 +12,11 @@ import (
 )
 
 func main() {
-	cfg := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		log.Error(err, nil)
+		os.Exit(1)
+	}
 
 	log.Namespace = "dp-dimension-extractor"
 
