@@ -36,11 +36,11 @@ func main() {
 	dimensionExtractedProducer := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
 
 	svc := &service.Service{
-		EnvMax:        envMax,
-		ConsumerGroup: consumerGroup,
-		ImportAPIURL:  cfg.ImportAPIURL,
-		Producer:      dimensionExtractedProducer,
-		S3:            s3,
+		EnvMax:       envMax,
+		Consumer:     consumerGroup,
+		ImportAPIURL: cfg.ImportAPIURL,
+		Producer:     dimensionExtractedProducer,
+		S3:           s3,
 	}
 
 	svc.Start()
