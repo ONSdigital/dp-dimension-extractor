@@ -21,8 +21,12 @@ var extract = &Extract{
 }
 
 func TestUnitExtract(t *testing.T) {
-	Convey("test successful extraction of dimensions", t, func() {
+	Convey("test creation of extract object/stuct", t, func() {
+		newExtract := New(dimensionsData, CSVLine, "http://test-url.com", "123")
+		So(newExtract, ShouldResemble, extract)
+	})
 
+	Convey("test successful extraction of dimensions", t, func() {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
