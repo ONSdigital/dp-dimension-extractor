@@ -23,6 +23,7 @@ func main() {
 	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
 	if err != nil {
 		log.ErrorC("encountered error parsing kafka max bytes", err, nil)
+		os.Exit(1)
 	}
 
 	consumerGroup, err := kafka.NewConsumerGroup(cfg.Brokers, cfg.InputFileAvailableTopic, "input-file-available", cfg.InputFileAvailableOffset)
