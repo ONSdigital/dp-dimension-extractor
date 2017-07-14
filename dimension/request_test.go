@@ -10,9 +10,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var dimensionNode = &Node{
+var request = &Request{
 	Dimension:      "123_sex_female",
 	DimensionValue: "female",
+	ImportAPIURL:   "http://test-url.com",
+	InstanceID:     "123",
 }
 
 func createMockClient(status int) *http.Client {
@@ -28,26 +30,21 @@ func createMockClient(status int) *http.Client {
 	return httpClient
 }
 
-func TestUnitPutDimensionResponse(t *testing.T) {
+func TestUnitSendRequest(t *testing.T) {
 	Convey("test successful put request", t, func() {
-		instanceID := "123"
-		err := dimensionNode.Put(createMockClient(200), "http://test-url.com/imports/"+instanceID+"/dimensions")
+		err := request.Put(createMockClient(200))
 		So(err, ShouldBeNil)
 	})
 
 	Convey("test error returned when instance id does not match import jobs", t, func() {
-		instanceID := "124"
-		url := "http://test-url.com/imports/" + instanceID + "/dimensions"
-
-		err := dimensionNode.Put(createMockClient(404), url)
+		err := request.Put(createMockClient(404))
 		So(err, ShouldNotBeNil)
-		expectedError := errors.New("invalid status returned from [" + url + "] api: [404]")
+		expectedError := errors.New("invalid status returned from [" + request.ImportAPIURL + "] api: [404]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 
 	Convey("test error returned when client throws error", t, func() {
-		url := "test-url.com"
-		err := dimensionNode.Put(createMockClient(500), url)
+		err := request.Put(createMockClient(500))
 		So(err, ShouldNotBeNil)
 	})
 }
