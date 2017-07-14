@@ -1,7 +1,6 @@
-DIRECTORIES?=dimension service
+DIRECTORIES?=dimension service config
 
 BUILD=build
-HASH?=$(shell make hash)
 BUILD_ARCH=$(BUILD)/$(GOOS)-$(GOARCH)
 BIN_DIR?=.
 
@@ -15,6 +14,6 @@ build:
 debug:
 	HUMAN_LOG=1 go run main.go
 
-test: ; $(foreach dir,$(DIRECTORIES),(go test -cover $(dir)/*.go) &&) :
+test: ; $(foreach dir,$(DIRECTORIES),(echo Running tests for $(dir) package:) && (go test -cover $(dir)/*.go) &&) :
 
-.PHONEY: test
+.PHONEY: build debug test
