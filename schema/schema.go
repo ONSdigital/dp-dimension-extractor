@@ -1,7 +1,8 @@
 package schema
 
-// InputFileAvailable schema
-var InputFileAvailable = `{
+import "github.com/ONSdigital/go-ns/avro"
+
+var inputFileAvailable = `{
   "type": "record",
   "name": "input-file-available",
   "fields": [
@@ -10,8 +11,13 @@ var InputFileAvailable = `{
   ]
 }`
 
-// DimensionsExtracted schema
-var DimensionsExtracted = `{
+// InputFileAvailableSchema is the Avro schema for each
+// input file that becomes available
+var InputFileAvailableSchema *avro.Schema = &avro.Schema{
+	Definition: inputFileAvailable,
+}
+
+var dimensionsExtracted = `{
   "type": "record",
   "name": "dimensions-extracted",
   "fields": [
@@ -19,3 +25,8 @@ var DimensionsExtracted = `{
     {"name": "instance_id", "type": "string"}
   ]
 }`
+
+// DimensionsExtractedSchema is the Avro schema for each dimension extracted
+var DimensionsExtractedSchema *avro.Schema = &avro.Schema{
+	Definition: dimensionsExtracted,
+}
