@@ -33,6 +33,7 @@ In order to run the service locally you will need the following:
 | BIND_ADDR                    | :21400                 | The host and port to bind to
 | DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted   | The kafka topic to write messages to
 | IMPORT_API_URL               | http://localhost:21800 | The import api url
+| INPUT_FILE_AVAILABLE_GROUP   | input-file-available   | The kafka consumer group to consume messages from
 | INPUT_FILE_AVAILABLE_OFFSET  | -1                     | The offset you wish to consume from (-1 to continue from last committed message)
 | INPUT_FILE_AVAILABLE_TOPIC   | input-file-available   | The kafka topic to consume messages from
 | KAFKA_ADDR                   | localhost:9092  | The kafka broker addresses (can be comma separated)
