@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
@@ -80,12 +82,27 @@ func (svc *Service) Start() {
 
 				csvReader := csv.NewReader(file)
 
-				// Scan and discard header row (for now) - the data rows contain sufficient information about the structure
-				if _, err := csvReader.Read(); err != nil {
+				// Scan for header row
+				headerRow, err := csvReader.Read()
+				if err != nil {
 					log.ErrorC("encountered error immediately when processing header row", err, log.Data{"instanceID": event.InstanceID})
+					continue
 				}
 
+				metaData := strings.Split(headerRow[0], "_")
+				dimensionColumnOffset, err := strconv.Atoi(metaData[1])
+				if err != nil {
+					log.ErrorC("encountered error distinguishing dimension column offset", err, log.Data{"instanceID": event.InstanceID})
+					continue
+				}
+
+				// TODO Make a request to the import API to insert the header row of csv
+				// into database, used for observation inserter (needed to move from v4
+				// format from v3)
+				log.Trace("a list of headers", log.Data{"instanceID": event.InstanceID, "headerRow": headerRow})
+
 				dimensions := make(map[string]string)
+				numberOfObservations := 0
 
 				// Iterate over csv file pulling out unique dimensions
 				for {
@@ -98,15 +115,13 @@ func (svc *Service) Start() {
 						break
 					}
 
-					dimension := dimension.New(dimensions, line, svc.ImportAPIURL, event.InstanceID)
+					dimension := dimension.New(dimensions, dimensionColumnOffset, svc.ImportAPIURL, event.InstanceID, line)
 
-					//log.Trace("did we get here", nil)
 					lineDimensions, err := dimension.Extract()
 					if err != nil {
 						log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instanceID": event.InstanceID, "csv_line": line})
 						break
 					}
-					//log.Trace("did we get here 2", nil)
 
 					for _, request := range lineDimensions {
 						if err := request.Put(http.DefaultClient); err != nil {
@@ -114,8 +129,14 @@ func (svc *Service) Start() {
 							continue
 						}
 					}
+
+					numberOfObservations++
 				}
 
+				// TODO Make PUT/POST request to import API to pass the number of
+				// observations that exist against this instance
+				log.Trace("a count of the number of observations", log.Data{"instanceID": event.InstanceID, "numberOfObservations": numberOfObservations})
+				log.Trace("a list of headers", log.Data{"instanceID": event.InstanceID, "headerRow": headerRow})
 				// Once csv file has been iterated over and there were no errors,
 				// send a completed messsage to the dimensions-extracted topic
 				producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{

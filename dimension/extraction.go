@@ -6,10 +6,11 @@ import "fmt"
 
 // Extract represents an extract details
 type Extract struct {
-	Dimensions   map[string]string
-	ImportAPIURL string
-	InstanceID   string
-	Line         []string
+	Dimensions            map[string]string
+	DimensionColumnOffset int
+	ImportAPIURL          string
+	InstanceID            string
+	Line                  []string
 }
 
 // InvalidNumberOfColumns is returned when the number of columns is not divisible by 3
@@ -18,17 +19,18 @@ type InvalidNumberOfColumns struct {
 }
 
 func (e *InvalidNumberOfColumns) Error() string {
-	return fmt.Sprintf("invalid number of columns: [%d], needs to be divisible by 3", len(e.line))
+	return fmt.Sprintf("invalid number of columns: [%d], needs to be divisible by 2", len(e.line))
 }
 
 // ----------------------------------------------------------------------------
 
-func New(dimensions map[string]string, line []string, importAPIURL string, instanceID string) *Extract {
+func New(dimensions map[string]string, dimensionColumnOffset int, importAPIURL string, instanceID string, line []string) *Extract {
 	return &Extract{
-		ImportAPIURL: importAPIURL,
-		InstanceID:   instanceID,
-		Dimensions:   dimensions,
-		Line:         line,
+		Dimensions:            dimensions,
+		DimensionColumnOffset: dimensionColumnOffset,
+		ImportAPIURL:          importAPIURL,
+		InstanceID:            instanceID,
+		Line:                  line,
 	}
 }
 
@@ -39,16 +41,13 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 	dimensions := make(map[string]Request)
 	line := extract.Line
 
-	// Both variables below (dimensionColumnOffset and dimensionColumns)
-	// could be configurable or variables received by the event, thereby
-	// allowing dimension-extractor to handle different file formats
-
 	// dimensionColumnOffset is the number of columns that exist
 	// prior to the columns that are relevant to the dimensions
-	dimensionColumnOffset := 3
+	dimensionColumnOffset := extract.DimensionColumnOffset + 1
+
 	// dimensionColumns is the number of columns that make a
 	// unique dimension
-	dimensionColumns := 3
+	dimensionColumns := 2
 
 	// Check the number of columns is the expected amount
 	if (len(line)-dimensionColumnOffset)%dimensionColumns != 0 {
@@ -57,8 +56,8 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 
 	for i := dimensionColumnOffset; i < len(line); i += dimensionColumns {
 
-		dimension := extract.InstanceID + "_" + line[i] + "_" + line[i+1] + "_" + line[i+2]
-		dimensionValue := line[i+2]
+		dimension := extract.InstanceID + "_" + line[i] + "_" + line[i+1]
+		dimensionValue := line[i+1]
 		dimensionAlreadyExists := false
 
 		// If dimension already exists add dimension to map
