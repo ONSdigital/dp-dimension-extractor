@@ -64,7 +64,6 @@ func HandleMessage(producer kafka.Producer, s3 *s3.S3, importAPIURL string, mess
 
 	log.Trace("a list of headers", log.Data{"instance_id": event.InstanceID, "header_row": headerRow})
 
-	var hasErrored bool
 	dimensions := make(map[string]string)
 	numberOfObservations := 0
 
@@ -76,8 +75,7 @@ func HandleMessage(producer kafka.Producer, s3 *s3.S3, importAPIURL string, mess
 		}
 		if err != nil {
 			log.ErrorC("encountered error reading csv", err, log.Data{"instance_id": event.InstanceID, "csv_line": line})
-			hasErrored = true
-			break
+			return event.InstanceID, err
 		}
 
 		dimension := dimension.New(dimensions, dimensionColumnOffset, importAPIURL, event.InstanceID, line, maxRetries)
@@ -85,29 +83,17 @@ func HandleMessage(producer kafka.Producer, s3 *s3.S3, importAPIURL string, mess
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
 			log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instance_id": event.InstanceID, "csv_line": line})
-			hasErrored = true
-			break
+			return event.InstanceID, err
 		}
 
 		for _, request := range lineDimensions {
 			if err := request.Put(http.DefaultClient); err != nil {
 				log.ErrorC("encountered error sending request to import API", err, log.Data{"instance_id": event.InstanceID, "csv_line": line})
-				hasErrored = true
-				break
+				return event.InstanceID, err
 			}
 		}
 
-		if hasErrored {
-			break
-		}
-
 		numberOfObservations++
-	}
-
-	// Check for any errors in processing of event before continuing
-	// with process
-	if hasErrored {
-		return event.InstanceID, err
 	}
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": event.InstanceID, "number_of_observations": numberOfObservations})
