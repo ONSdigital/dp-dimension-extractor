@@ -38,6 +38,7 @@ In order to run the service locally you will need the following:
 | INPUT_FILE_AVAILABLE_TOPIC   | input-file-available   | The kafka topic to consume messages from
 | KAFKA_ADDR                   | localhost:9092  | The kafka broker addresses (can be comma separated)
 | KAFKA_MAX_BYTES              | 2000000                | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
+| REQUEST_MAX_RETRIES          | 3                      | The maximum number of attempts for a single http request due to external service failure"
 
 ### Contributing
 

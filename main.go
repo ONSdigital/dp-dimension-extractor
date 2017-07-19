@@ -44,6 +44,7 @@ func main() {
 		EnvMax:       envMax,
 		Consumer:     consumerGroup,
 		ImportAPIURL: cfg.ImportAPIURL,
+		MaxRetries:   cfg.MaxRetries,
 		Producer:     dimensionExtractedProducer,
 		S3:           s3,
 	}

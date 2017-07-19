@@ -15,15 +15,16 @@ var dimensionsData = make(map[string]string)
 
 var extract = &Extract{
 	Dimensions:            dimensionsData,
-	DimensionColumnOffset: 2,
+	DimensionColumnOffset: 1,
 	Line:         CSVLine,
 	ImportAPIURL: "http://test-url.com",
 	InstanceID:   "123",
+	MaxRetries:   3,
 }
 
 func TestUnitExtract(t *testing.T) {
 	Convey("test creation of extract object/stuct", t, func() {
-		newExtract := New(dimensionsData, 2, "http://test-url.com", "123", CSVLine)
+		newExtract := New(dimensionsData, 1, "http://test-url.com", "123", CSVLine, 3)
 		So(newExtract, ShouldResemble, extract)
 	})
 
@@ -31,8 +32,8 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Year_2016/17"], ShouldResemble, Request{Dimension: "123_Year_2016/17", DimensionValue: "2016/17", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID})
-			So(dimensions["123_Division_Premier-League"], ShouldResemble, Request{Dimension: "123_Division_Premier-League", DimensionValue: "Premier-League", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID})
+			So(dimensions["123_Year_2016/17"], ShouldResemble, Request{Attempt: 1, Dimension: "123_Year_2016/17", DimensionValue: "2016/17", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_Division_Premier-League"], ShouldResemble, Request{Attempt: 1, Dimension: "123_Division_Premier-League", DimensionValue: "Premier-League", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where some dimensions are unique", func() {
@@ -40,7 +41,7 @@ func TestUnitExtract(t *testing.T) {
 			extract.Dimensions["123_Year_2015/16"] = "2015/16"
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Division_Championship"], ShouldResemble, Request{Dimension: "123_Division_Championship", DimensionValue: "Championship", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID})
+			So(dimensions["123_Division_Championship"], ShouldResemble, Request{Attempt: 1, Dimension: "123_Division_Championship", DimensionValue: "Championship", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 	})
 

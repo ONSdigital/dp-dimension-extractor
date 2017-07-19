@@ -11,10 +11,12 @@ import (
 )
 
 var request = &Request{
+	Attempt:        1,
 	Dimension:      "123_sex_female",
 	DimensionValue: "female",
 	ImportAPIURL:   "http://test-url.com",
 	InstanceID:     "123",
+	MaxAttempts:    1,
 }
 
 func createMockClient(status int) *http.Client {
@@ -44,6 +46,13 @@ func TestUnitSendRequest(t *testing.T) {
 	})
 
 	Convey("test error returned when client throws error", t, func() {
+		err := request.Put(createMockClient(500))
+		So(err, ShouldNotBeNil)
+	})
+
+	Convey("test error on second attempt", t, func() {
+		request.Attempt = 1
+		request.MaxAttempts = 2
 		err := request.Put(createMockClient(500))
 		So(err, ShouldNotBeNil)
 	})

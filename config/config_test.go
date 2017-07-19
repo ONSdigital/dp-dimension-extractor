@@ -26,6 +26,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.InputFileAvailableOffset, ShouldEqual, -1)
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
+				So(cfg.MaxRetries, ShouldEqual, 3)
 			})
 		})
 	})

@@ -1,46 +1,32 @@
 package dimension
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ONSdigital/go-ns/log"
 )
 
 // Request represents the request details
 type Request struct {
+	Attempt        int
+	Dimension      string
+	DimensionValue string
 	InstanceID     string
 	ImportAPIURL   string
-	Dimension      string `json:"nodeName"`
-	DimensionValue string `json:"value"`
-}
-
-// Node represents the dimension details for a node
-type Node struct {
-	Dimension      string `json:"nodeName"`
-	DimensionValue string `json:"value"`
+	MaxAttempts    int
 }
 
 // ----------------------------------------------------------------------------
 
-// SendRequest executes a put request to the import API
+// Put executes a put request to the import API
 func (request *Request) Put(httpClient *http.Client) error {
-	url := request.ImportAPIURL + "/instances/" + request.InstanceID + "/dimensions"
+	time.Sleep(time.Duration(request.Attempt) * time.Second)
 
-	node := &Node{
-		Dimension:      request.Dimension,
-		DimensionValue: request.DimensionValue,
-	}
+	url := request.ImportAPIURL + "/instances/" + request.InstanceID + "/dimensions/" + request.Dimension + "/options/" + request.DimensionValue
 
-	requestBody, err := json.Marshal(node)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
 		return err
 	}
@@ -52,9 +38,24 @@ func (request *Request) Put(httpClient *http.Client) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode))
+
+		// If request fails due to an internal server error from
+		// Import API try again and increase the backoff
+		if res.StatusCode != http.StatusInternalServerError {
+			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+		}
+
+		if request.Attempt == request.MaxAttempts {
+			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+		}
+
+		request.Attempt++
+
+		if err := request.Put(httpClient); err != nil {
+			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+		}
 	}
 
-	log.Info("successfully sent request to import API", log.Data{"dimension-name": node.Dimension, "dimension-value": node.DimensionValue})
+	log.Info("successfully sent request to import API", log.Data{"instance_id": request.InstanceID, "dimension_name": request.Dimension, "dimension_value": request.DimensionValue})
 	return nil
 }

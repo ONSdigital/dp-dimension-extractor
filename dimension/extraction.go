@@ -11,6 +11,7 @@ type Extract struct {
 	ImportAPIURL          string
 	InstanceID            string
 	Line                  []string
+	MaxRetries            int
 }
 
 // InvalidNumberOfColumns is returned when the number of columns is not divisible by 3
@@ -24,13 +25,15 @@ func (e *InvalidNumberOfColumns) Error() string {
 
 // ----------------------------------------------------------------------------
 
-func New(dimensions map[string]string, dimensionColumnOffset int, importAPIURL string, instanceID string, line []string) *Extract {
+// New returns a new Extract object for a given instance
+func New(dimensions map[string]string, dimensionColumnOffset int, importAPIURL string, instanceID string, line []string, maxRetries int) *Extract {
 	return &Extract{
 		Dimensions:            dimensions,
 		DimensionColumnOffset: dimensionColumnOffset,
 		ImportAPIURL:          importAPIURL,
 		InstanceID:            instanceID,
 		Line:                  line,
+		MaxRetries:            maxRetries,
 	}
 }
 
@@ -69,10 +72,12 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 			extract.Dimensions[dimension] = dimension
 
 			request := Request{
+				Attempt:        1,
 				Dimension:      dimension,
 				DimensionValue: dimensionValue,
 				ImportAPIURL:   extract.ImportAPIURL,
 				InstanceID:     extract.InstanceID,
+				MaxAttempts:    extract.MaxRetries,
 			}
 
 			dimensions[dimension] = request
