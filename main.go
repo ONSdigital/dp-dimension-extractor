@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	consumerGroup, err := kafka.NewConsumerGroup(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, cfg.InputFileAvailableOffset)
+	consumerGroup, err := kafka.NewConsumerGroup(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, kafka.OffsetNewest)
 	if err != nil {
 		log.ErrorC("could not obtain consumer", err, nil)
 		os.Exit(1)
