@@ -126,7 +126,7 @@ func HandleMessage(producer kafka.MessageProducer, s3 *s3.S3, importAPIURL strin
 func readMessage(eventValue []byte) (*inputFileAvailable, error) {
 	var i inputFileAvailable
 
-	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, i); err != nil {
+	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, &i); err != nil {
 		return nil, err
 	}
 
