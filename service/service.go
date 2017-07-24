@@ -16,10 +16,10 @@ import (
 // Service represents the necessary config for dp-dimension-extractor
 type Service struct {
 	EnvMax       int64
-	Consumer     *kafka.ConsumerGroup
+	Consumer     kafka.MessageConsumer
 	ImportAPIURL string
 	MaxRetries   int
-	Producer     kafka.Producer
+	Producer     kafka.MessageProducer
 	S3           *s3.S3
 }
 
@@ -41,13 +41,13 @@ func (svc *Service) Start() {
 			case <-signals:
 				//Falls into this block when the service is shutdown to safely close the consumer
 
-				svc.Consumer.Closer <- true
-				svc.Producer.Closer <- true
+				svc.Consumer.Closer() <- true
+				svc.Producer.Closer() <- true
 				exitCh <- true
 
 				log.Info("graceful shutdown was successful", nil)
 				return
-			case message := <-svc.Consumer.Incoming:
+			case message := <-svc.Consumer.Incoming():
 
 				instanceID, err := handler.HandleMessage(svc.Producer, svc.S3, svc.ImportAPIURL, message, svc.MaxRetries)
 				if err != nil {
@@ -58,10 +58,10 @@ func (svc *Service) Start() {
 
 				message.Commit()
 				log.Debug("message committed", log.Data{"instance_id": instanceID})
-			case errorMessage := <-svc.Consumer.Errors:
+			case errorMessage := <-svc.Consumer.Errors():
 				log.Error(fmt.Errorf("aborting"), log.Data{"message_received": errorMessage})
-				svc.Consumer.Closer <- true
-				svc.Producer.Closer <- true
+				svc.Consumer.Closer() <- true
+				svc.Producer.Closer() <- true
 				exitCh <- true
 				return
 			case <-healthCh:

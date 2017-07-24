@@ -27,7 +27,7 @@ type inputFileAvailable struct {
 
 // HandleMessage handles a message by sending requests to the import API
 // before producing a new message to confirm successful completion
-func HandleMessage(producer kafka.Producer, s3 *s3.S3, importAPIURL string, message kafka.Message, maxRetries int) (string, error) {
+func HandleMessage(producer kafka.MessageProducer, s3 *s3.S3, importAPIURL string, message kafka.Message, maxRetries int) (string, error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Error(err, log.Data{"schema": "failed to unmarshal event"})
@@ -115,7 +115,7 @@ func HandleMessage(producer kafka.Producer, s3 *s3.S3, importAPIURL string, mess
 		InstanceID: event.InstanceID,
 	})
 
-	producer.Output <- producerMessage
+	producer.Output() <- producerMessage
 
 	return event.InstanceID, nil
 }
