@@ -11,8 +11,6 @@ import (
 	"github.com/ONSdigital/go-ns/s3"
 )
 
-// ----------------------------------------------------------------------------
-
 // Service represents the necessary config for dp-dimension-extractor
 type Service struct {
 	EnvMax       int64
@@ -22,8 +20,6 @@ type Service struct {
 	Producer     kafka.MessageProducer
 	S3           *s3.S3
 }
-
-// ----------------------------------------------------------------------------
 
 // Start handles consumption of events
 func (svc *Service) Start() {

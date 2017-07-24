@@ -6,7 +6,7 @@ import "github.com/ian-kent/gofigure"
 type Config struct {
 	AWSRegion                string   `env:"AWS_REGION" flag:"aws-region" flagDesc:"The AWS region to use"`
 	BindAddr                 string   `env:"BIND_ADDR" flag:"bind-addr" flagDesc:"The port to bind to"`
-	Brokers                  []string `env:"KAFKA_ADDR" flag:"kafka-addr" flagDesc:"The kafka broker addresses"`
+	Brokers                  []string `env:"KAFKA_ADDR" flag:"kafka-addr" flagDesc:"The Kafka broker addresses"`
 	DimensionsExtractedTopic string   `env:"DIMENSIONS_EXTRACTED_TOPIC" flag:"dimensions-extracted-topic" flagDesc:"The Kafka topic to write dimension messages to"`
 	ImportAPIURL             string   `env:"IMPORT_API_URL" flag:"import-api-url" flagDesc:"The import api url"`
 	InputFileAvailableGroup  string   `env:"INPUT_FILE_AVAILABLE_GROUP" flag:"input-file-available-group" flagDesc:"The Kafka consumer group to consume file messages from"`
@@ -24,14 +24,10 @@ func Get() (*Config, error) {
 		return cfg, nil
 	}
 
-	var brokers []string
-
-	brokers = append(brokers, "localhost:9092")
-
 	cfg = &Config{
 		AWSRegion:                "eu-west-1",
 		BindAddr:                 ":21400",
-		Brokers:                  brokers,
+		Brokers:                  []string{"localhost:9092"},
 		DimensionsExtractedTopic: "dimensions-extracted",
 		ImportAPIURL:             "http://localhost:21800",
 		InputFileAvailableOffset: int64(-1),

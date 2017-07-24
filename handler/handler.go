@@ -62,6 +62,9 @@ func HandleMessage(producer kafka.MessageProducer, s3 *s3.S3, importAPIURL strin
 		return event.InstanceID, err
 	}
 
+	// Meta data for dimension column offset does not consider the observation column, so add 1 to value
+	dimensionColumnOffset = dimensionColumnOffset + 1
+
 	log.Trace("a list of headers", log.Data{"instance_id": event.InstanceID, "header_row": headerRow})
 
 	dimensions := make(map[string]string)
@@ -120,14 +123,12 @@ func HandleMessage(producer kafka.MessageProducer, s3 *s3.S3, importAPIURL strin
 	return event.InstanceID, nil
 }
 
-// ----------------------------------------------------------------------------
-
-func readMessage(eventValue []byte) (inputFileAvailable, error) {
+func readMessage(eventValue []byte) (*inputFileAvailable, error) {
 	var i inputFileAvailable
 
-	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, &i); err != nil {
-		return i, err
+	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, i); err != nil {
+		return nil, err
 	}
 
-	return i, nil
+	return &i, nil
 }

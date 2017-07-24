@@ -1,4 +1,4 @@
-package instance
+package instance_test
 
 import (
 	"errors"
@@ -7,12 +7,13 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/ONSdigital/dp-dimension-extractor/instance"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var headerNames []string
 
-var instance = &JobInstance{
+var job = &instance.JobInstance{
 	Attempt:              1,
 	HeaderNames:          headerNames,
 	ImportAPIURL:         "http://test-url.com",
@@ -45,34 +46,34 @@ func TestUnitRequest(t *testing.T) {
 		"Constriction_Sectors_Codelist",
 		"Construction_Sectors",
 	)
-	instance.HeaderNames = headerNames
+	job.HeaderNames = headerNames
 
 	Convey("test creation of instance object/stuct", t, func() {
-		newInstance := NewJobInstance("http://test-url.com", "123", 1255, headerNames, 1)
-		So(newInstance, ShouldResemble, instance)
+		newJob := instance.NewJobInstance("http://test-url.com", "123", 1255, headerNames, 1)
+		So(newJob, ShouldResemble, job)
 	})
 
 	Convey("test successful put request", t, func() {
-		err := instance.PutData(createMockClient(200))
+		err := job.PutData(createMockClient(200))
 		So(err, ShouldBeNil)
 	})
 
 	Convey("test error returned when instance id does not match import jobs", t, func() {
-		err := instance.PutData(createMockClient(404))
+		err := job.PutData(createMockClient(404))
 		So(err, ShouldNotBeNil)
-		expectedError := errors.New("invalid status returned from [" + instance.ImportAPIURL + "] api: [404]")
+		expectedError := errors.New("invalid status [404] returned from [" + job.ImportAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 
 	Convey("test error returned when client throws error", t, func() {
-		err := instance.PutData(createMockClient(500))
+		err := job.PutData(createMockClient(500))
 		So(err, ShouldNotBeNil)
 	})
 
 	Convey("test error on second attempt due to client throwing an error", t, func() {
-		instance.Attempt = 1
-		instance.MaxAttempts = 2
-		err := instance.PutData(createMockClient(500))
+		job.Attempt = 1
+		job.MaxAttempts = 2
+		err := job.PutData(createMockClient(500))
 		So(err, ShouldNotBeNil)
 	})
 }

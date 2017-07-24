@@ -38,24 +38,25 @@ func (request *Request) Put(httpClient *http.Client) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
+		errorInvalidStatus := fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, request.ImportAPIURL)
 
 		// If request fails due to an internal server error from
 		// Import API try again and increase the backoff
 		if res.StatusCode != http.StatusInternalServerError {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 
 		if request.Attempt == request.MaxAttempts {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 
 		request.Attempt++
 
 		if err := request.Put(httpClient); err != nil {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", request.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 	}
 
-	log.Info("successfully sent request to import API", log.Data{"instance_id": request.InstanceID, "dimension_name": request.Dimension, "dimension_value": request.DimensionValue})
+	log.Info("successfully sent request to import api", log.Data{"instance_id": request.InstanceID, "dimension_name": request.Dimension, "dimension_value": request.DimensionValue})
 	return nil
 }

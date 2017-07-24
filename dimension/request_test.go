@@ -1,4 +1,4 @@
-package dimension
+package dimension_test
 
 import (
 	"errors"
@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var request = &Request{
+var request = &dimension.Request{
 	Attempt:        1,
 	Dimension:      "123_sex_female",
 	DimensionValue: "female",
@@ -41,7 +42,7 @@ func TestUnitSendRequest(t *testing.T) {
 	Convey("test error returned when instance id does not match import jobs", t, func() {
 		err := request.Put(createMockClient(404))
 		So(err, ShouldNotBeNil)
-		expectedError := errors.New("invalid status returned from [" + request.ImportAPIURL + "] api: [404]")
+		expectedError := errors.New("invalid status [404] returned from [" + request.ImportAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 

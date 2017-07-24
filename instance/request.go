@@ -19,8 +19,6 @@ type JobInstance struct {
 	NumberOfObservations int `json:"number_of_observations"`
 }
 
-// ----------------------------------------------------------------------------
-
 // NewJobInstance returns a new JobInstance object for a given instance
 func NewJobInstance(importAPIURL string, instanceID string, numberOfObservations int, headerNames []string, maxAttempts int) *JobInstance {
 	return &JobInstance{
@@ -35,12 +33,12 @@ func NewJobInstance(importAPIURL string, instanceID string, numberOfObservations
 
 // ----------------------------------------------------------------------------
 
-// PutObservationCount executes a put request to insert the number of
+// PutData executes a put request to insert the number of
 // observations against a job instance via the import API
 func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	url := instance.ImportAPIURL + "/instances/" + instance.InstanceID
 
-	requestBody, err := json.Marshal(instance.NumberOfObservations)
+	requestBody, err := json.Marshal(instance)
 	if err != nil {
 		return err
 	}
@@ -57,20 +55,22 @@ func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
+		errorInvalidStatus := fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, instance.ImportAPIURL)
+
 		// If request fails due to an internal server error from
 		// Import API try again and increase the backoff
 		if res.StatusCode != http.StatusInternalServerError {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", instance.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 
 		if instance.Attempt == instance.MaxAttempts {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", instance.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 
 		instance.Attempt++
 
 		if err := instance.PutData(httpClient); err != nil {
-			return fmt.Errorf("invalid status returned from [%s] api: [%d]", instance.ImportAPIURL, res.StatusCode)
+			return errorInvalidStatus
 		}
 	}
 
