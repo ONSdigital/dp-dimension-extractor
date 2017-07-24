@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "YxxkxEm/b17iPTtEQM2LrgUZZ+A=",
+			"checksumSHA1": "dzh4fF9o6j+mJEbJn5utm8Q+Pyg=",
 			"path": "github.com/ONSdigital/go-ns/avro",
-			"revision": "4e26786b1b92e0e4081b898b31ba460970778642",
-			"revisionTime": "2017-07-18T10:29:30Z"
+			"revision": "d43ea97cc004982b0f4522f25a84ddfb3bbcb574",
+			"revisionTime": "2017-07-24T14:56:24Z"
 		},
 		{
 			"checksumSHA1": "H1urt43SqHdE7w9jeKZMky7Iuo4=",
