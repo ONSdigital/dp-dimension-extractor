@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ONSdigital/dp-dimension-extractor/handler"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
@@ -45,7 +44,7 @@ func (svc *Service) Start() {
 				return
 			case message := <-svc.Consumer.Incoming():
 
-				instanceID, err := handler.HandleMessage(svc.Producer, svc.S3, svc.ImportAPIURL, message, svc.MaxRetries)
+				instanceID, err := svc.handleMessage(message)
 				if err != nil {
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 				} else {

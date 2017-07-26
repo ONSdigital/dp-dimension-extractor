@@ -7,25 +7,29 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var CSVLine = []string{"20", "", "Year", "2016/17", "Division", "Premier-League"}
-var CSVLine2 = []string{"20", "", "Year", "2015/16", "Division", "Championship"}
+var headerRow = []string{"Observation", "Data Marking", "Time Codelist", "Time", "League Codelist", "League"}
+var CSVLine = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League"}
+var CSVLine2 = []string{"20", "", "Year", "2015/16", "", "Championship"}
 
-var badCSVLine = []string{"20", "", "Year", "2016/17", "Division", "Premier-League", "test-failure"}
+var badCSVLine = []string{"20", "", "Year", "2016/17", "", ""}
+var badCSVLine2 = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League", "test-failure"}
 
 var dimensionsData = make(map[string]string)
 
 var extract = &dimension.Extract{
 	Dimensions:            dimensionsData,
 	DimensionColumnOffset: 2,
-	Line:         CSVLine,
-	ImportAPIURL: "http://test-url.com",
-	InstanceID:   "123",
-	MaxRetries:   3,
+	HeaderRow:             headerRow,
+	Line:                  CSVLine,
+	ImportAPIURL:          "http://test-url.com",
+	InstanceID:            "123",
+	MaxRetries:            3,
+	TimeColumn:            2,
 }
 
 func TestUnitExtract(t *testing.T) {
 	Convey("test creation of extract object/stuct", t, func() {
-		newExtract := dimension.New(dimensionsData, 2, "http://test-url.com", "123", CSVLine, 3)
+		newExtract := dimension.New(dimensionsData, 2, headerRow, "http://test-url.com", "123", CSVLine, 3, 2)
 		So(newExtract, ShouldResemble, extract)
 	})
 
@@ -33,8 +37,8 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Year_2016/17"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Year_2016/17", DimensionValue: "2016/17", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
-			So(dimensions["123_Division_Premier-League"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Division_Premier-League", DimensionValue: "Premier-League", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_Time_2016/17"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Time_2016/17", DimensionValue: "2016/17", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League_PL01"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League_PL01", DimensionValue: "PL01", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where some dimensions are unique", func() {
@@ -42,21 +46,30 @@ func TestUnitExtract(t *testing.T) {
 			extract.Dimensions["123_Year_2015/16"] = "2015/16"
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Division_Championship"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Division_Championship", DimensionValue: "Championship", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League_Championship"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League_Championship", DimensionValue: "Championship", ImportAPIURL: extract.ImportAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where no dimensions are unique", func() {
 			extract.Line = CSVLine2
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Division_Championship"], ShouldResemble, dimension.Request{Attempt: 0, Dimension: "", DimensionValue: "", ImportAPIURL: "", InstanceID: "", MaxAttempts: 0})
+			So(dimensions["123_League_Championship"], ShouldResemble, dimension.Request{Attempt: 0, Dimension: "", DimensionValue: "", ImportAPIURL: "", InstanceID: "", MaxAttempts: 0})
 		})
 	})
 
 	Convey("test unsuccessful extraction of dimensions", t, func() {
-		extract.Line = badCSVLine
-		_, err := extract.Extract()
-		So(err, ShouldNotBeNil)
-		So(err, ShouldResemble, &dimension.InvalidNumberOfColumns{Line: badCSVLine})
+		Convey("missing dimension values", func() {
+			extract.Line = badCSVLine
+			_, err := extract.Extract()
+			So(err, ShouldNotBeNil)
+			So(err, ShouldResemble, &dimension.MissingDimensionValues{Line: badCSVLine})
+		})
+
+		Convey("invalid number of columns", func() {
+			extract.Line = badCSVLine2
+			_, err := extract.Extract()
+			So(err, ShouldNotBeNil)
+			So(err, ShouldResemble, &dimension.InvalidNumberOfColumns{Line: badCSVLine2})
+		})
 	})
 }

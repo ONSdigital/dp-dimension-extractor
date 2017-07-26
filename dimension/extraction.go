@@ -6,10 +6,12 @@ import "fmt"
 type Extract struct {
 	Dimensions            map[string]string
 	DimensionColumnOffset int
+	HeaderRow             []string
 	ImportAPIURL          string
 	InstanceID            string
 	Line                  []string
 	MaxRetries            int
+	TimeColumn            int
 }
 
 // dimensionColumns is the number of columns that make a unique dimension
@@ -24,15 +26,26 @@ func (e *InvalidNumberOfColumns) Error() string {
 	return fmt.Sprintf("invalid number of columns: [%d], needs to be divisible by 2", len(e.Line))
 }
 
+// InvalidNumberOfColumns is returned when the number of columns is not divisible by 2
+type MissingDimensionValues struct {
+	Line []string
+}
+
+func (e *MissingDimensionValues) Error() string {
+	return fmt.Sprintf("missing dimension values in : [%v]", e.Line)
+}
+
 // New returns a new Extract object for a given instance
-func New(dimensions map[string]string, dimensionColumnOffset int, importAPIURL string, instanceID string, line []string, maxRetries int) *Extract {
+func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, importAPIURL string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
 	return &Extract{
 		Dimensions:            dimensions,
 		DimensionColumnOffset: dimensionColumnOffset,
+		HeaderRow:             headerRow,
 		ImportAPIURL:          importAPIURL,
 		InstanceID:            instanceID,
 		Line:                  line,
 		MaxRetries:            maxRetries,
+		TimeColumn:            timeColumn,
 	}
 }
 
@@ -51,9 +64,27 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 	}
 
 	for i := dimensionColumnOffset; i < len(line); i += dimensionColumns {
+		var dimensionValue string
 
-		dimension := extract.InstanceID + "_" + line[i] + "_" + line[i+1]
-		dimensionValue := line[i+1]
+		// If a pair of columns represents time always use the value in the second
+		// column to represent dimension value
+		if i == extract.TimeColumn || i+1 == extract.TimeColumn {
+			dimensionValue = line[i+1]
+		} else {
+			// For all other dimensons use first column in pair; if this is empty use
+			// second column and lastly if both columns are empty then throw an error
+			if len(line[i]) > 0 {
+				dimensionValue = line[i]
+			} else {
+				if len(line[i+1]) > 0 {
+					dimensionValue = line[i+1]
+				} else {
+					return nil, &MissingDimensionValues{line}
+				}
+			}
+		}
+
+		dimension := extract.InstanceID + "_" + extract.HeaderRow[i+1] + "_" + dimensionValue
 
 		// If dimension already exists add dimension to map
 		if _, ok := extract.Dimensions[dimension]; ok {

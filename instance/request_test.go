@@ -39,12 +39,12 @@ func TestUnitRequest(t *testing.T) {
 	headerNames = append(headerNames,
 		"v4-1",
 		"Data_Marking",
-		"Time_codelist",
+		"Time codelist",
 		"Time",
-		"Geography_codelist",
+		"Geography codelist",
 		"Geography",
-		"Constriction_Sectors_Codelist",
-		"Construction_Sectors",
+		"Constriction Sectors Codelist",
+		"Construction Sectors",
 	)
 	job.HeaderNames = headerNames
 

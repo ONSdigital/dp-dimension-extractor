@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/ONSdigital/go-ns/log"
 )
@@ -36,21 +37,31 @@ func NewJobInstance(importAPIURL string, instanceID string, numberOfObservations
 // PutData executes a put request to insert the number of
 // observations against a job instance via the import API
 func (instance *JobInstance) PutData(httpClient *http.Client) error {
-	url := instance.ImportAPIURL + "/instances/" + instance.InstanceID
+	path := instance.ImportAPIURL + "/instances/" + instance.InstanceID
+
+	var URL *url.URL
+	URL, err := url.Parse(path)
+	if err != nil {
+		return err
+	}
 
 	requestBody, err := json.Marshal(instance)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("PUT", URL.String(), bytes.NewBuffer(requestBody))
 	if err != nil {
 		return err
 	}
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		if nextError := instance.retryRequest(httpClient, err); nextError != nil {
+			return nextError
+		}
+
+		return nil
 	}
 	defer res.Body.Close()
 
@@ -63,17 +74,27 @@ func (instance *JobInstance) PutData(httpClient *http.Client) error {
 			return errorInvalidStatus
 		}
 
-		if instance.Attempt == instance.MaxAttempts {
-			return errorInvalidStatus
-		}
-
-		instance.Attempt++
-
-		if err := instance.PutData(httpClient); err != nil {
-			return errorInvalidStatus
+		if err := instance.retryRequest(httpClient, errorInvalidStatus); err != nil {
+			return err
 		}
 	}
 
 	log.Info("successfully sent request to import API", log.Data{"instance_id": instance.InstanceID, "number_of_observations": instance.NumberOfObservations})
+	return nil
+}
+
+func (jobInstance *JobInstance) retryRequest(httpClient *http.Client, err error) error {
+	if jobInstance.Attempt == jobInstance.MaxAttempts {
+		return err
+	}
+
+	jobInstance.Attempt++
+
+	log.Info("attempting request in 10 seconds", log.Data{"attempt": jobInstance.Attempt})
+
+	if newErr := jobInstance.PutData(httpClient); err != nil {
+		return newErr
+	}
+
 	return nil
 }
