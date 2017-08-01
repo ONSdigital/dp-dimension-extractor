@@ -19,8 +19,6 @@ type Request struct {
 	MaxAttempts    int
 }
 
-// ----------------------------------------------------------------------------
-
 // Put executes a put request to the import API
 func (request *Request) Put(httpClient *http.Client) error {
 	// TODO Instead off backing off by bumping the sleep by 10 seconds per failed

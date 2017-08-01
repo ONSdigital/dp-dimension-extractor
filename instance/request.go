@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/ONSdigital/go-ns/log"
 )
@@ -32,11 +33,11 @@ func NewJobInstance(importAPIURL string, instanceID string, numberOfObservations
 	}
 }
 
-// ----------------------------------------------------------------------------
-
 // PutData executes a put request to insert the number of
 // observations against a job instance via the import API
 func (instance *JobInstance) PutData(httpClient *http.Client) error {
+	time.Sleep(time.Duration(instance.Attempt-1) * 10 * time.Second)
+
 	path := instance.ImportAPIURL + "/instances/" + instance.InstanceID
 
 	var URL *url.URL

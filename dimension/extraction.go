@@ -84,14 +84,14 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 			}
 		}
 
-		dimension := extract.InstanceID + "_" + extract.HeaderRow[i+1] + "_" + dimensionValue
+		dimension := extract.InstanceID + "_" + extract.HeaderRow[i+1]
 
 		// If dimension already exists add dimension to map
-		if _, ok := extract.Dimensions[dimension]; ok {
+		if _, ok := extract.Dimensions[dimension+"_"+dimensionValue]; ok {
 			continue
 		}
 
-		extract.Dimensions[dimension] = dimension
+		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		request := Request{
 			Attempt:        1,

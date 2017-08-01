@@ -1,4 +1,4 @@
-DIRECTORIES?=dimension service config
+DIRECTORIES?=dimension service config instance
 
 BUILD=build
 BUILD_ARCH=$(BUILD)/$(GOOS)-$(GOARCH)

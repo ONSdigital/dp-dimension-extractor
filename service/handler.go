@@ -25,7 +25,7 @@ type inputFileAvailable struct {
 	InstanceID string `avro:"instance_id"`
 }
 
-// HandleMessage handles a message by sending requests to the import API
+// handleMessage handles a message by sending requests to the import API
 // before producing a new message to confirm successful completion
 func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	producerMessage, instanceID, file, err := retrieveData(message, svc.S3)
