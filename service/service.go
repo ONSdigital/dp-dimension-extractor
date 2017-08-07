@@ -35,12 +35,10 @@ func (svc *Service) Start() {
 			select {
 			case <-signals:
 				//Falls into this block when the service is shutdown to safely close the consumer
-
+				log.Info("graceful shutdown in progress", nil)
 				svc.Consumer.Closer() <- true
 				svc.Producer.Closer() <- true
 				exitCh <- true
-
-				log.Info("graceful shutdown was successful", nil)
 				return
 			case message := <-svc.Consumer.Incoming():
 

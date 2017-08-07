@@ -18,7 +18,7 @@ type JobInstance struct {
 	InstanceID           string
 	ImportAPIURL         string
 	MaxAttempts          int
-	NumberOfObservations int `json:"number_of_observations"`
+	NumberOfObservations int `json:"total_observations"`
 }
 
 // NewJobInstance returns a new JobInstance object for a given instance
@@ -37,7 +37,6 @@ func NewJobInstance(importAPIURL string, instanceID string, numberOfObservations
 // observations against a job instance via the import API
 func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	time.Sleep(time.Duration(instance.Attempt-1) * 10 * time.Second)
-
 	path := instance.ImportAPIURL + "/instances/" + instance.InstanceID
 
 	var URL *url.URL
@@ -55,6 +54,7 @@ func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Internal-token", "FD0108EA-825D-411C-9B1D-41EF7727F465")
 
 	res, err := httpClient.Do(req)
 	if err != nil {
