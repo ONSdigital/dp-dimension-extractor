@@ -17,6 +17,7 @@ var job = &instance.JobInstance{
 	Attempt:              1,
 	HeaderNames:          headerNames,
 	ImportAPIURL:         "http://test-url.com",
+	ImportAPIAuthToken:   "sfqr-4f345-f43534",
 	InstanceID:           "123",
 	MaxAttempts:          1,
 	NumberOfObservations: 1255,
@@ -49,7 +50,7 @@ func TestUnitRequest(t *testing.T) {
 	job.HeaderNames = headerNames
 
 	Convey("test creation of instance object/stuct", t, func() {
-		newJob := instance.NewJobInstance("http://test-url.com", "123", 1255, headerNames, 1)
+		newJob := instance.NewJobInstance("http://test-url.com", job.ImportAPIAuthToken, "123", 1255, headerNames, 1)
 		So(newJob, ShouldResemble, job)
 	})
 

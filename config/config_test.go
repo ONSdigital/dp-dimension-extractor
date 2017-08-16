@@ -23,6 +23,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.Brokers[0], ShouldEqual, "localhost:9092")
 				So(cfg.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
 				So(cfg.ImportAPIURL, ShouldEqual, "http://localhost:21800")
+				So(cfg.ImportAPIAuthToken, ShouldEqual, "FD0108EA-825D-411C-9B1D-41EF7727F465")
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
 				So(cfg.MaxRetries, ShouldEqual, 3)

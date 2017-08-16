@@ -8,6 +8,7 @@ type Extract struct {
 	DimensionColumnOffset int
 	HeaderRow             []string
 	ImportAPIURL          string
+	ImportAPIAuthToken    string
 	InstanceID            string
 	Line                  []string
 	MaxRetries            int
@@ -36,12 +37,13 @@ func (e *MissingDimensionValues) Error() string {
 }
 
 // New returns a new Extract object for a given instance
-func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, importAPIURL string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
+func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, importAPIURL string, importAPIAuthToken string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
 	return &Extract{
 		Dimensions:            dimensions,
 		DimensionColumnOffset: dimensionColumnOffset,
 		HeaderRow:             headerRow,
 		ImportAPIURL:          importAPIURL,
+		ImportAPIAuthToken:    importAPIAuthToken,
 		InstanceID:            instanceID,
 		Line:                  line,
 		MaxRetries:            maxRetries,

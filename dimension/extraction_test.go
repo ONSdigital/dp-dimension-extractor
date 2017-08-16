@@ -22,6 +22,7 @@ var extract = &dimension.Extract{
 	HeaderRow:             headerRow,
 	Line:                  CSVLine,
 	ImportAPIURL:          "http://test-url.com",
+	ImportAPIAuthToken:    "asfe-34sfd-23",
 	InstanceID:            "123",
 	MaxRetries:            3,
 	TimeColumn:            2,
@@ -29,7 +30,7 @@ var extract = &dimension.Extract{
 
 func TestUnitExtract(t *testing.T) {
 	Convey("test creation of extract object/stuct", t, func() {
-		newExtract := dimension.New(dimensionsData, 2, headerRow, "http://test-url.com", "123", CSVLine, 3, 2)
+		newExtract := dimension.New(dimensionsData, 2, headerRow, "http://test-url.com", extract.ImportAPIAuthToken, "123", CSVLine, 3, 2)
 		So(newExtract, ShouldResemble, extract)
 	})
 
