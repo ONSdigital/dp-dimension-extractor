@@ -11,12 +11,13 @@ import (
 
 // Request represents the request details
 type Request struct {
-	Attempt        int
-	Dimension      string
-	DimensionValue string
-	InstanceID     string
-	ImportAPIURL   string
-	MaxAttempts    int
+	Attempt            int
+	Dimension          string
+	DimensionValue     string
+	InstanceID         string
+	ImportAPIURL       string
+	ImportAPIAuthToken string
+	MaxAttempts        int
 }
 
 // Put executes a put request to the import API
@@ -37,7 +38,7 @@ func (request *Request) Put(httpClient *http.Client) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Internal-token", "FD0108EA-825D-411C-9B1D-41EF7727F465")
+	req.Header.Set("Internal-token", request.ImportAPIAuthToken)
 
 	res, err := httpClient.Do(req)
 	if err != nil {

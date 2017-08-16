@@ -12,12 +12,13 @@ import (
 
 // Service represents the necessary config for dp-dimension-extractor
 type Service struct {
-	EnvMax       int64
-	Consumer     kafka.MessageConsumer
-	ImportAPIURL string
-	MaxRetries   int
-	Producer     kafka.MessageProducer
-	S3           *s3.S3
+	EnvMax             int64
+	Consumer           kafka.MessageConsumer
+	ImportAPIURL       string
+	ImportAPIAuthToken string
+	MaxRetries         int
+	Producer           kafka.MessageProducer
+	S3                 *s3.S3
 }
 
 // Start handles consumption of events

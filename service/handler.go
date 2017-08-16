@@ -71,7 +71,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 			return instanceID, err
 		}
 
-		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.ImportAPIURL, instanceID, line, svc.MaxRetries, timeColumn)
+		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.ImportAPIURL, svc.ImportAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn)
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
@@ -91,7 +91,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	instance := instance.NewJobInstance(svc.ImportAPIURL, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
+	instance := instance.NewJobInstance(svc.ImportAPIURL, svc.ImportAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
 
 	// PUT request to import API to pass the header row and the
 	// number of observations that exist against this job instance

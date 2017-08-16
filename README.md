@@ -27,17 +27,18 @@ In order to run the service locally you will need the following:
 
 ### Configuration
 
-| Environment variable         | Default                | Description
-| ---------------------------- | ---------------------- | ----------------------------------------------------
-| AWS_REGION                   | eu-west-1              | The AWS region to use
-| BIND_ADDR                    | :21400                 | The host and port to bind to
-| DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted   | The kafka topic to write messages to
-| IMPORT_API_URL               | http://localhost:21800 | The import api url
-| INPUT_FILE_AVAILABLE_GROUP   | input-file-available   | The kafka consumer group to consume messages from
-| INPUT_FILE_AVAILABLE_TOPIC   | input-file-available   | The kafka topic to consume messages from
-| KAFKA_ADDR                   | localhost:9092         | The kafka broker addresses (can be comma separated)
-| KAFKA_MAX_BYTES              | 2000000                | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
-| REQUEST_MAX_RETRIES          | 3                      | The maximum number of attempts for a single http request due to external service failure"
+| Environment variable         | Default                               | Description
+| ---------------------------- | ------------------------------------- | ----------------------------------------------------
+| AWS_REGION                   | eu-west-1                             | The AWS region to use
+| BIND_ADDR                    | :21400                                | The host and port to bind to
+| DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted                  | The kafka topic to write messages to
+| IMPORT_API_URL               | http://localhost:21800                | The import api url
+| IMPORT_AUTH_TOKEN            | FD0108EA-825D-411C-9B1D-41EF7727F465  | Authentication token for access to import API
+| INPUT_FILE_AVAILABLE_GROUP   | input-file-available                  | The kafka consumer group to consume messages from
+| INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                  | The kafka topic to consume messages from
+| KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
+| KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
+| REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
 
 ### Contributing
 
