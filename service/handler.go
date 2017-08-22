@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
+	"net/url"
 )
 
 type dimensionExtracted struct {
@@ -23,6 +24,15 @@ type dimensionExtracted struct {
 type inputFileAvailable struct {
 	FileURL    string `avro:"file_url"`
 	InstanceID string `avro:"instance_id"`
+}
+
+func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
+	url, err := url.Parse(inputFileAvailable.FileURL)
+	if err != nil {
+		return "", err
+	}
+
+	return "s3:/" + url.Path, nil
 }
 
 // handleMessage handles a message by sending requests to the import API
@@ -116,10 +126,16 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 		return nil, "", nil, err
 	}
 
-	log.Debug("event received", log.Data{"file_url": event.FileURL, "instance_id": event.InstanceID})
+	s3URL, err := event.s3URL()
+	if err != nil {
+		log.ErrorC("encountered error parsing file URL", err, log.Data{"instance_id": event.InstanceID})
+		return nil, event.InstanceID, nil, err
+	}
+
+	log.Debug("event received", log.Data{"file_url": event.FileURL, "s3_url": s3URL, "instance_id": event.InstanceID})
 
 	// Get csv from S3 bucket
-	file, err := s3.Get(event.FileURL)
+	file, err := s3.Get(s3URL)
 	if err != nil {
 		log.ErrorC("encountered error retrieving csv file", err, log.Data{"instance_id": event.InstanceID})
 		return nil, event.InstanceID, nil, err
@@ -128,7 +144,7 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 	log.Debug("file successfully read from aws", log.Data{"instance_id": event.InstanceID})
 
 	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{
-		FileURL:    event.FileURL,
+		FileURL:    s3URL,
 		InstanceID: event.InstanceID,
 	})
 
