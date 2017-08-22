@@ -96,12 +96,13 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		request := Request{
-			Attempt:        1,
-			Dimension:      dimension,
-			DimensionValue: dimensionValue,
-			ImportAPIURL:   extract.ImportAPIURL,
-			InstanceID:     extract.InstanceID,
-			MaxAttempts:    extract.MaxRetries,
+			Attempt:            1,
+			Dimension:          dimension,
+			DimensionValue:     dimensionValue,
+			ImportAPIURL:       extract.ImportAPIURL,
+			ImportAPIAuthToken: extract.ImportAPIAuthToken,
+			InstanceID:         extract.InstanceID,
+			MaxAttempts:        extract.MaxRetries,
 		}
 
 		dimensions[dimension] = request

@@ -38,7 +38,7 @@ func (request *Request) Put(httpClient *http.Client) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Internal-token", request.ImportAPIAuthToken)
+	req.Header.Set("internal-token", request.ImportAPIAuthToken)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
