@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -118,8 +119,11 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 
 	log.Debug("event received", log.Data{"file_url": event.FileURL, "instance_id": event.InstanceID})
 
+	// TODO check url is an s3 url if not get bucket name and path
+	fileURL := convertURL(event.FileURL)
+
 	// Get csv from S3 bucket
-	file, err := s3.Get(event.FileURL)
+	file, err := s3.Get(fileURL)
 	if err != nil {
 		log.ErrorC("encountered error retrieving csv file", err, log.Data{"instance_id": event.InstanceID})
 		return nil, event.InstanceID, nil, err
@@ -133,6 +137,14 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 	})
 
 	return producerMessage, event.InstanceID, file, nil
+}
+
+func convertURL(url string) string {
+
+	matchHTTPS := regexp.MustCompile("(?i)https{0,1}://")
+	newURL := matchHTTPS.ReplaceAllString(url, "s3://")
+
+	return newURL
 }
 
 func readMessage(eventValue []byte) (*inputFileAvailable, error) {
