@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"net/url"
+
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/instance"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
-	"net/url"
 )
 
 type dimensionExtracted struct {
@@ -27,6 +28,9 @@ type inputFileAvailable struct {
 }
 
 func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
+	if strings.HasPrefix(inputFileAvailable.FileURL, "s3:") {
+		return inputFileAvailable.FileURL, nil
+	}
 	url, err := url.Parse(inputFileAvailable.FileURL)
 	if err != nil {
 		return "", err
