@@ -56,7 +56,7 @@ func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Internal-token", instance.ImportAPIAuthToken)
+	req.Header.Set("internal-token", instance.ImportAPIAuthToken)
 
 	res, err := httpClient.Do(req)
 	if err != nil {
