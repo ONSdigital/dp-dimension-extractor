@@ -15,7 +15,7 @@ var request = &dimension.Request{
 	Attempt:        1,
 	Dimension:      "123_sex_female",
 	DimensionValue: "female",
-	ImportAPIURL:   "http://test-url.com",
+	DatasetAPIURL:  "http://test-url.com",
 	InstanceID:     "123",
 	MaxAttempts:    1,
 }
@@ -39,10 +39,10 @@ func TestUnitSendRequest(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 
-	Convey("test error returned when instance id does not match import jobs", t, func() {
+	Convey("test error returned when instance id does not match any instances", t, func() {
 		err := request.Put(createMockClient(404))
 		So(err, ShouldNotBeNil)
-		expectedError := errors.New("invalid status [404] returned from [" + request.ImportAPIURL + "]")
+		expectedError := errors.New("invalid status [404] returned from [" + request.DatasetAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 

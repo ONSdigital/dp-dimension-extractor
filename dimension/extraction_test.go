@@ -21,8 +21,8 @@ var extract = &dimension.Extract{
 	DimensionColumnOffset: 2,
 	HeaderRow:             headerRow,
 	Line:                  CSVLine,
-	ImportAPIURL:          "http://test-url.com",
-	ImportAPIAuthToken:    "asfe-34sfd-23",
+	DatasetAPIURL:         "http://test-url.com",
+	DatasetAPIAuthToken:   "asfe-34sfd-23",
 	InstanceID:            "123",
 	MaxRetries:            3,
 	TimeColumn:            2,
@@ -30,7 +30,7 @@ var extract = &dimension.Extract{
 
 func TestUnitExtract(t *testing.T) {
 	Convey("test creation of extract object/stuct", t, func() {
-		newExtract := dimension.New(dimensionsData, 2, headerRow, "http://test-url.com", extract.ImportAPIAuthToken, "123", CSVLine, 3, 2)
+		newExtract := dimension.New(dimensionsData, 2, headerRow, "http://test-url.com", extract.DatasetAPIAuthToken, "123", CSVLine, 3, 2)
 		So(newExtract, ShouldResemble, extract)
 	})
 
@@ -38,8 +38,8 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Time", DimensionValue: "2016/17", ImportAPIURL: extract.ImportAPIURL, ImportAPIAuthToken:extract.ImportAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
-			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League", DimensionValue: "PL01", ImportAPIURL: extract.ImportAPIURL, ImportAPIAuthToken:extract.ImportAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_Time", DimensionValue: "2016/17", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League", DimensionValue: "PL01", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where some dimensions are unique", func() {
@@ -47,14 +47,14 @@ func TestUnitExtract(t *testing.T) {
 			extract.Dimensions["123_Year"] = "2015/16"
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League", DimensionValue: "Championship", ImportAPIURL: extract.ImportAPIURL, ImportAPIAuthToken:extract.ImportAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, Dimension: "123_League", DimensionValue: "Championship", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where no dimensions are unique", func() {
 			extract.Line = CSVLine2
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 0, Dimension: "", DimensionValue: "", ImportAPIURL: "", InstanceID: "", MaxAttempts: 0})
+			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 0, Dimension: "", DimensionValue: "", DatasetAPIURL: "", InstanceID: "", MaxAttempts: 0})
 		})
 	})
 

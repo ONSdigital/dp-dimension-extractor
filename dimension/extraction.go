@@ -7,8 +7,8 @@ type Extract struct {
 	Dimensions            map[string]string
 	DimensionColumnOffset int
 	HeaderRow             []string
-	ImportAPIURL          string
-	ImportAPIAuthToken    string
+	DatasetAPIURL         string
+	DatasetAPIAuthToken   string
 	InstanceID            string
 	Line                  []string
 	MaxRetries            int
@@ -37,13 +37,13 @@ func (e *MissingDimensionValues) Error() string {
 }
 
 // New returns a new Extract object for a given instance
-func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, importAPIURL string, importAPIAuthToken string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
+func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, datasetAPIURL string, datasetAPIAuthToken string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
 	return &Extract{
 		Dimensions:            dimensions,
 		DimensionColumnOffset: dimensionColumnOffset,
 		HeaderRow:             headerRow,
-		ImportAPIURL:          importAPIURL,
-		ImportAPIAuthToken:    importAPIAuthToken,
+		DatasetAPIURL:         datasetAPIURL,
+		DatasetAPIAuthToken:   datasetAPIAuthToken,
 		InstanceID:            instanceID,
 		Line:                  line,
 		MaxRetries:            maxRetries,
@@ -96,13 +96,13 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		request := Request{
-			Attempt:            1,
-			Dimension:          dimension,
-			DimensionValue:     dimensionValue,
-			ImportAPIURL:       extract.ImportAPIURL,
-			ImportAPIAuthToken: extract.ImportAPIAuthToken,
-			InstanceID:         extract.InstanceID,
-			MaxAttempts:        extract.MaxRetries,
+			Attempt:             1,
+			Dimension:           dimension,
+			DimensionValue:      dimensionValue,
+			DatasetAPIURL:       extract.DatasetAPIURL,
+			DatasetAPIAuthToken: extract.DatasetAPIAuthToken,
+			InstanceID:          extract.InstanceID,
+			MaxAttempts:         extract.MaxRetries,
 		}
 
 		dimensions[dimension] = request

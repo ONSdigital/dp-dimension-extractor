@@ -39,7 +39,7 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 	return "s3:/" + url.Path, nil
 }
 
-// handleMessage handles a message by sending requests to the import API
+// handleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	producerMessage, instanceID, file, err := retrieveData(message, svc.S3)
@@ -50,7 +50,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	csvReader := csv.NewReader(file)
 
 	// Scan for header row, this information will need to be sent to the
-	// import API with the number of observations in a PUT request
+	// dataset API with the number of observations in a PUT request
 	headerRow, err := csvReader.Read()
 	if err != nil {
 		log.ErrorC("encountered error immediately when processing header row", err, log.Data{"instance_id": instanceID})
@@ -85,7 +85,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 			return instanceID, err
 		}
 
-		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.ImportAPIURL, svc.ImportAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn)
+		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn)
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
@@ -95,7 +95,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 		for _, request := range lineDimensions {
 			if err := request.Put(http.DefaultClient); err != nil {
-				log.ErrorC("encountered error sending request to import API", err, log.Data{"instance_id": instanceID, "csv_line": line})
+				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
 				return instanceID, err
 			}
 		}
@@ -105,12 +105,12 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	instance := instance.NewJobInstance(svc.ImportAPIURL, svc.ImportAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
+	instance := instance.NewJobInstance(svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
 
-	// PUT request to import API to pass the header row and the
+	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance
 	if err := instance.PutData(http.DefaultClient); err != nil {
-		log.ErrorC("encountered error sending request to import API", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
+		log.ErrorC("encountered error sending request to the dataset api", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err
 	}
 

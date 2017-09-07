@@ -12,18 +12,18 @@ import (
 
 // Service represents the necessary config for dp-dimension-extractor
 type Service struct {
-	EnvMax             int64
-	Consumer           kafka.MessageConsumer
-	ImportAPIURL       string
-	ImportAPIAuthToken string
-	MaxRetries         int
-	Producer           kafka.MessageProducer
-	S3                 *s3.S3
+	EnvMax              int64
+	Consumer            kafka.MessageConsumer
+	DatasetAPIURL       string
+	DatasetAPIAuthToken string
+	MaxRetries          int
+	Producer            kafka.MessageProducer
+	S3                  *s3.S3
 }
 
 // Start handles consumption of events
 func (svc *Service) Start() {
-	log.Info("application started", log.Data{"import_api_url": svc.ImportAPIURL})
+	log.Info("application started", log.Data{"dataset_api_url": svc.DatasetAPIURL})
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)

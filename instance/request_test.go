@@ -16,8 +16,8 @@ var headerNames []string
 var job = &instance.JobInstance{
 	Attempt:              1,
 	HeaderNames:          headerNames,
-	ImportAPIURL:         "http://test-url.com",
-	ImportAPIAuthToken:   "sfqr-4f345-f43534",
+	DatasetAPIURL:        "http://test-url.com",
+	DatasetAPIAuthToken:  "sfqr-4f345-f43534",
 	InstanceID:           "123",
 	MaxAttempts:          1,
 	NumberOfObservations: 1255,
@@ -50,7 +50,7 @@ func TestUnitRequest(t *testing.T) {
 	job.HeaderNames = headerNames
 
 	Convey("test creation of instance object/stuct", t, func() {
-		newJob := instance.NewJobInstance("http://test-url.com", job.ImportAPIAuthToken, "123", 1255, headerNames, 1)
+		newJob := instance.NewJobInstance("http://test-url.com", job.DatasetAPIAuthToken, "123", 1255, headerNames, 1)
 		So(newJob, ShouldResemble, job)
 	})
 
@@ -59,10 +59,10 @@ func TestUnitRequest(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 
-	Convey("test error returned when instance id does not match import jobs", t, func() {
+	Convey("test error returned when instance ID does not match an existing instance ID", t, func() {
 		err := job.PutData(createMockClient(404))
 		So(err, ShouldNotBeNil)
-		expectedError := errors.New("invalid status [404] returned from [" + job.ImportAPIURL + "]")
+		expectedError := errors.New("invalid status [404] returned from [" + job.DatasetAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 
