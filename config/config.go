@@ -9,7 +9,7 @@ type Config struct {
 	Brokers                  []string `envconfig:"KAFKA_ADDR"`
 	DimensionsExtractedTopic string   `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
 	DatasetAPIURL            string   `envconfig:"DATASET_API_URL"`
-	DatasetAPIAuthToken      string   `envconfig:"IMPORT_AUTH_TOKEN"`
+	DatasetAPIAuthToken      string   `envconfig:"DATASET_API_AUTH_TOKEN"`
 	InputFileAvailableGroup  string   `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
 	InputFileAvailableTopic  string   `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string   `envconfig:"KAFKA_MAX_BYTES"`
