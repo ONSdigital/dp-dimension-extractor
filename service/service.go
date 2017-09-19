@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/ONSdigital/dp-dimension-extractor/errors"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
@@ -18,6 +19,7 @@ type Service struct {
 	MaxRetries   int
 	Producer     kafka.MessageProducer
 	S3           *s3.S3
+	ErrorHandler errorhandler.Handler
 }
 
 // Start handles consumption of events
@@ -44,6 +46,7 @@ func (svc *Service) Start() {
 
 				instanceID, err := svc.handleMessage(message)
 				if err != nil {
+					svc.ErrorHandler.Handle(instanceID, err, nil)
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 				} else {
 					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
+	"github.com/ONSdigital/dp-dimension-extractor/errors"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
@@ -32,13 +33,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	s3, err := s3.New(cfg.AWSRegion)
+	//TODO Delete once finished testing.
+	s3_url := "localhost:4000"
+	s1, _ := s3.NewURL(s3_url)
+	s3, err := s3.New(s1.Host)
 	if err != nil {
 		log.Error(err, nil)
 		os.Exit(1)
 	}
-
+	kafkaErrorProducer := kafka.NewProducer(cfg.Brokers, cfg.ErrorProducerTopic, 0)
 	dimensionExtractedProducer := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
+
+	errorHandler := errorhandler.NewKafkaHandler(kafkaErrorProducer)
 
 	svc := &service.Service{
 		EnvMax:       envMax,
@@ -47,6 +53,7 @@ func main() {
 		MaxRetries:   cfg.MaxRetries,
 		Producer:     dimensionExtractedProducer,
 		S3:           s3,
+		ErrorHandler: errorHandler,
 	}
 
 	svc.Start()

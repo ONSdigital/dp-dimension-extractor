@@ -13,6 +13,7 @@ type Config struct {
 	InputFileAvailableTopic  string   `env:"INPUT_FILE_AVAILABLE_TOPIC" flag:"input-file-available-topic" flagDesc:"The Kafka topic to consume file messages from"`
 	KafkaMaxBytes            string   `env:"KAFKA_MAX_BYTES" flag:"kafka-max-bytes" flagDesc:"The maximum permitted size of a message. Should be set equal to or smaller than the broker's 'message.max.bytes'"`
 	MaxRetries               int      `env:"REQUEST_MAX_RETRIES" flag:"request-max-retries" flagDesc:"The maximum number of attempts for a single http request due to external service failure"`
+	ErrorProducerTopic       string   `env:"ERROR_PRODUCER_TOPIC" flag:"error-producer-topic" flagDesc:"The Kafka topic to send error messages to"`
 }
 
 var cfg *Config
@@ -33,6 +34,7 @@ func Get() (*Config, error) {
 		InputFileAvailableGroup:  "input-file-available",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
+		ErrorProducerTopic:       "event-reporter",
 	}
 
 	if err := gofigure.Gofigure(cfg); err != nil {
