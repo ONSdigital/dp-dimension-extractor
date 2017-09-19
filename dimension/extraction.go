@@ -1,6 +1,10 @@
 package dimension
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // Extract represents all information needed to extract dimensions
 type Extract struct {
@@ -13,6 +17,7 @@ type Extract struct {
 	Line                  []string
 	MaxRetries            int
 	TimeColumn            int
+	CodelistMap           map[string]string
 }
 
 // dimensionColumns is the number of columns that make a unique dimension
@@ -37,7 +42,8 @@ func (e *MissingDimensionValues) Error() string {
 }
 
 // New returns a new Extract object for a given instance
-func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, datasetAPIURL string, datasetAPIAuthToken string, instanceID string, line []string, maxRetries int, timeColumn int) *Extract {
+func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, datasetAPIURL string, datasetAPIAuthToken string,
+	instanceID string, line []string, maxRetries int, timeColumn int, codelistMap map[string]string) *Extract {
 	return &Extract{
 		Dimensions:            dimensions,
 		DimensionColumnOffset: dimensionColumnOffset,
@@ -48,6 +54,7 @@ func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []st
 		Line:                  line,
 		MaxRetries:            maxRetries,
 		TimeColumn:            timeColumn,
+		CodelistMap:           codelistMap,
 	}
 }
 
@@ -93,12 +100,19 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 			continue
 		}
 
+		dimensionCodeList, ok := extract.CodelistMap[strings.ToLower(extract.HeaderRow[i+1])]
+		if !ok {
+			return nil, errors.New("Failed to map dimension to code list, " + extract.HeaderRow[i+1])
+		}
+
 		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		request := Request{
 			Attempt:             1,
-			Dimension:           dimension,
-			DimensionValue:      dimensionValue,
+			DimensionID:         strings.ToLower(extract.HeaderRow[i+1]),
+			Code:                line[i],
+			Value:               dimensionValue,
+			CodeList:            dimensionCodeList,
 			DatasetAPIURL:       extract.DatasetAPIURL,
 			DatasetAPIAuthToken: extract.DatasetAPIAuthToken,
 			InstanceID:          extract.InstanceID,

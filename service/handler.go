@@ -9,6 +9,7 @@ import (
 
 	"net/url"
 
+	"github.com/ONSdigital/dp-dimension-extractor/codelists"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/instance"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
@@ -44,6 +45,12 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	producerMessage, instanceID, file, err := retrieveData(message, svc.S3)
 	if err != nil {
+		return instanceID, err
+	}
+
+	codelistMap, err := codelists.GetFromInstance(svc.DatasetAPIURL, instanceID, http.DefaultClient)
+	if err != nil {
+		log.ErrorC("encountered error immediately when requesting data from the dataset api", err, log.Data{"instance_id": instanceID})
 		return instanceID, err
 	}
 
@@ -85,7 +92,8 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 			return instanceID, err
 		}
 
-		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn)
+		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.DatasetAPIURL,
+			svc.DatasetAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn, codelistMap)
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
@@ -94,7 +102,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 		}
 
 		for _, request := range lineDimensions {
-			if err := request.Put(http.DefaultClient); err != nil {
+			if err := request.Post(http.DefaultClient); err != nil {
 				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
 				return instanceID, err
 			}

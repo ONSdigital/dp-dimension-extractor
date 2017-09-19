@@ -1,5 +1,3 @@
-DIRECTORIES?=dimension service config instance
-
 BUILD=build
 BUILD_ARCH=$(BUILD)/$(GOOS)-$(GOARCH)
 BIN_DIR?=.
@@ -14,6 +12,7 @@ build:
 debug:
 	HUMAN_LOG=1 go run main.go
 
-test: ; $(foreach dir,$(DIRECTORIES),(echo Running tests for $(dir) package:) && (go test -cover $(dir)/*.go) &&) :
+test:
+	go test -cover $(shell go list ./... | grep -v /vendor/)
 
 .PHONEY: build debug test
