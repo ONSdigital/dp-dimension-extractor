@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
-	"github.com/ONSdigital/dp-dimension-extractor/errors"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
+	"github.com/ONSdigital/go-ns/errorhandler"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"

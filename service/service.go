@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ONSdigital/dp-dimension-extractor/errors"
+	"github.com/ONSdigital/go-ns/errorhandler"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
@@ -46,7 +46,7 @@ func (svc *Service) Start() {
 
 				instanceID, err := svc.handleMessage(message)
 				if err != nil {
-					svc.ErrorHandler.Handle(instanceID, err, nil)
+					svc.ErrorHandler.Handle(instanceID, err)
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 				} else {
 					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})
