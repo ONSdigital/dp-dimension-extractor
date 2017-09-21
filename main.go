@@ -34,9 +34,7 @@ func main() {
 	}
 
 	//TODO Delete once finished testing.
-	s3_url := "localhost:4000"
-	s1, _ := s3.NewURL(s3_url)
-	s3, err := s3.New(s1.Host)
+	s3, err := s3.New(cfg.AWSRegion)
 	if err != nil {
 		log.Error(err, nil)
 		os.Exit(1)
