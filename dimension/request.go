@@ -29,7 +29,7 @@ type DimensionOption struct {
 	Name     string `json:"dimension_id"`
 	Code     string `json:"code"`
 	CodeList string `json:"code_list,omitempty"`
-	Value    string `json:"value"`
+	Option   string `json:"option"`
 }
 
 // Put executes a put request to the dataset API
@@ -38,7 +38,7 @@ func (request *Request) Post(httpClient *http.Client) error {
 	// request, we may want an exponential backoff
 	time.Sleep(time.Duration(request.Attempt-1) * 10 * time.Second)
 
-	option, err := json.Marshal(DimensionOption{Name: request.DimensionID, Value: request.Value, CodeList: request.CodeList, Code: request.Code})
+	option, err := json.Marshal(DimensionOption{Name: request.DimensionID, Option: request.Value, CodeList: request.CodeList, Code: request.Code})
 
 	path := fmt.Sprintf("%s/instances/%s/dimensions", request.DatasetAPIURL, request.InstanceID)
 
