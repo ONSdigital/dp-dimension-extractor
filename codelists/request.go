@@ -26,7 +26,7 @@ type ImportClient interface {
 	Get(path string) (*http.Response, error)
 }
 
-// GetFromInstance
+// GetFromInstance returns a map of dimension names to code list IDs
 func GetFromInstance(datasetAPIUrl, instanceID string, client ImportClient) (map[string]string, error) {
 	url := fmt.Sprintf("%s/instances/%s", datasetAPIUrl, instanceID)
 	codeList := make(map[string]string)

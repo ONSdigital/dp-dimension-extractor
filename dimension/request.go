@@ -41,7 +41,6 @@ func (request *Request) Post(httpClient *http.Client) error {
 	option, err := json.Marshal(DimensionOption{Name: request.DimensionID, Value: request.Value, CodeList: request.CodeList, Code: request.Code})
 
 	path := fmt.Sprintf("%s/instances/%s/dimensions", request.DatasetAPIURL, request.InstanceID)
-	fmt.Printf("path : %s\n", path)
 
 	var URL *url.URL
 	URL, err = url.Parse(path)

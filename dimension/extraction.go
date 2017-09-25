@@ -41,23 +41,6 @@ func (e *MissingDimensionValues) Error() string {
 	return fmt.Sprintf("missing dimension values in : [%v]", e.Line)
 }
 
-// New returns a new Extract object for a given instance
-func New(dimensions map[string]string, dimensionColumnOffset int, headerRow []string, datasetAPIURL string, datasetAPIAuthToken string,
-	instanceID string, line []string, maxRetries int, timeColumn int, codelistMap map[string]string) *Extract {
-	return &Extract{
-		Dimensions:            dimensions,
-		DimensionColumnOffset: dimensionColumnOffset,
-		HeaderRow:             headerRow,
-		DatasetAPIURL:         datasetAPIURL,
-		DatasetAPIAuthToken:   datasetAPIAuthToken,
-		InstanceID:            instanceID,
-		Line:                  line,
-		MaxRetries:            maxRetries,
-		TimeColumn:            timeColumn,
-		CodelistMap:           codelistMap,
-	}
-}
-
 // Extract method checks within csv line for unique dimensions from the consumed dataset and returns them
 func (extract *Extract) Extract() (map[string]Request, error) {
 	dimensions := make(map[string]Request)

@@ -92,8 +92,18 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 			return instanceID, err
 		}
 
-		dimension := dimension.New(dimensions, dimensionColumnOffset, headerRow, svc.DatasetAPIURL,
-			svc.DatasetAPIAuthToken, instanceID, line, svc.MaxRetries, timeColumn, codelistMap)
+		dimension := dimension.Extract{
+			Dimensions:            dimensions,
+			DimensionColumnOffset: dimensionColumnOffset,
+			HeaderRow:             headerRow,
+			DatasetAPIURL:         svc.DatasetAPIURL,
+			DatasetAPIAuthToken:   svc.DatasetAPIAuthToken,
+			InstanceID:            instanceID,
+			Line:                  line,
+			MaxRetries:            svc.MaxRetries,
+			TimeColumn:            timeColumn,
+			CodelistMap:           codelistMap,
+		}
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
