@@ -90,6 +90,12 @@
 			"revisionTime": "2017-02-15T23:32:05Z"
 		},
 		{
+			"checksumSHA1": "yIkYzW7bzAD81zHyuCNmEj4+oxQ=",
+			"path": "github.com/gopherjs/gopherjs/js",
+			"revision": "b40cd48c38f9a18eb3db20d163bad78de12cf0b7",
+			"revisionTime": "2017-09-06T18:39:36Z"
+		},
+		{
 			"checksumSHA1": "Js/yx9fZ3+wH1wZpHNIxSTMIaCg=",
 			"path": "github.com/jtolds/gls",
 			"revision": "77f18212c9c7edc9bd6a33d383a7b545ce62f064",

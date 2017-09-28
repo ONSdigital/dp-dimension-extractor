@@ -2,8 +2,8 @@ package codelists
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/johnnadratowski/golang-neo4j-bolt-driver/errors"
 	"io/ioutil"
 	"net/http"
 )
