@@ -95,6 +95,7 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 			DimensionID:         strings.ToLower(extract.HeaderRow[i+1]),
 			Code:                line[i],
 			Value:               dimensionValue,
+			Label:               line[i+1],
 			CodeList:            dimensionCodeList,
 			DatasetAPIURL:       extract.DatasetAPIURL,
 			DatasetAPIAuthToken: extract.DatasetAPIAuthToken,

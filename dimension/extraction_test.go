@@ -47,8 +47,8 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "time", Value: "2016/17", Code: "Year", CodeList: "1234-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
-			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "league", Value: "PL01", Code: "PL01", CodeList: "dgdfg-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "time", Value: "2016/17", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "league", Value: "PL01", Code: "PL01", Label: "Premier-League", CodeList: "dgdfg-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where some dimensions are unique", func() {
@@ -56,7 +56,7 @@ func TestUnitExtract(t *testing.T) {
 			extract.Dimensions["123_Year"] = "2015/16"
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "league", Value: "Championship", CodeList: "dgdfg-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, DimensionID: "league", Value: "Championship", Label: "Championship", CodeList: "dgdfg-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, DatasetAPIAuthToken: extract.DatasetAPIAuthToken, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
 		Convey("where no dimensions are unique", func() {
