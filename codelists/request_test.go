@@ -1,7 +1,6 @@
 package codelists
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/ONSdigital/dp-dimension-extractor/codelists/testcodelist"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"golang.org/x/net/context"
 )
 
 func TestGetFromInstanceReturnsCodes(t *testing.T) {

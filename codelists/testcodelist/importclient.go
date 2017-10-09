@@ -4,9 +4,10 @@
 package testcodelist
 
 import (
-	"context"
 	"net/http"
 	"sync"
+
+	"golang.org/x/net/context"
 )
 
 var (
