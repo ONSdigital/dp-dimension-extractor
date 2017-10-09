@@ -38,16 +38,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	dimensionExtractedProducer := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
+	dimensionExtractedProducer, err := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
+	if err != nil {
+		log.Error(err, nil)
+		os.Exit(1)
+	}
 
 	svc := &service.Service{
-		EnvMax:              envMax,
-		Consumer:            consumerGroup,
-		DatasetAPIURL:       cfg.DatasetAPIURL,
-		DatasetAPIAuthToken: cfg.DatasetAPIAuthToken,
-		MaxRetries:          cfg.MaxRetries,
-		Producer:            dimensionExtractedProducer,
-		S3:                  s3,
+		EnvMax:                envMax,
+		BindAddr:              cfg.BindAddr,
+		Consumer:              consumerGroup,
+		DatasetAPIURL:         cfg.DatasetAPIURL,
+		DatasetAPIAuthToken:   cfg.DatasetAPIAuthToken,
+		DimensionExtractorURL: cfg.DimensionExtractorURL,
+		MaxRetries:            cfg.MaxRetries,
+		Producer:              dimensionExtractedProducer,
+		S3:                    s3,
+		Shutdown:              cfg.ShutdownTimeout,
 	}
 
 	svc.Start()

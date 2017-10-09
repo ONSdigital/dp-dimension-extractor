@@ -3,9 +3,10 @@ package service
 import (
 	"encoding/csv"
 	"io"
-	"net/http"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/context"
 
 	"net/url"
 
@@ -42,13 +43,13 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 
 // handleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
-func (svc *Service) handleMessage(message kafka.Message) (string, error) {
+func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (string, error) {
 	producerMessage, instanceID, file, err := retrieveData(message, svc.S3)
 	if err != nil {
 		return instanceID, err
 	}
 
-	codelistMap, err := codelists.GetFromInstance(svc.DatasetAPIURL, instanceID, http.DefaultClient)
+	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, instanceID, svc.HTTPClient)
 	if err != nil {
 		log.ErrorC("encountered error immediately when requesting data from the dataset api", err, log.Data{"instance_id": instanceID})
 		return instanceID, err
@@ -112,7 +113,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 		}
 
 		for _, request := range lineDimensions {
-			if err := request.Post(http.DefaultClient); err != nil {
+			if err := request.Post(svc.HTTPClient.HTTPClient); err != nil {
 				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
 				return instanceID, err
 			}
@@ -127,7 +128,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance
-	if err := instance.PutData(http.DefaultClient); err != nil {
+	if err := instance.PutData(svc.HTTPClient.HTTPClient); err != nil {
 		log.ErrorC("encountered error sending request to the dataset api", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err
 	}

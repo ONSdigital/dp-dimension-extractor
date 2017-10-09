@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"golang.org/x/net/context"
 )
 
 // Instance which contains a list of codes
@@ -23,15 +25,15 @@ type CodeList struct {
 //go:generate moq -out testcodelist/importclient.go -pkg testcodelist . ImportClient
 // ImportClient
 type ImportClient interface {
-	Get(path string) (*http.Response, error)
+	Get(ctx context.Context, path string) (*http.Response, error)
 }
 
 // GetFromInstance returns a map of dimension names to code list IDs
-func GetFromInstance(datasetAPIUrl, instanceID string, client ImportClient) (map[string]string, error) {
+func GetFromInstance(ctx context.Context, datasetAPIUrl, instanceID string, client ImportClient) (map[string]string, error) {
 	url := fmt.Sprintf("%s/instances/%s", datasetAPIUrl, instanceID)
 	codeList := make(map[string]string)
 
-	response, err := client.Get(url)
+	response, err := client.Get(ctx, url)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@
 package testcodelist
 
 import (
+	"context"
 	"net/http"
 	"sync"
 )
@@ -18,7 +19,7 @@ var (
 //
 //         // make and configure a mocked ImportClient
 //         mockedImportClient := &ImportClientMock{
-//             GetFunc: func(path string) (*http.Response, error) {
+//             GetFunc: func(ctx context.Context, path string) (*http.Response, error) {
 // 	               panic("TODO: mock out the Get method")
 //             },
 //         }
@@ -29,12 +30,14 @@ var (
 //     }
 type ImportClientMock struct {
 	// GetFunc mocks the Get method.
-	GetFunc func(path string) (*http.Response, error)
+	GetFunc func(ctx context.Context, path string) (*http.Response, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Get holds details about calls to the Get method.
 		Get []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// Path is the path argument value.
 			Path string
 		}
@@ -42,28 +45,32 @@ type ImportClientMock struct {
 }
 
 // Get calls GetFunc.
-func (mock *ImportClientMock) Get(path string) (*http.Response, error) {
+func (mock *ImportClientMock) Get(ctx context.Context, path string) (*http.Response, error) {
 	if mock.GetFunc == nil {
 		panic("moq: ImportClientMock.GetFunc is nil but ImportClient.Get was just called")
 	}
 	callInfo := struct {
+		Ctx  context.Context
 		Path string
 	}{
+		Ctx:  ctx,
 		Path: path,
 	}
 	lockImportClientMockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
 	lockImportClientMockGet.Unlock()
-	return mock.GetFunc(path)
+	return mock.GetFunc(ctx, path)
 }
 
 // GetCalls gets all the calls that were made to Get.
 // Check the length with:
 //     len(mockedImportClient.GetCalls())
 func (mock *ImportClientMock) GetCalls() []struct {
+	Ctx  context.Context
 	Path string
 } {
 	var calls []struct {
+		Ctx  context.Context
 		Path string
 	}
 	lockImportClientMockGet.RLock()
