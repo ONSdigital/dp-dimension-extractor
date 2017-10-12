@@ -113,7 +113,7 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 		}
 
 		for _, request := range lineDimensions {
-			if err := request.Post(svc.HTTPClient.HTTPClient); err != nil {
+			if err := request.Post(ctx, svc.HTTPClient); err != nil {
 				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
 				return instanceID, err
 			}
@@ -128,7 +128,7 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 
 	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance
-	if err := instance.PutData(svc.HTTPClient.HTTPClient); err != nil {
+	if err := instance.PutData(ctx, svc.HTTPClient); err != nil {
 		log.ErrorC("encountered error sending request to the dataset api", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err
 	}

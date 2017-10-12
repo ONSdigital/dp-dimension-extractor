@@ -2,6 +2,7 @@ package instance
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/go-ns/rchttp"
 )
 
 // JobInstance represents the details necessary to update a job instance
@@ -36,7 +38,7 @@ func NewJobInstance(datasetAPIURL string, datasetAPIAuthToken string, instanceID
 }
 
 // PutData executes a put request to update instance data via the dataset API.
-func (instance *JobInstance) PutData(httpClient *http.Client) error {
+func (instance *JobInstance) PutData(ctx context.Context, httpClient *rchttp.Client) error {
 	time.Sleep(time.Duration(instance.Attempt-1) * 10 * time.Second)
 	path := instance.DatasetAPIURL + "/instances/" + instance.InstanceID
 
@@ -57,46 +59,15 @@ func (instance *JobInstance) PutData(httpClient *http.Client) error {
 	}
 	req.Header.Set("internal-token", instance.DatasetAPIAuthToken)
 
-	res, err := httpClient.Do(req)
+	res, err := httpClient.Do(ctx, req)
 	if err != nil {
-		if nextError := instance.retryRequest(httpClient, err); nextError != nil {
-			return nextError
-		}
-
-		return nil
+		return err
 	}
 	defer res.Body.Close()
-
 	if res.StatusCode != http.StatusOK {
-		errorInvalidStatus := fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, instance.DatasetAPIURL)
-
-		// If request fails due to an internal server error from the
-		// Dataset API try again and increase the backoff
-		if res.StatusCode != http.StatusInternalServerError {
-			return errorInvalidStatus
-		}
-
-		if err := instance.retryRequest(httpClient, errorInvalidStatus); err != nil {
-			return err
-		}
+		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, instance.DatasetAPIURL)
 	}
 
 	log.Info("successfully sent request to dataset API", log.Data{"instance_id": instance.InstanceID, "number_of_observations": instance.NumberOfObservations})
-	return nil
-}
-
-func (jobInstance *JobInstance) retryRequest(httpClient *http.Client, err error) error {
-	if jobInstance.Attempt == jobInstance.MaxAttempts {
-		return err
-	}
-
-	jobInstance.Attempt++
-
-	log.Info("attempting request in 10 seconds", log.Data{"attempt": jobInstance.Attempt})
-
-	if newErr := jobInstance.PutData(httpClient); err != nil {
-		return newErr
-	}
-
 	return nil
 }

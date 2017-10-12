@@ -1,14 +1,16 @@
 package dimension
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"bytes"
 	"encoding/json"
+
 	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/go-ns/rchttp"
 )
 
 // Request represents the request details
@@ -34,12 +36,8 @@ type DimensionOption struct {
 	Label    string `json:"label"`
 }
 
-// Put executes a put request to the dataset API
-func (request *Request) Post(httpClient *http.Client) error {
-	// TODO Instead off backing off by bumping the sleep by 10 seconds per failed
-	// request, we may want an exponential backoff
-	time.Sleep(time.Duration(request.Attempt-1) * 10 * time.Second)
-
+// Post executes a post request to the dataset API
+func (request *Request) Post(ctx context.Context, httpClient *rchttp.Client) error {
 	option, err := json.Marshal(DimensionOption{Name: request.DimensionID, Option: request.Value, Label: request.Label,
 		CodeList: request.CodeList, Code: request.Code})
 
@@ -57,47 +55,16 @@ func (request *Request) Post(httpClient *http.Client) error {
 	}
 	req.Header.Set("internal-token", request.DatasetAPIAuthToken)
 
-	res, err := httpClient.Do(req)
+	res, err := httpClient.Do(ctx, req)
 	if err != nil {
-		if nextError := request.retryRequest(httpClient, err); nextError != nil {
-			return nextError
-		}
-
-		return nil
+		return err
 	}
-
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		errorInvalidStatus := fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, request.DatasetAPIURL)
-
-		// If request fails due to an internal server error from
-		// Dataset API try again and increase the backoff
-		if res.StatusCode != http.StatusInternalServerError {
-			return errorInvalidStatus
-		}
-
-		if err := request.retryRequest(httpClient, errorInvalidStatus); err != nil {
-			return err
-		}
+		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, request.DatasetAPIURL)
 	}
 
 	log.Info("successfully sent request to dataset api", log.Data{"instance_id": request.InstanceID, "dimension_name": request.DimensionID, "dimension_value": request.Code})
-	return nil
-}
-
-func (request *Request) retryRequest(httpClient *http.Client, err error) error {
-	if request.Attempt == request.MaxAttempts {
-		return err
-	}
-
-	request.Attempt++
-
-	log.Info("attempting request in 10 seconds", log.Data{"attempt": request.Attempt})
-
-	if newErr := request.Post(httpClient); err != nil {
-		return newErr
-	}
-
 	return nil
 }

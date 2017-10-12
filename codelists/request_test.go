@@ -4,14 +4,33 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/ONSdigital/dp-dimension-extractor/codelists/testcodelist"
+	"github.com/ONSdigital/dp-dimension-extractor/config"
+	"github.com/ian-kent/go-log/log"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"golang.org/x/net/context"
 )
+
+var (
+	url string
+	ctx context.Context
+)
+
+func init() {
+	cfg, err := config.Get()
+	if err != nil {
+		log.Error(err, nil)
+		os.Exit(1)
+	}
+
+	url = cfg.DatasetAPIURL
+	ctx = context.Background()
+}
 
 func TestGetFromInstanceReturnsCodes(t *testing.T) {
 	Convey("test successful get codelists from instance", t, func() {
@@ -24,7 +43,7 @@ func TestGetFromInstanceReturnsCodes(t *testing.T) {
 			},
 		}
 
-		codeLists, err := GetFromInstance(context.Background(), "http://localhost:22000", "1234", mockedImportClient)
+		codeLists, err := GetFromInstance(ctx, url, "1234", mockedImportClient)
 		So(err, ShouldBeNil)
 		So(codeLists["time"], ShouldEqual, "321-9873")
 	})
@@ -38,7 +57,7 @@ func TestGetFromInstanceReturnsErrors(t *testing.T) {
 			},
 		}
 
-		_, err := GetFromInstance(context.Background(), "http://localhost:22000", "1234", mockedImportClient)
+		_, err := GetFromInstance(context.Background(), url, "1234", mockedImportClient)
 		So(err, ShouldNotBeNil)
 	})
 	Convey("test 404 status code returns an error", t, func() {
@@ -51,7 +70,7 @@ func TestGetFromInstanceReturnsErrors(t *testing.T) {
 			},
 		}
 
-		_, err := GetFromInstance(context.Background(), "http://localhost:22000", "1234", mockedImportClient)
+		_, err := GetFromInstance(ctx, url, "1234", mockedImportClient)
 		So(err, ShouldNotBeNil)
 	})
 }

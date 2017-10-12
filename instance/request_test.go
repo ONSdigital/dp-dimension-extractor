@@ -1,29 +1,42 @@
 package instance_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/ONSdigital/dp-dimension-extractor/instance"
+	"github.com/ONSdigital/go-ns/rchttp"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var headerNames []string
 
-var job = &instance.JobInstance{
-	Attempt:              1,
-	HeaderNames:          headerNames,
-	DatasetAPIURL:        "http://test-url.com",
-	DatasetAPIAuthToken:  "sfqr-4f345-f43534",
-	InstanceID:           "123",
-	MaxAttempts:          1,
-	NumberOfObservations: 1255,
+var (
+	job = &instance.JobInstance{
+		Attempt:              1,
+		HeaderNames:          headerNames,
+		DatasetAPIURL:        "http://test-url.com",
+		DatasetAPIAuthToken:  "sfqr-4f345-f43534",
+		InstanceID:           "123",
+		MaxAttempts:          1,
+		NumberOfObservations: 1255,
+	}
+
+	ctx         context.Context
+	oneAttempt  time.Duration
+	twoAttempts time.Duration
+)
+
+func init() {
+	ctx = context.Background()
 }
 
-func createMockClient(status int) *http.Client {
+func createMockClient(maxRetries, status int) *rchttp.Client {
 	mockStreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(status)
 	}))
@@ -32,7 +45,11 @@ func createMockClient(status int) *http.Client {
 			return url.Parse(mockStreamServer.URL)
 		},
 	}
-	httpClient := &http.Client{Transport: transport}
+
+	httpClient := rchttp.DefaultClient
+	httpClient.HTTPClient = &http.Client{Transport: transport}
+	httpClient.MaxRetries = maxRetries
+
 	return httpClient
 }
 
@@ -55,26 +72,37 @@ func TestUnitRequest(t *testing.T) {
 	})
 
 	Convey("test successful put request", t, func() {
-		err := job.PutData(createMockClient(200))
+		err := job.PutData(ctx, createMockClient(1, 200))
 		So(err, ShouldBeNil)
 	})
 
 	Convey("test error returned when instance ID does not match an existing instance ID", t, func() {
-		err := job.PutData(createMockClient(404))
+		err := job.PutData(ctx, createMockClient(1, 404))
 		So(err, ShouldNotBeNil)
 		expectedError := errors.New("invalid status [404] returned from [" + job.DatasetAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 
 	Convey("test error returned when client throws error", t, func() {
-		err := job.PutData(createMockClient(500))
+		start := time.Now()
+		err := job.PutData(ctx, createMockClient(1, 500))
+		oneAttempt = time.Since(start)
+
 		So(err, ShouldNotBeNil)
+		expectedError := errors.New("invalid status [500] returned from [" + job.DatasetAPIURL + "]")
+		So(err.Error(), ShouldEqual, expectedError.Error())
 	})
 
 	Convey("test error on second attempt due to client throwing an error", t, func() {
-		job.Attempt = 1
-		job.MaxAttempts = 2
-		err := job.PutData(createMockClient(500))
+		start := time.Now()
+		err := job.PutData(ctx, createMockClient(2, 500))
+		twoAttempts = time.Since(start)
+
 		So(err, ShouldNotBeNil)
+		expectedError := errors.New("invalid status [500] returned from [" + job.DatasetAPIURL + "]")
+		So(err.Error(), ShouldEqual, expectedError.Error())
+		// This assertion is dependent on oneAttempt value from
+		// `test error returned when client throws error` test
+		So(twoAttempts, ShouldBeGreaterThan, oneAttempt)
 	})
 }

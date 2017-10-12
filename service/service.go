@@ -40,7 +40,7 @@ func (svc *Service) Start() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	done := make(chan bool)
+	serviceLoopDone := make(chan bool)
 	listeningToConsumerGroupStopped := make(chan bool)
 	readyToCloseOutboundConnections := make(chan bool)
 	apiErrors := make(chan error, 1)
@@ -59,9 +59,6 @@ func (svc *Service) Start() {
 				// closing any outbound connections
 				readyToCloseOutboundConnections <- true
 				return
-			case <-signals:
-				log.Debug("os signal received", nil)
-				close(done)
 			case message := <-svc.Consumer.Incoming():
 
 				instanceID, err := svc.handleMessage(ctx, message)
@@ -75,22 +72,22 @@ func (svc *Service) Start() {
 				log.Debug("message committed", log.Data{"instance_id": instanceID})
 			case consumerError := <-svc.Consumer.Errors():
 				log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
-				close(done)
+				close(serviceLoopDone)
 			case producerError := <-svc.Producer.Errors():
 				log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
-				close(done)
+				close(serviceLoopDone)
 			case <-apiErrors:
 				log.Error(fmt.Errorf("server error forcing shutdown"), nil)
-				close(done)
+				close(serviceLoopDone)
 			}
 		}
 	}()
 
 	select {
-	case <-done:
+	case <-serviceLoopDone:
 		log.Debug("Quitting after done was closed", nil)
-	case <-signals:
-		log.Debug("Quitting after os signal received", nil)
+	case signal := <-signals:
+		log.Debug("Quitting after os signal received", log.Data{"signal": signal})
 	}
 
 	childContext, childCancel := context.WithTimeout(ctx, svc.Shutdown)
@@ -120,7 +117,7 @@ func (svc *Service) Start() {
 
 	// setup a timer to zero waitGroup after timeout
 	go func() {
-		<-time.After(svc.Shutdown)
+		<-childContext.Done()
 		log.Error(errors.New("timeout while shutting down"), nil)
 		atomic.AddInt32(&waitGroup, -atomic.LoadInt32(&waitGroup))
 	}()

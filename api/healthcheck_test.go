@@ -3,18 +3,29 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/gorilla/mux"
+	"github.com/ian-kent/go-log/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 const host = "80"
 
 func TestHealthCheckReturnsOK(t *testing.T) {
+	cfg, err := config.Get()
+	if err != nil {
+		log.Error(err, nil)
+		os.Exit(1)
+	}
+
+	path := cfg.DimensionExtractorURL + "/healthcheck"
+
 	t.Parallel()
 	Convey("", t, func() {
-		r, err := http.NewRequest("GET", "http://localhost:21400/healthcheck", nil)
+		r, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		w := httptest.NewRecorder()
 
