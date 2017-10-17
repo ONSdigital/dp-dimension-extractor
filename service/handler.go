@@ -9,6 +9,7 @@ import (
 
 	"net/url"
 
+	"fmt"
 	"github.com/ONSdigital/dp-dimension-extractor/codelists"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/instance"
@@ -16,6 +17,7 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
+	"github.com/pkg/errors"
 )
 
 type dimensionExtracted struct {
@@ -50,8 +52,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 	codelistMap, err := codelists.GetFromInstance(svc.DatasetAPIURL, instanceID, http.DefaultClient)
 	if err != nil {
-		log.ErrorC("encountered error immediately when requesting data from the dataset api", err, log.Data{"instance_id": instanceID})
-		return instanceID, err
+		return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error immediately when requesting data from the dataset api: instance_id=%s", instanceID))
 	}
 
 	csvReader := csv.NewReader(file)
@@ -60,8 +61,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	// dataset API with the number of observations in a PUT request
 	headerRow, err := csvReader.Read()
 	if err != nil {
-		log.ErrorC("encountered error immediately when processing header row", err, log.Data{"instance_id": instanceID})
-		return instanceID, err
+		return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error immediately when processing header row: instance_id=%s", instanceID))
 	}
 
 	timeColumn := checkHeaderForTime(headerRow)
@@ -69,8 +69,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	metaData := strings.Split(headerRow[0], "_")
 	dimensionColumnOffset, err := strconv.Atoi(metaData[1])
 	if err != nil {
-		log.ErrorC("encountered error distinguishing dimension column offset", err, log.Data{"instance_id": instanceID})
-		return instanceID, err
+		return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error distinguishing dimension column offset: instance_id=%s", instanceID))
 	}
 
 	// Meta data for dimension column offset does not consider the observation column, so add 1 to value
@@ -88,8 +87,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 			break
 		}
 		if err != nil {
-			log.ErrorC("encountered error reading csv", err, log.Data{"instance_id": instanceID, "csv_line": line})
-			return instanceID, err
+			return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error reading csv: instance_id=%s, csv_line=%s", instanceID, line))
 		}
 
 		dimension := dimension.Extract{
@@ -107,14 +105,12 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
-			log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instance_id": instanceID, "csv_line": line})
-			return instanceID, err
+			return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error retrieving dimensions: instance_id=%s, csv_line=%s", instanceID, line))
 		}
 
 		for _, request := range lineDimensions {
 			if err := request.Post(http.DefaultClient); err != nil {
-				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
-				return instanceID, err
+				return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error sending request to datset api: instance_id=%s, csv_line=%s", instanceID, line))
 			}
 		}
 
@@ -128,8 +124,7 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance
 	if err := instance.PutData(http.DefaultClient); err != nil {
-		log.ErrorC("encountered error sending request to the dataset api", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
-		return instanceID, err
+		return instanceID, errors.Wrap(err, fmt.Sprintf("encountered error sending request to the dataset api: insatnce_id=%s, number_of_observations=%d", instanceID, numberOfObservations))
 	}
 
 	log.Trace("a list of headers", log.Data{"instance_id": instanceID, "header_row": headerRow})
@@ -144,14 +139,12 @@ func (svc *Service) handleMessage(message kafka.Message) (string, error) {
 func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
-		log.Error(err, log.Data{"schema": "failed to unmarshal event"})
 		return nil, "", nil, err
 	}
 
 	s3URL, err := event.s3URL()
 	if err != nil {
-		log.ErrorC("encountered error parsing file URL", err, log.Data{"instance_id": event.InstanceID})
-		return nil, event.InstanceID, nil, err
+		return nil, event.InstanceID, nil, errors.Wrap(err, fmt.Sprintf("encountered error parsing file URL: instance_id:%s", event.InstanceID))
 	}
 
 	log.Debug("event received", log.Data{"file_url": event.FileURL, "s3_url": s3URL, "instance_id": event.InstanceID})
@@ -159,8 +152,8 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 	// Get csv from S3 bucket
 	file, err := s3.Get(s3URL)
 	if err != nil {
-		log.ErrorC("encountered error retrieving csv file", err, log.Data{"instance_id": event.InstanceID})
-		return nil, event.InstanceID, nil, err
+		details := fmt.Sprintf("encountered error retrieving csv file: instance_id=%s, S3URL=%s", event.InstanceID, s3URL)
+		return nil, event.InstanceID, nil, errors.Wrap(err, details)
 	}
 
 	log.Debug("file successfully read from aws", log.Data{"instance_id": event.InstanceID})
@@ -177,7 +170,7 @@ func readMessage(eventValue []byte) (*inputFileAvailable, error) {
 	var i inputFileAvailable
 
 	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, &i); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error while attempting to unmarshal kakfa message to service.inputFileAvailable")
 	}
 
 	return &i, nil
