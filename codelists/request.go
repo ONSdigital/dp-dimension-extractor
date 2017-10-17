@@ -2,10 +2,17 @@ package codelists
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+)
+
+const (
+	clientGetErr        = "codelists.GetFromInstance ImportClient.Get returned an error: url=%s"
+	incorrectStatusErr  = "codelists.GetFromInstance ImportClient.Get returned an unexpected response status: expected=200, actual=%d, url=%s"
+	readResponseBodyErr = "codelists.GetFromInstance error while attempting to read response body: url=%s"
+	unmarshalBodyErr    = "codelists.GetFromInstance error while attempting to unmarshal response body to codelists.Instance: url=%s"
 )
 
 // Instance which contains a list of codes
@@ -33,19 +40,23 @@ func GetFromInstance(datasetAPIUrl, instanceID string, client ImportClient) (map
 
 	response, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf(clientGetErr, url))
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("Unexpected status code returned, " + response.Status)
+		return nil, errors.Errorf(incorrectStatusErr, response.StatusCode, url)
 	}
 
+	defer response.Body.Close()
 	bytes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf(readResponseBodyErr, url))
+	}
 
 	var instance Instance
 	err = json.Unmarshal(bytes, &instance)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, fmt.Sprintf(unmarshalBodyErr, url))
 	}
 	for _, cl := range instance.CodeLists {
 		codeList[cl.Name] = cl.ID

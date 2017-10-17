@@ -158,10 +158,15 @@ func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, 
 
 	log.Debug("file successfully read from aws", log.Data{"instance_id": event.InstanceID})
 
-	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{
+	dimensionExtractedEvent := &dimensionExtracted{
 		FileURL:    s3URL,
 		InstanceID: event.InstanceID,
-	})
+	}
+	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(dimensionExtractedEvent)
+	if err != nil {
+		details := fmt.Sprintf("error while attempting to marshal service.dimensionExtractedEvent: event=%v", *dimensionExtractedEvent)
+		return nil, event.InstanceID, nil, errors.Wrap(err, details)
+	}
 
 	return producerMessage, event.InstanceID, file, nil
 }
