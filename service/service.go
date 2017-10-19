@@ -102,8 +102,11 @@ func (svc *Service) Start() {
 		listeningToConsumerGroupStopped <- true
 		<-readyToCloseOutboundConnections
 		log.Debug("Attempting to close http server", nil)
-		api.Close(childContext)
-		log.Debug("Successfully closed http server", nil)
+		if err := api.Close(childContext); err != nil {
+			log.ErrorC("Failed to gracefully close http server", err, nil)
+		} else {
+			log.Debug("Successfully closed http server", nil)
+		}
 		log.Debug("Attempting to close kafka producer", nil)
 		svc.Producer.Close(childContext)
 		log.Debug("Successfully closed kafka producer", nil)
