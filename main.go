@@ -54,7 +54,7 @@ func main() {
 		MaxRetries:            cfg.MaxRetries,
 		Producer:              dimensionExtractedProducer,
 		S3:                    s3,
-		Shutdown:              cfg.ShutdownTimeout,
+		Shutdown:              cfg.GracefulShutdownTimeout,
 	}
 
 	svc.Start()

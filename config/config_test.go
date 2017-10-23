@@ -29,7 +29,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
 				So(cfg.MaxRetries, ShouldEqual, 3)
-				So(cfg.ShutdownTimeout, ShouldEqual, 5*time.Second)
+				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 			})
 		})
 	})

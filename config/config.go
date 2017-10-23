@@ -19,7 +19,7 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
-	ShutdownTimeout          time.Duration `envconfig:"SHUTDOWN_TIMEOUT"`
+	GracefulShutdownTimeout  time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 }
 
 var cfg *Config
@@ -42,7 +42,7 @@ func Get() (*Config, error) {
 		InputFileAvailableGroup:  "input-file-available",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
-		ShutdownTimeout:          5 * time.Second,
+		GracefulShutdownTimeout:  5 * time.Second,
 	}
 
 	return cfg, envconfig.Process("", cfg)
