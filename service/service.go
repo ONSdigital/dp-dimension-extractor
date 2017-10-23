@@ -43,7 +43,7 @@ func (svc *Service) Start() {
 
 	svc.HTTPClient = rchttp.DefaultClient
 
-	eventLoopContex, eventLoopCancel := context.WithCancel(context.Background())
+	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
 
 	api.CreateDimensionExtractorAPI(svc.DimensionExtractorURL, svc.BindAddr, apiErrors)
 
@@ -52,12 +52,12 @@ func (svc *Service) Start() {
 		defer close(eventLoopDone)
 		for {
 			select {
-			case <-eventLoopContex.Done():
-				log.Trace("Event loop context done", log.Data{"eventLoopContextErr": eventLoopContex.Err()})
+			case <-eventLoopContext.Done():
+				log.Trace("Event loop context done", log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
 			case message := <-svc.Consumer.Incoming():
 
-				instanceID, err := svc.handleMessage(eventLoopContex, message)
+				instanceID, err := svc.handleMessage(eventLoopContext, message)
 				if err != nil {
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 				} else {

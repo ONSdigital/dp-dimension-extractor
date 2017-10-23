@@ -34,13 +34,13 @@ In order to run the service locally you will need the following:
 | DATASET_API_URL              | http://localhost:22000                | The dataset API url
 | DATASET_API_AUTH_TOKEN       | FD0108EA-825D-411C-9B1D-41EF7727F465  | Authentication token for access to dataset API
 | DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted                  | The kafka topic to write messages to
-| DIMENSIONS_EXTRACTOR_URL     | http://localhost:21400                | The kafka topic to write messages to
+| DIMENSIONS_EXTRACTOR_URL     | http://localhost:21400                | The dimension extractor url
 | INPUT_FILE_AVAILABLE_GROUP   | input-file-available                  | The kafka consumer group to consume messages from
 | INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                  | The kafka topic to consume messages from
 | KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
 | KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
-| SHUTDOWN_TIMEOUT             | 5s                                    | The graceful shutdown timeout in seconds
+| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                    | The graceful shutdown timeout in seconds
 
 ### Contributing
 

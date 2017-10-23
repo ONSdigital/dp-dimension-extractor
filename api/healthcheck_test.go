@@ -12,7 +12,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const host = "80"
+const host = ":80"
 
 func TestHealthCheckReturnsOK(t *testing.T) {
 	cfg, err := config.Get()
