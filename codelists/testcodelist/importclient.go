@@ -4,14 +4,13 @@
 package testcodelist
 
 import (
+	"context"
 	"net/http"
 	"sync"
-
-	"golang.org/x/net/context"
 )
 
 var (
-	lockImportClientMockGet sync.RWMutex
+	lockImportClientMockDo sync.RWMutex
 )
 
 // ImportClientMock is a mock implementation of ImportClient.
@@ -20,8 +19,8 @@ var (
 //
 //         // make and configure a mocked ImportClient
 //         mockedImportClient := &ImportClientMock{
-//             GetFunc: func(ctx context.Context, path string) (*http.Response, error) {
-// 	               panic("TODO: mock out the Get method")
+//             DoFunc: func(ctx context.Context, req *http.Request) (*http.Response, error) {
+// 	               panic("TODO: mock out the Do method")
 //             },
 //         }
 //
@@ -30,52 +29,52 @@ var (
 //
 //     }
 type ImportClientMock struct {
-	// GetFunc mocks the Get method.
-	GetFunc func(ctx context.Context, path string) (*http.Response, error)
+	// DoFunc mocks the Do method.
+	DoFunc func(ctx context.Context, req *http.Request) (*http.Response, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Get holds details about calls to the Get method.
-		Get []struct {
+		// Do holds details about calls to the Do method.
+		Do []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Path is the path argument value.
-			Path string
+			// Req is the req argument value.
+			Req *http.Request
 		}
 	}
 }
 
-// Get calls GetFunc.
-func (mock *ImportClientMock) Get(ctx context.Context, path string) (*http.Response, error) {
-	if mock.GetFunc == nil {
-		panic("moq: ImportClientMock.GetFunc is nil but ImportClient.Get was just called")
+// Do calls DoFunc.
+func (mock *ImportClientMock) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	if mock.DoFunc == nil {
+		panic("moq: ImportClientMock.DoFunc is nil but ImportClient.Do was just called")
 	}
 	callInfo := struct {
-		Ctx  context.Context
-		Path string
+		Ctx context.Context
+		Req *http.Request
 	}{
-		Ctx:  ctx,
-		Path: path,
+		Ctx: ctx,
+		Req: req,
 	}
-	lockImportClientMockGet.Lock()
-	mock.calls.Get = append(mock.calls.Get, callInfo)
-	lockImportClientMockGet.Unlock()
-	return mock.GetFunc(ctx, path)
+	lockImportClientMockDo.Lock()
+	mock.calls.Do = append(mock.calls.Do, callInfo)
+	lockImportClientMockDo.Unlock()
+	return mock.DoFunc(ctx, req)
 }
 
-// GetCalls gets all the calls that were made to Get.
+// DoCalls gets all the calls that were made to Do.
 // Check the length with:
-//     len(mockedImportClient.GetCalls())
-func (mock *ImportClientMock) GetCalls() []struct {
-	Ctx  context.Context
-	Path string
+//     len(mockedImportClient.DoCalls())
+func (mock *ImportClientMock) DoCalls() []struct {
+	Ctx context.Context
+	Req *http.Request
 } {
 	var calls []struct {
-		Ctx  context.Context
-		Path string
+		Ctx context.Context
+		Req *http.Request
 	}
-	lockImportClientMockGet.RLock()
-	calls = mock.calls.Get
-	lockImportClientMockGet.RUnlock()
+	lockImportClientMockDo.RLock()
+	calls = mock.calls.Do
+	lockImportClientMockDo.RUnlock()
 	return calls
 }

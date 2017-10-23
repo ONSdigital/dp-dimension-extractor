@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/context"
-
 	"net/url"
 
 	"github.com/ONSdigital/dp-dimension-extractor/codelists"
@@ -17,6 +15,7 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/s3"
+	"golang.org/x/net/context"
 )
 
 type dimensionExtracted struct {
@@ -49,7 +48,8 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 		return instanceID, err
 	}
 
-	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, instanceID, svc.HTTPClient)
+	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, svc.HTTPClient)
+
 	if err != nil {
 		log.ErrorC("encountered error immediately when requesting data from the dataset api", err, log.Data{"instance_id": instanceID})
 		return instanceID, err

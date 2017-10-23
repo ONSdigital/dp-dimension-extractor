@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
-
-	"golang.org/x/net/context"
 )
 
 // Instance which contains a list of codes
@@ -25,15 +24,19 @@ type CodeList struct {
 //go:generate moq -out testcodelist/importclient.go -pkg testcodelist . ImportClient
 // ImportClient
 type ImportClient interface {
-	Get(ctx context.Context, path string) (*http.Response, error)
+	Do(ctx context.Context, req *http.Request) (*http.Response, error)
 }
 
 // GetFromInstance returns a map of dimension names to code list IDs
-func GetFromInstance(ctx context.Context, datasetAPIUrl, instanceID string, client ImportClient) (map[string]string, error) {
+func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, instanceID string, client ImportClient) (map[string]string, error) {
 	url := fmt.Sprintf("%s/instances/%s", datasetAPIUrl, instanceID)
 	codeList := make(map[string]string)
-
-	response, err := client.Get(ctx, url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("internal-token", datasetToken)
+	response, err := client.Do(ctx, req)
 	if err != nil {
 		return nil, err
 	}
