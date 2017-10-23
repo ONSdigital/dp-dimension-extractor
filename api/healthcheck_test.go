@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
+	"github.com/ONSdigital/go-ns/log"
 	"github.com/gorilla/mux"
-	"github.com/ian-kent/go-log/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

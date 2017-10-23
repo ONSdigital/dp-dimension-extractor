@@ -1,11 +1,9 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -40,97 +38,85 @@ func (svc *Service) Start() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	serviceLoopDone := make(chan bool)
-	listeningToConsumerGroupStopped := make(chan bool)
-	readyToCloseOutboundConnections := make(chan bool)
+	eventLoopDone := make(chan bool)
 	apiErrors := make(chan error, 1)
 
 	svc.HTTPClient = rchttp.DefaultClient
 
-	ctx, cancel := context.WithCancel(context.Background())
+	eventLoopContex, eventLoopCancel := context.WithCancel(context.Background())
 
 	api.CreateDimensionExtractorAPI(svc.DimensionExtractorURL, svc.BindAddr, apiErrors)
 
+	// eventLoop
 	go func() {
+		defer close(eventLoopDone)
 		for {
 			select {
-			case <-listeningToConsumerGroupStopped:
-				// This case allows any in flight process to finish before
-				// closing any outbound connections
-				readyToCloseOutboundConnections <- true
+			case <-eventLoopContex.Done():
+				log.Trace("Event loop context done", log.Data{"eventLoopContextErr": eventLoopContex.Err()})
 				return
 			case message := <-svc.Consumer.Incoming():
 
-				instanceID, err := svc.handleMessage(ctx, message)
+				instanceID, err := svc.handleMessage(eventLoopContex, message)
 				if err != nil {
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 				} else {
 					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})
 				}
 
-				message.Commit()
+				svc.Consumer.CommitAndRelease(message)
 				log.Debug("message committed", log.Data{"instance_id": instanceID})
-			case consumerError := <-svc.Consumer.Errors():
-				log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
-				close(serviceLoopDone)
-			case producerError := <-svc.Producer.Errors():
-				log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
-				close(serviceLoopDone)
-			case <-apiErrors:
-				log.Error(fmt.Errorf("server error forcing shutdown"), nil)
-				close(serviceLoopDone)
 			}
 		}
 	}()
 
+	// block until a fatal error, signal or eventLoopDone - then proceed to shutdown
 	select {
-	case <-serviceLoopDone:
+	case <-eventLoopDone:
 		log.Debug("Quitting after done was closed", nil)
 	case signal := <-signals:
 		log.Debug("Quitting after os signal received", log.Data{"signal": signal})
+	case consumerError := <-svc.Consumer.Errors():
+		log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
+	case producerError := <-svc.Producer.Errors():
+		log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
+	case <-apiErrors:
+		log.Error(fmt.Errorf("server error forcing shutdown"), nil)
 	}
 
-	childContext, childCancel := context.WithTimeout(ctx, svc.Shutdown)
+	// give the app `Timeout` seconds to close gracefully before killing it.
+	ctx, cancel := context.WithTimeout(context.Background(), svc.Shutdown)
 
-	waitGroup := int32(0)
-
-	atomic.AddInt32(&waitGroup, 1)
 	go func() {
-		log.Debug("Attempting to stop listening to kafka consumer group", nil)
-		svc.Consumer.StopListeningToConsumer(childContext)
-		log.Debug("Successfully stopped listening to kafka consumer group", nil)
-		listeningToConsumerGroupStopped <- true
-		<-readyToCloseOutboundConnections
-		log.Debug("Attempting to close http server", nil)
-		if err := api.Close(childContext); err != nil {
+		log.Debug("Stopping kafka consumer listener", nil)
+		svc.Consumer.StopListeningToConsumer(ctx)
+		log.Debug("Stopped kafka consumer listener", nil)
+		eventLoopCancel()
+		<-eventLoopDone
+		log.Debug("Closing http server", nil)
+		if err := api.Close(ctx); err != nil {
 			log.ErrorC("Failed to gracefully close http server", err, nil)
 		} else {
-			log.Debug("Successfully closed http server", nil)
+			log.Debug("Gracefully closed http server", nil)
 		}
-		log.Debug("Attempting to close kafka producer", nil)
-		svc.Producer.Close(childContext)
-		log.Debug("Successfully closed kafka producer", nil)
-		log.Debug("Attempting to close kafka consumer group", nil)
-		svc.Consumer.Close(childContext)
-		log.Debug("Successfully closed kafka consumer group", nil)
-		atomic.AddInt32(&waitGroup, -1)
+		log.Debug("Closing kafka producer", nil)
+		svc.Producer.Close(ctx)
+		log.Debug("Closed kafka producer", nil)
+		log.Debug("Closing kafka consumer", nil)
+		svc.Consumer.Close(ctx)
+		log.Debug("Closed kafka consumer", nil)
 
-		log.Debug("Closed kafka successfully", nil)
+		log.Info("Done shutdown - cancelling timeout context", nil)
+
+		cancel() // stop timer
 	}()
 
-	// setup a timer to zero waitGroup after timeout
-	go func() {
-		<-childContext.Done()
-		log.Error(errors.New("timeout while shutting down"), nil)
-		atomic.AddInt32(&waitGroup, -atomic.LoadInt32(&waitGroup))
-	}()
-
-	for atomic.LoadInt32(&waitGroup) > 0 {
+	// wait for timeout or success (via cancel)
+	<-ctx.Done()
+	if ctx.Err() == context.DeadlineExceeded {
+		log.Error(ctx.Err(), nil)
+	} else {
+		log.Info("Done shutdown gracefully", log.Data{"context": ctx.Err()})
 	}
-
-	log.Info("Shutdown complete", nil)
-
-	childCancel()
-	cancel()
 	os.Exit(1)
 }
