@@ -25,8 +25,6 @@ type KafkaConsumer struct {
 	IncomingArg            chan kafka.Message
 	CommitAndReleaseCalls  int
 	CommitAndReleaseNotify chan bool
-	ReleaseCalls           int
-	ReleaseNotify          chan bool
 }
 
 // Incoming mocked impl of Incoming
@@ -39,12 +37,6 @@ func (m *KafkaConsumer) Incoming() chan kafka.Message {
 func (m *KafkaConsumer) CommitAndRelease(msg kafka.Message) {
 	m.CommitAndReleaseCalls++
 	close(m.CommitAndReleaseNotify)
-}
-
-// Release mocked impl of Release
-func (m *KafkaConsumer) Release() {
-	m.ReleaseCalls++
-	close(m.ReleaseNotify)
 }
 
 // KafkaMessage represents a single kafka message.

@@ -17,6 +17,7 @@ type Config struct {
 	DimensionExtractorURL    string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
 	InputFileAvailableGroup  string        `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
+	EventReporterTopic       string        `envconfig:"EVENT_REPORTER_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
 	GracefulShutdownTimeout  time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
@@ -40,6 +41,7 @@ func Get() (*Config, error) {
 		DatasetAPIAuthToken:      "FD0108EA-825D-411C-9B1D-41EF7727F465",
 		InputFileAvailableTopic:  "input-file-available",
 		InputFileAvailableGroup:  "input-file-available",
+		EventReporterTopic:       "report-events",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
 		GracefulShutdownTimeout:  5 * time.Second,

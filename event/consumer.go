@@ -11,18 +11,17 @@ import (
 type KafkaConsumer interface {
 	Incoming() chan kafka.Message
 	CommitAndRelease(msg kafka.Message)
-	Release()
 }
 
-// MessageHandler is kafka message handler
-type MessageHandler interface {
+// Service is kafka message handler
+type Service interface {
 	HandleMessage(eventLoopContext context.Context, message kafka.Message) (string, error)
 }
 
 // Consumer polls a kafka topic for incoming messages
 type Consumer struct {
 	KafkaConsumer KafkaConsumer
-	Handler       MessageHandler
+	EventService  Service
 	ErrorReporter reporter.ErrorReporter
 }
 
@@ -37,7 +36,7 @@ func (c *Consumer) Start(eventLoopDone chan bool, eventLoopContext context.Conte
 				return
 			case message := <-c.KafkaConsumer.Incoming():
 
-				instanceID, err := c.Handler.HandleMessage(eventLoopContext, message)
+				instanceID, err := c.EventService.HandleMessage(eventLoopContext, message)
 				if err != nil {
 					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
 
@@ -49,8 +48,6 @@ func (c *Consumer) Start(eventLoopDone chan bool, eventLoopContext context.Conte
 							log.ErrorC("errorReporter.Notify returned an error", err, log.Data{"instance_id": instanceID})
 						}
 					}
-					c.KafkaConsumer.Release()
-					continue
 
 				} else {
 					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})

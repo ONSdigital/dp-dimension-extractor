@@ -2,8 +2,8 @@ package codelists
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
@@ -38,11 +38,11 @@ func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, instanceI
 	req.Header.Set("internal-token", datasetToken)
 	response, err := client.Do(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "ImportClient.Do returned error while attempting request to "+url)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, errors.New("Unexpected status code returned, " + response.Status)
+		return nil, errors.Errorf("unexpected status code expected: %d, actual: %s, url: %s", http.StatusOK, response.Status, url)
 	}
 
 	bytes, err := ioutil.ReadAll(response.Body)
@@ -50,7 +50,7 @@ func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, instanceI
 	var instance Instance
 	err = json.Unmarshal(bytes, &instance)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error while attempting to unmarshal json response to codelists.Instance")
 	}
 	for _, cl := range instance.CodeLists {
 		codeList[cl.Name] = cl.ID

@@ -43,7 +43,7 @@ func TestConsumer_Start(t *testing.T) {
 
 		consumer := &Consumer{
 			KafkaConsumer: kafkaConsumerMock,
-			Handler:       handler,
+			EventService:  handler,
 			ErrorReporter: errorReporter,
 		}
 
@@ -63,10 +63,6 @@ func TestConsumer_Start(t *testing.T) {
 
 			Convey("And message.CommitAndRelease is called once", func() {
 				So(kafkaConsumerMock.CommitAndReleaseCalls, ShouldEqual, 1)
-			})
-
-			Convey("And message.Release is never called", func() {
-				So(kafkaConsumerMock.ReleaseCalls, ShouldEqual, 0)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
@@ -90,8 +86,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 		kafkaConsumerMock := &mocks.KafkaConsumer{
 			CommitAndReleaseCalls:  0,
-			CommitAndReleaseNotify: nil,
-			ReleaseNotify:          release,
+			CommitAndReleaseNotify: release,
 			IncomingCalls:          0,
 			IncomingArg:            incomingChan,
 		}
@@ -117,7 +112,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				},
 			}
 
-			consumer.Handler = handler
+			consumer.EventService = handler
 
 			consumer.Start(eventLoopDone, ctx)
 
@@ -130,12 +125,8 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.Release is called once", func() {
-				So(kafkaConsumerMock.ReleaseCalls, ShouldEqual, 1)
-			})
-
-			Convey("And message.CommitAndRelease is never called", func() {
-				So(kafkaConsumerMock.CommitAndReleaseCalls, ShouldEqual, 0)
+			Convey("And message.CommitAndRelease is called once", func() {
+				So(kafkaConsumerMock.CommitAndReleaseCalls, ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is called once", func() {
@@ -154,7 +145,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				},
 			}
 
-			consumer.Handler = handler
+			consumer.EventService = handler
 
 			consumer.Start(eventLoopDone, ctx)
 
@@ -167,12 +158,8 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.Release is called once", func() {
-				So(kafkaConsumerMock.ReleaseCalls, ShouldEqual, 1)
-			})
-
-			Convey("And message.CommitAndRelease is never called", func() {
-				So(kafkaConsumerMock.CommitAndReleaseCalls, ShouldEqual, 0)
+			Convey("And message.CommitAndRelease is called once", func() {
+				So(kafkaConsumerMock.CommitAndReleaseCalls, ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
