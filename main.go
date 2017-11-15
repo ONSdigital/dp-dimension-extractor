@@ -55,6 +55,7 @@ func main() {
 		Producer:              dimensionExtractedProducer,
 		S3:                    s3,
 		Shutdown:              cfg.GracefulShutdownTimeout,
+		DimensionBatchMaxSize: cfg.DimensionBatchMaxSize,
 	}
 
 	svc.Start()

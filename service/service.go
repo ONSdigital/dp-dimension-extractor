@@ -29,6 +29,7 @@ type Service struct {
 	Producer              kafka.Producer
 	S3                    *s3.S3
 	Shutdown              time.Duration
+	DimensionBatchMaxSize int
 }
 
 // Start handles consumption of events
@@ -42,6 +43,7 @@ func (svc *Service) Start() {
 	apiErrors := make(chan error, 1)
 
 	svc.HTTPClient = rchttp.DefaultClient
+	svc.HTTPClient.MaxRetries = svc.MaxRetries
 
 	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
 

@@ -91,16 +91,11 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		request := Request{
-			Attempt:             1,
-			DimensionID:         strings.ToLower(extract.HeaderRow[i+1]),
-			Code:                line[i],
-			Value:               dimensionValue,
-			Label:               line[i+1],
-			CodeList:            dimensionCodeList,
-			DatasetAPIURL:       extract.DatasetAPIURL,
-			DatasetAPIAuthToken: extract.DatasetAPIAuthToken,
-			InstanceID:          extract.InstanceID,
-			MaxAttempts:         extract.MaxRetries,
+			DimensionID: strings.ToLower(extract.HeaderRow[i+1]),
+			Code:        line[i],
+			Value:       dimensionValue,
+			Label:       line[i+1],
+			CodeList:    dimensionCodeList,
 		}
 
 		dimensions[dimension] = request

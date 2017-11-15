@@ -20,6 +20,7 @@ type Config struct {
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
 	GracefulShutdownTimeout  time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
+	DimensionBatchMaxSize    int           `envconfig:"DIMENSION_BATCH_MAX_SIZE"`
 }
 
 var cfg *Config
@@ -43,6 +44,7 @@ func Get() (*Config, error) {
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
 		GracefulShutdownTimeout:  5 * time.Second,
+		DimensionBatchMaxSize:    200,
 	}
 
 	return cfg, envconfig.Process("", cfg)
