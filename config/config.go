@@ -13,6 +13,7 @@ type Config struct {
 	Brokers                  []string      `envconfig:"KAFKA_ADDR"`
 	DatasetAPIURL            string        `envconfig:"DATASET_API_URL"`
 	DatasetAPIAuthToken      string        `envconfig:"DATASET_API_AUTH_TOKEN"`
+	DatasetAPITimeout        time.Duration `envconfig:"DATASET_API_TIMEOUT"`
 	DimensionsExtractedTopic string        `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
 	DimensionExtractorURL    string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
 	InputFileAvailableGroup  string        `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
@@ -39,12 +40,13 @@ func Get() (*Config, error) {
 		DimensionExtractorURL:    "http://localhost:21400",
 		DatasetAPIURL:            "http://localhost:22000",
 		DatasetAPIAuthToken:      "FD0108EA-825D-411C-9B1D-41EF7727F465",
+		DatasetAPITimeout:        55 * time.Second,
 		InputFileAvailableTopic:  "input-file-available",
-		InputFileAvailableGroup:  "input-file-available",
+		InputFileAvailableGroup:  "dp-dimension-extractor",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
 		GracefulShutdownTimeout:  5 * time.Second,
-		DimensionBatchMaxSize:    200,
+		DimensionBatchMaxSize:    1000,
 	}
 
 	return cfg, envconfig.Process("", cfg)
