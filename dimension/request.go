@@ -29,7 +29,7 @@ type Request struct {
 
 // DimensionOption to store in the dataset api
 type DimensionOption struct {
-	Name     string `json:"dimension_id"`
+	Name     string `json:"dimension"`
 	Code     string `json:"code"`
 	CodeList string `json:"code_list,omitempty"`
 	Option   string `json:"option"`
