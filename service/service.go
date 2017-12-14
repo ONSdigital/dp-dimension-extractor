@@ -23,12 +23,14 @@ type Service struct {
 	Consumer              *kafka.ConsumerGroup
 	DatasetAPIURL         string
 	DatasetAPIAuthToken   string
+	DatasetAPITimeout     time.Duration
 	DimensionExtractorURL string
 	HTTPClient            *rchttp.Client
 	MaxRetries            int
 	Producer              kafka.Producer
 	S3                    *s3.S3
 	Shutdown              time.Duration
+	DimensionBatchMaxSize int
 }
 
 // Start handles consumption of events
@@ -41,7 +43,8 @@ func (svc *Service) Start() {
 	eventLoopDone := make(chan bool)
 	apiErrors := make(chan error, 1)
 
-	svc.HTTPClient = rchttp.DefaultClient
+	svc.HTTPClient = rchttp.ClientWithTimeout(svc.DatasetAPITimeout)
+	svc.HTTPClient.MaxRetries = svc.MaxRetries
 
 	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
 
@@ -59,13 +62,14 @@ func (svc *Service) Start() {
 
 				instanceID, err := svc.handleMessage(eventLoopContext, message)
 				if err != nil {
-					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
+					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID, "msg_offset": message.Offset()})
+					svc.Consumer.Release()
 				} else {
-					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})
+					log.Debug("event successfully processed", log.Data{"instance_id": instanceID, "msg_offset": message.Offset()})
+					svc.Consumer.CommitAndRelease(message)
+					log.Debug("message committed", log.Data{"instance_id": instanceID, "msg_offset": message.Offset()})
 				}
 
-				svc.Consumer.CommitAndRelease(message)
-				log.Debug("message committed", log.Data{"instance_id": instanceID})
 			}
 		}
 	}()

@@ -15,15 +15,16 @@ import (
 )
 
 var (
-	request = &dimension.Request{
-		Attempt:       1,
-		DimensionID:   "123_sex_female",
-		Value:         "female",
+	request = &dimension.RequestBatch{
 		DatasetAPIURL: "http://test-url.com",
-		InstanceID:    "123",
-		MaxAttempts:   1,
+		Batch: []dimension.Request{
+			dimension.Request{
+				DimensionID: "123_sex_female",
+				Value:       "female",
+			},
+		},
 	}
-
+	instanceID  = "inst123"
 	ctx         context.Context
 	oneAttempt  time.Duration
 	twoAttempts time.Duration
@@ -53,12 +54,12 @@ func createMockClient(maxRetries, status int) *rchttp.Client {
 func TestUnitSendRequest(t *testing.T) {
 	Convey("test successful put request", t, func() {
 
-		err := request.Post(ctx, createMockClient(1, 200))
+		err := request.Post(ctx, createMockClient(1, 200), instanceID)
 		So(err, ShouldBeNil)
 	})
 
 	Convey("test error returned when instance id does not match any instances", t, func() {
-		err := request.Post(ctx, createMockClient(1, 404))
+		err := request.Post(ctx, createMockClient(1, 404), instanceID)
 		So(err, ShouldNotBeNil)
 		expectedError := errors.New("invalid status [404] returned from [" + request.DatasetAPIURL + "]")
 		So(err.Error(), ShouldEqual, expectedError.Error())
@@ -66,7 +67,7 @@ func TestUnitSendRequest(t *testing.T) {
 
 	Convey("test error returned when client throws error", t, func() {
 		start := time.Now()
-		err := request.Post(ctx, createMockClient(1, 500))
+		err := request.Post(ctx, createMockClient(1, 500), instanceID)
 		oneAttempt = time.Since(start)
 
 		So(err, ShouldNotBeNil)
@@ -76,7 +77,7 @@ func TestUnitSendRequest(t *testing.T) {
 
 	Convey("test error on second attempt", t, func() {
 		start := time.Now()
-		err := request.Post(ctx, createMockClient(2, 500))
+		err := request.Post(ctx, createMockClient(2, 500), instanceID)
 		twoAttempts = time.Since(start)
 
 		So(err, ShouldNotBeNil)

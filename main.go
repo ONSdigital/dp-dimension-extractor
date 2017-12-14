@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	syncConsumerGroup, err := kafka.NewSyncConsumer(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, kafka.OffsetNewest)
+	syncConsumerGroup, err := kafka.NewSyncConsumer(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, kafka.OffsetOldest)
 	if err != nil {
 		log.ErrorC("could not obtain consumer", err, nil)
 		os.Exit(1)
@@ -50,11 +50,13 @@ func main() {
 		Consumer:              syncConsumerGroup,
 		DatasetAPIURL:         cfg.DatasetAPIURL,
 		DatasetAPIAuthToken:   cfg.DatasetAPIAuthToken,
+		DatasetAPITimeout:     cfg.DatasetAPITimeout,
 		DimensionExtractorURL: cfg.DimensionExtractorURL,
 		MaxRetries:            cfg.MaxRetries,
 		Producer:              dimensionExtractedProducer,
 		S3:                    s3,
 		Shutdown:              cfg.GracefulShutdownTimeout,
+		DimensionBatchMaxSize: cfg.DimensionBatchMaxSize,
 	}
 
 	svc.Start()

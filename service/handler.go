@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -82,8 +83,20 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 	dimensions := make(map[string]string)
 	numberOfObservations := 0
 
+	// create a new batch map (per DimensionID)
+	// requestMap := make(map[string]dimension.RequestBatch)
+	requestBatch := dimension.RequestBatch{
+		DatasetAPIURL:       svc.DatasetAPIURL,
+		DatasetAPIAuthToken: svc.DatasetAPIAuthToken,
+		Batch:               make([]dimension.Request, 0, svc.DimensionBatchMaxSize),
+	}
+	countWhenBatchLastChanged := 0
+	countWhenLastEmptyBatchPinged := 0
+	countBlanks := 0
+
 	// Iterate over csv file pulling out unique dimensions
 	for {
+		// log.Trace("csvread", nil) // XXX
 		line, err := csvReader.Read()
 		if err == io.EOF {
 			break
@@ -93,33 +106,61 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 			return instanceID, err
 		}
 
+		if len(line) == 0 {
+			countBlanks++
+			if countBlanks%1000 == 0 {
+				log.Trace("got blank lines in csv", log.Data{"instance_id": instanceID, "blank_count": countBlanks, "num_observations": numberOfObservations})
+			}
+			continue
+		}
+
 		dimension := dimension.Extract{
+			InstanceID:            instanceID,
 			Dimensions:            dimensions,
 			DimensionColumnOffset: dimensionColumnOffset,
 			HeaderRow:             headerRow,
-			DatasetAPIURL:         svc.DatasetAPIURL,
-			DatasetAPIAuthToken:   svc.DatasetAPIAuthToken,
-			InstanceID:            instanceID,
 			Line:                  line,
-			MaxRetries:            svc.MaxRetries,
 			TimeColumn:            timeColumn,
 			CodelistMap:           codelistMap,
 		}
+		numberOfObservations++
 
 		lineDimensions, err := dimension.Extract()
 		if err != nil {
-			log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instance_id": instanceID, "csv_line": line})
+			log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instance_id": instanceID, "csv_line": line, "num_observations": numberOfObservations})
 			return instanceID, err
 		}
 
 		for _, request := range lineDimensions {
-			if err := request.Post(ctx, svc.HTTPClient); err != nil {
-				log.ErrorC("encountered error sending request to datset api", err, log.Data{"instance_id": instanceID, "csv_line": line})
-				return instanceID, err
+			requestBatch.Batch = append(requestBatch.Batch, request)
+			countWhenBatchLastChanged = numberOfObservations
+			if len(requestBatch.Batch) == svc.DimensionBatchMaxSize {
+				if err := svc.postBatch(ctx, instanceID, &requestBatch, numberOfObservations); err != nil {
+					return instanceID, err
+				}
+				countWhenLastEmptyBatchPinged = numberOfObservations
 			}
 		}
 
-		numberOfObservations++
+		batchSize := len(requestBatch.Batch)
+		if batchSize > 0 && numberOfObservations-countWhenBatchLastChanged > 100*svc.DimensionBatchMaxSize {
+			log.Trace(fmt.Sprintf("forceBatch %s:%d %s:%d", "batch_size", batchSize, "num_observations", numberOfObservations), nil)
+			if err := svc.postBatch(ctx, instanceID, &requestBatch, numberOfObservations); err != nil {
+				return instanceID, err
+			}
+			countWhenBatchLastChanged = numberOfObservations
+			countWhenLastEmptyBatchPinged = numberOfObservations
+		} else if batchSize == 0 && numberOfObservations-countWhenLastEmptyBatchPinged > 200*svc.DimensionBatchMaxSize {
+			countWhenLastEmptyBatchPinged = numberOfObservations
+			log.Trace(fmt.Sprintf("ping %s:%d", "num_observations", numberOfObservations), nil)
+		}
+
+	}
+	if len(requestBatch.Batch) > 0 {
+		// post any remaining dimensons in requestBatch
+		if err := svc.postBatch(ctx, instanceID, &requestBatch, numberOfObservations); err != nil {
+			return instanceID, err
+		}
 	}
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
@@ -140,6 +181,17 @@ func (svc *Service) handleMessage(ctx context.Context, message kafka.Message) (s
 	svc.Producer.Output() <- producerMessage
 
 	return instanceID, nil
+}
+
+// postBatch posts a batch of dimensions to the DatasetAPI
+func (svc *Service) postBatch(ctx context.Context, instanceID string, requestBatch *dimension.RequestBatch, numberOfObservations int) error {
+	log.Trace("sending request", log.Data{"instance_id": instanceID, "batch_size": len(requestBatch.Batch), "observation_count": numberOfObservations})
+	if err := requestBatch.Post(ctx, svc.HTTPClient, instanceID); err != nil {
+		log.ErrorC("postBatch dimensions to dataset api", err, log.Data{"instance_id": instanceID, "observation_count": numberOfObservations, "batch_size": len(requestBatch.Batch)})
+		return err
+	}
+	requestBatch.Batch = requestBatch.Batch[0:0]
+	return nil
 }
 
 func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, error) {
