@@ -43,14 +43,14 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 
 // Service handles incoming messages.
 type Service struct {
-	EnvMax                int64
-	DatasetAPIURL         string
-	DatasetAPIAuthToken   string
-	DimensionExtractorURL string
-	HTTPClient            *rchttp.Client
-	MaxRetries            int
-	Producer              kafka.Producer
-	S3                    *s3.S3
+	EnvMax                     int64
+	DatasetAPIURL              string
+	DatasetAPIAuthToken        string
+	DimensionExtractorURL      string
+	HTTPClient                 *rchttp.Client
+	MaxRetries                 int
+	DimensionExtractedProducer kafka.Producer
+	S3                         *s3.S3
 }
 
 // HandleMessage handles a message by sending requests to the dataset API
@@ -150,7 +150,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	// Once csv file has been iterated over and there were no errors,
 	// send a completed messsage to the dimensions-extracted topic
 
-	svc.Producer.Output() <- producerMessage
+	svc.DimensionExtractedProducer.Output() <- producerMessage
 
 	return instanceID, nil
 }

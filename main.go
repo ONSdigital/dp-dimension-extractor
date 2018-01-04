@@ -67,14 +67,14 @@ func main() {
 	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
 
 	service := &service.Service{
-		EnvMax:                envMax,
-		DatasetAPIURL:         cfg.DatasetAPIURL,
-		DatasetAPIAuthToken:   cfg.DatasetAPIAuthToken,
-		DimensionExtractorURL: cfg.DimensionExtractorURL,
-		MaxRetries:            cfg.MaxRetries,
-		Producer:              dimensionExtractedProducer,
-		S3:                    s3,
-		HTTPClient:            rchttp.DefaultClient,
+		EnvMax:                     envMax,
+		DatasetAPIURL:              cfg.DatasetAPIURL,
+		DatasetAPIAuthToken:        cfg.DatasetAPIAuthToken,
+		DimensionExtractorURL:      cfg.DimensionExtractorURL,
+		MaxRetries:                 cfg.MaxRetries,
+		DimensionExtractedProducer: dimensionExtractedProducer,
+		S3:                         s3,
+		HTTPClient:                 rchttp.DefaultClient,
 	}
 
 	errorReporter, err := reporter.NewImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
@@ -100,7 +100,7 @@ func main() {
 		log.Debug("quitting after os signal received", log.Data{"signal": signal})
 	case consumerError := <-syncConsumerGroup.Errors():
 		log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
-	case producerError := <-service.Producer.Errors():
+	case producerError := <-service.DimensionExtractedProducer.Errors():
 		log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
 	case <-apiErrors:
 		log.Error(fmt.Errorf("server error forcing shutdown"), nil)
@@ -121,9 +121,14 @@ func main() {
 		} else {
 			log.Debug("gracefully closed http server", nil)
 		}
-		log.Debug("closing kafka producer", nil)
-		service.Producer.Close(ctx)
-		log.Debug("closed kafka producer", nil)
+		log.Debug("closing dimension extracted kafka producer", nil)
+		service.DimensionExtractedProducer.Close(ctx)
+		log.Debug("closed dimension extracted kafka producer", nil)
+
+		log.Debug("closing down dimension extracted error producer", nil)
+		dimensionExtractedErrProducer.Close(ctx)
+		log.Debug("closed dimension extracted error producer", nil)
+
 		log.Debug("closing kafka consumer", nil)
 		syncConsumerGroup.Close(ctx)
 		log.Debug("closed kafka consumer", nil)
