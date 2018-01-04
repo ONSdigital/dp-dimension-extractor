@@ -106,7 +106,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			return instanceID, err
 		}
 
-		dimension := dimension.Extract{
+		dim := dimension.Extract{
 			Dimensions:            dimensions,
 			DimensionColumnOffset: dimensionColumnOffset,
 			HeaderRow:             headerRow,
@@ -119,7 +119,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			CodelistMap:           codelistMap,
 		}
 
-		lineDimensions, err := dimension.Extract()
+		lineDimensions, err := dim.Extract()
 		if err != nil {
 			log.ErrorC("encountered error retrieving dimensions", err, log.Data{"instance_id": instanceID, "csv_line": line})
 			return instanceID, err
@@ -137,11 +137,11 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	instance := instance.NewJobInstance(svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
+	jobInstance := instance.NewJobInstance(svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
 
 	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance
-	if err := instance.PutData(ctx, svc.HTTPClient); err != nil {
+	if err := jobInstance.PutData(ctx, svc.HTTPClient); err != nil {
 		log.ErrorC("encountered error sending request to the dataset api", err, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err
 	}
