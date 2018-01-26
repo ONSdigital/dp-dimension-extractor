@@ -27,6 +27,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
 				So(cfg.DimensionExtractorURL, ShouldEqual, "http://localhost:21400")
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
+				So(cfg.EventReporterTopic, ShouldEqual, "report-events")
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
 				So(cfg.MaxRetries, ShouldEqual, 3)
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)

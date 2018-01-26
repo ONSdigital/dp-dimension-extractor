@@ -3,6 +3,30 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "yVhSSS1KY9fmMVUcoZhIVyRB/YA=",
+			"path": "github.com/ONSdigital/dp-reporter-client/model",
+			"revision": "2a4f047efd3afeaf282c577dd1e87f7de34dc8de",
+			"revisionTime": "2017-10-10T10:05:43Z"
+		},
+		{
+			"checksumSHA1": "7VuAVtBFJvzKbYbIYRWNxYLu9Ww=",
+			"path": "github.com/ONSdigital/dp-reporter-client/reporter",
+			"revision": "2a4f047efd3afeaf282c577dd1e87f7de34dc8de",
+			"revisionTime": "2017-10-10T10:05:43Z"
+		},
+		{
+			"checksumSHA1": "OXjV7Al4Q42aSizk3mhzzLCLFWA=",
+			"path": "github.com/ONSdigital/dp-reporter-client/reporter/reportertest",
+			"revision": "2a4f047efd3afeaf282c577dd1e87f7de34dc8de",
+			"revisionTime": "2017-10-10T10:05:43Z"
+		},
+		{
+			"checksumSHA1": "9+/RSnsTjyQxIVXfczqMkJpN6fM=",
+			"path": "github.com/ONSdigital/dp-reporter-client/schema",
+			"revision": "2a4f047efd3afeaf282c577dd1e87f7de34dc8de",
+			"revisionTime": "2017-10-10T10:05:43Z"
+		},
+		{
 			"checksumSHA1": "dzh4fF9o6j+mJEbJn5utm8Q+Pyg=",
 			"path": "github.com/ONSdigital/go-ns/avro",
 			"revision": "1c6e69223361205f4c50ba8f85b2abbdc1e39b5e",
@@ -15,10 +39,10 @@
 			"revisionTime": "2017-10-20T14:01:57Z"
 		},
 		{
-			"checksumSHA1": "d0xkjPw9SKVWK1vDJqvD3HoFbnA=",
+			"checksumSHA1": "qqaN4hllMTNueffB5bcz8xQnwX0=",
 			"path": "github.com/ONSdigital/go-ns/kafka",
-			"revision": "1c6e69223361205f4c50ba8f85b2abbdc1e39b5e",
-			"revisionTime": "2017-10-20T14:01:57Z"
+			"revision": "b7a9d79bc028131d34399e7ef420b73007786202",
+			"revisionTime": "2018-01-23T16:28:19Z"
 		},
 		{
 			"checksumSHA1": "AjbjbhFVAOP/1NU5HL+uy+X/yJo=",
@@ -162,6 +186,12 @@
 			"path": "github.com/pierrec/xxHash/xxHash32",
 			"revision": "5a004441f897722c627870a981d02b29924215fa",
 			"revisionTime": "2016-01-12T16:53:51Z"
+		},
+		{
+			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
+			"path": "github.com/pkg/errors",
+			"revision": "f15c970de5b76fac0b59abb32d62c17cc7bed265",
+			"revisionTime": "2017-10-18T19:55:50Z"
 		},
 		{
 			"checksumSHA1": "KAzbLjI9MzW2tjfcAsK75lVRp6I=",
