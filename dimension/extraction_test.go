@@ -39,7 +39,18 @@ func makeCodelists() map[string]string {
 func TestUnitExtract(t *testing.T) {
 
 	Convey("test creation of extract object/stuct", t, func() {
-		newExtract := &dimension.Extract{dimensionsData, 2, headerRow, "http://test-url.com", extract.DatasetAPIAuthToken, "123", CSVLine, 3, 2, makeCodelists()}
+		newExtract := &dimension.Extract{
+			Dimensions:            dimensionsData,
+			DimensionColumnOffset: 2,
+			HeaderRow:             headerRow,
+			DatasetAPIURL:         "http://test-url.com",
+			DatasetAPIAuthToken:   extract.DatasetAPIAuthToken,
+			InstanceID:            "123",
+			Line:                  CSVLine,
+			MaxRetries:            3,
+			TimeColumn:            2,
+			CodelistMap:           makeCodelists(),
+		}
 		So(newExtract, ShouldResemble, extract)
 	})
 

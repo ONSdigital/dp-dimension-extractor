@@ -27,8 +27,8 @@ type Request struct {
 	MaxAttempts         int
 }
 
-// DimensionOption to store in the dataset api
-type DimensionOption struct {
+// Option to store in the dataset api
+type Option struct {
 	Name     string `json:"dimension"`
 	Code     string `json:"code"`
 	CodeList string `json:"code_list,omitempty"`
@@ -38,8 +38,11 @@ type DimensionOption struct {
 
 // Post executes a post request to the dataset API
 func (request *Request) Post(ctx context.Context, httpClient *rchttp.Client) error {
-	option, err := json.Marshal(DimensionOption{Name: request.DimensionID, Option: request.Value, Label: request.Label,
+	option, err := json.Marshal(Option{Name: request.DimensionID, Option: request.Value, Label: request.Label,
 		CodeList: request.CodeList, Code: request.Code})
+	if err != nil {
+		return err
+	}
 
 	path := fmt.Sprintf("%s/instances/%s/dimensions", request.DatasetAPIURL, request.InstanceID)
 

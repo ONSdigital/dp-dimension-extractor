@@ -12,6 +12,9 @@ build:
 debug:
 	HUMAN_LOG=1 go run main.go
 
+acceptance:
+	ENCRYPTION_DISABLED=false HUMAN_LOG=1 go run main.go
+
 test:
 	go test -cover $(shell go list ./... | grep -v /vendor/)
 

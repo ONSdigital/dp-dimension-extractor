@@ -1,10 +1,17 @@
 package main
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"os"
 	"strconv"
 
 	"fmt"
+	"os/signal"
+	"syscall"
+
 	"github.com/ONSdigital/dp-dimension-extractor/api"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/event"
@@ -13,20 +20,22 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/rchttp"
-	"github.com/ONSdigital/go-ns/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
+	log.Namespace = "dp-dimension-extractor"
+
 	cfg, err := config.Get()
 	if err != nil {
 		log.Error(err, nil)
 		os.Exit(1)
 	}
 
-	log.Namespace = "dp-dimension-extractor"
+	// sensitive fields are omitted from config.String().
+	log.Info("config on startup", log.Data{"config": cfg})
 
 	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
 	if err != nil {
@@ -40,7 +49,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	s3, err := s3.New(cfg.AWSRegion)
+	var privateKey *rsa.PrivateKey
+	if !cfg.EncryptionDisabled {
+		privateKey, err = getPrivateKey([]byte(cfg.AWSPrivateKey))
+		if err != nil {
+			log.Error(err, nil)
+			log.Info("you must provide a valid RSA private key for file upload encryption or set the environment variable ENCRYPTION_DISABLED to be true", nil)
+			os.Exit(1)
+		}
+	}
+
+	s3, err := session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
 	if err != nil {
 		log.Error(err, nil)
 		os.Exit(1)
@@ -67,14 +86,16 @@ func main() {
 	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
 
 	service := &service.Service{
-		EnvMax:                     envMax,
 		DatasetAPIURL:              cfg.DatasetAPIURL,
 		DatasetAPIAuthToken:        cfg.DatasetAPIAuthToken,
-		DimensionExtractorURL:      cfg.DimensionExtractorURL,
-		MaxRetries:                 cfg.MaxRetries,
 		DimensionExtractedProducer: dimensionExtractedProducer,
-		S3:                         s3,
+		DimensionExtractorURL:      cfg.DimensionExtractorURL,
+		EncryptionDisabled:         cfg.EncryptionDisabled,
+		EnvMax:                     envMax,
 		HTTPClient:                 rchttp.DefaultClient,
+		MaxRetries:                 cfg.MaxRetries,
+		PrivateKey:                 privateKey,
+		S3:                         s3,
 	}
 
 	errorReporter, err := reporter.NewImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
@@ -90,7 +111,7 @@ func main() {
 	}
 
 	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
-	eventConsumer.Start(eventLoopDone, eventLoopContext)
+	eventConsumer.Start(eventLoopContext, eventLoopDone)
 
 	// block until a fatal error, signal or eventLoopDone - then proceed to shutdown
 	select {
@@ -146,4 +167,13 @@ func main() {
 		log.Info("done shutdown gracefully", log.Data{"context": ctx.Err()})
 	}
 	os.Exit(1)
+}
+
+func getPrivateKey(keyBytes []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(keyBytes)
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, errors.New("invalid RSA PRIVATE KEY provided")
+	}
+
+	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
