@@ -62,10 +62,12 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, file, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.PrivateKey)
+	producerMessage, instanceID, output, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.PrivateKey)
 	if err != nil {
 		return instanceID, err
 	}
+	file := output.Body
+	defer output.Body.Close()
 
 	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, svc.HTTPClient)
 
@@ -161,7 +163,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, privateKey *rsa.PrivateKey) ([]byte, string, io.Reader, error) {
+func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, privateKey *rsa.PrivateKey) ([]byte, string, *s3.GetObjectOutput, error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Error(err, log.Data{"schema": "failed to unmarshal event"})
@@ -188,7 +190,7 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 
 	log.Debug("event received", logData)
 
-	var req *s3.GetObjectOutput
+	var output *s3.GetObjectOutput
 
 	// Get csv from S3 bucket
 	getInput := &s3.GetObjectInput{
@@ -199,7 +201,7 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	if !encryptionDisabled {
 		client := s3crypto.New(sess, &s3crypto.Config{PrivateKey: privateKey})
 
-		req, err = client.GetObject(getInput)
+		output, err = client.GetObject(getInput)
 		if err != nil {
 			log.ErrorC("encountered error retrieving and decrypting csv file", err, logData)
 			return nil, event.InstanceID, nil, err
@@ -207,15 +209,12 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	} else {
 		client := s3.New(sess)
 
-		req, err = client.GetObject(getInput)
+		output, err = client.GetObject(getInput)
 		if err != nil {
 			log.ErrorC("encountered error retrieving csv file", err, logData)
 			return nil, event.InstanceID, nil, err
 		}
 	}
-
-	file := req.Body
-	defer req.Body.Close()
 
 	log.Debug("file successfully read from aws", logData)
 
@@ -223,8 +222,12 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 		FileURL:    s3URL,
 		InstanceID: event.InstanceID,
 	})
+	if err != nil {
+		output.Body.Close()
+		return nil, event.InstanceID, nil, err
+	}
 
-	return producerMessage, event.InstanceID, file, nil
+	return producerMessage, event.InstanceID, output, nil
 }
 
 func readMessage(eventValue []byte) (*inputFileAvailable, error) {
