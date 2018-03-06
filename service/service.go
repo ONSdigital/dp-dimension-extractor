@@ -250,6 +250,8 @@ func checkHeaderForTime(headerNames []string) int {
 	return 0
 }
 
+// FIXME function will fail to retrieve correct file location if folder
+// structure is to be introduced in s3 bucket
 func getBucketAndFilename(s3URL string) (string, string, error) {
 	urlSplitz := strings.Split(s3URL, "/")
 	n := len(urlSplitz)
