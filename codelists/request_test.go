@@ -37,16 +37,14 @@ func TestGetFromInstanceReturnsCodes(t *testing.T) {
 		json := `{  "dimensions":[ {"name":"time", "id":"321-9873"}, {"name":"geo", "id":"84830"}  ]  }`
 
 		mockedImportClient := &testcodelist.ImportClientMock{
-			DoFunc:func(ctx context.Context, req *http.Request) (*http.Response, error) {
+			DoFunc: func(ctx context.Context, req *http.Request) (*http.Response, error) {
 				body := iOReadCloser{strings.NewReader(json)}
 				response := http.Response{StatusCode: http.StatusOK, Body: body}
 				return &response, nil
 			},
 		}
 
-
 		codeLists, err := GetFromInstance(ctx, url, "1234", "123", mockedImportClient)
-
 
 		So(err, ShouldBeNil)
 		So(codeLists["time"], ShouldEqual, "321-9873")
@@ -68,13 +66,12 @@ func TestGetFromInstanceReturnsErrors(t *testing.T) {
 	Convey("test 404 status code returns an error", t, func() {
 		json := `{}`
 		mockedImportClient := &testcodelist.ImportClientMock{
-			DoFunc:func(ctx context.Context, req *http.Request) (*http.Response, error) {
+			DoFunc: func(ctx context.Context, req *http.Request) (*http.Response, error) {
 				body := iOReadCloser{strings.NewReader(json)}
 				response := http.Response{StatusCode: http.StatusNotFound, Body: body}
 				return &response, nil
 			},
 		}
-
 
 		_, err := GetFromInstance(ctx, url, "1234", "123", mockedImportClient)
 		So(err, ShouldNotBeNil)

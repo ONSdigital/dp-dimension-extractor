@@ -1,7 +1,9 @@
 package service
 
 import (
+	"crypto/rsa"
 	"encoding/csv"
+	"errors"
 	"io"
 	"strconv"
 	"strings"
@@ -15,7 +17,9 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/rchttp"
-	"github.com/ONSdigital/go-ns/s3"
+	"github.com/ONSdigital/s3crypto"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"golang.org/x/net/context"
 )
 
@@ -43,23 +47,27 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 
 // Service handles incoming messages.
 type Service struct {
-	EnvMax                     int64
 	DatasetAPIURL              string
 	DatasetAPIAuthToken        string
+	DimensionExtractedProducer kafka.Producer
 	DimensionExtractorURL      string
+	EncryptionDisabled         bool
+	EnvMax                     int64
 	HTTPClient                 *rchttp.Client
 	MaxRetries                 int
-	DimensionExtractedProducer kafka.Producer
-	S3                         *s3.S3
+	PrivateKey                 *rsa.PrivateKey
+	S3                         *session.Session
 }
 
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, file, err := retrieveData(message, svc.S3)
+	producerMessage, instanceID, output, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.PrivateKey)
 	if err != nil {
 		return instanceID, err
 	}
+	file := output.Body
+	defer output.Body.Close()
 
 	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, svc.HTTPClient)
 
@@ -155,36 +163,71 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func retrieveData(message kafka.Message, s3 *s3.S3) ([]byte, string, io.Reader, error) {
+func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, privateKey *rsa.PrivateKey) ([]byte, string, *s3.GetObjectOutput, error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Error(err, log.Data{"schema": "failed to unmarshal event"})
 		return nil, "", nil, err
 	}
 
+	logData := log.Data{"instance_id": event.InstanceID, "event": event}
+
 	s3URL, err := event.s3URL()
 	if err != nil {
-		log.ErrorC("encountered error parsing file URL", err, log.Data{"instance_id": event.InstanceID})
+		log.ErrorC("encountered error parsing file URL", err, logData)
 		return nil, event.InstanceID, nil, err
 	}
 
-	log.Debug("event received", log.Data{"file_url": event.FileURL, "s3_url": s3URL, "instance_id": event.InstanceID})
+	bucket, filename, err := getBucketAndFilename(s3URL)
+	if err != nil {
+		log.ErrorC("unable to find bucket and filename in event file url", err, logData)
+		return nil, event.InstanceID, nil, err
+	}
+	logData["file_url"] = event.FileURL
+	logData["s3_url"] = s3URL
+	logData["bucket"] = bucket
+	logData["filename"] = filename
+
+	log.Debug("event received", logData)
+
+	var output *s3.GetObjectOutput
 
 	// Get csv from S3 bucket
-	file, err := s3.Get(s3URL)
-	if err != nil {
-		log.ErrorC("encountered error retrieving csv file", err, log.Data{"instance_id": event.InstanceID})
-		return nil, event.InstanceID, nil, err
+	getInput := &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &filename,
 	}
 
-	log.Debug("file successfully read from aws", log.Data{"instance_id": event.InstanceID})
+	if !encryptionDisabled {
+		client := s3crypto.New(sess, &s3crypto.Config{PrivateKey: privateKey})
+
+		output, err = client.GetObject(getInput)
+		if err != nil {
+			log.ErrorC("encountered error retrieving and decrypting csv file", err, logData)
+			return nil, event.InstanceID, nil, err
+		}
+	} else {
+		client := s3.New(sess)
+
+		output, err = client.GetObject(getInput)
+		if err != nil {
+			log.ErrorC("encountered error retrieving csv file", err, logData)
+			return nil, event.InstanceID, nil, err
+		}
+	}
+
+	log.Debug("file successfully read from aws", logData)
 
 	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{
 		FileURL:    s3URL,
 		InstanceID: event.InstanceID,
 	})
+	if err != nil {
+		output.Body.Close()
+		return nil, event.InstanceID, nil, err
+	}
 
-	return producerMessage, event.InstanceID, file, nil
+	return producerMessage, event.InstanceID, output, nil
 }
 
 func readMessage(eventValue []byte) (*inputFileAvailable, error) {
@@ -205,4 +248,24 @@ func checkHeaderForTime(headerNames []string) int {
 	}
 
 	return 0
+}
+
+// FIXME function will fail to retrieve correct file location if folder
+// structure is to be introduced in s3 bucket
+func getBucketAndFilename(s3URL string) (string, string, error) {
+	urlSplitz := strings.Split(s3URL, "/")
+	n := len(urlSplitz)
+	if n < 3 {
+		return "", "", errors.New("could not find bucket or filename in file url")
+	}
+	bucket := urlSplitz[n-2]
+	filename := urlSplitz[n-1]
+	if filename == "" {
+		return "", "", errors.New("missing filename in file url")
+	}
+	if bucket == "" {
+		return "", "", errors.New("missing bucket name in file url")
+	}
+
+	return bucket, filename, nil
 }

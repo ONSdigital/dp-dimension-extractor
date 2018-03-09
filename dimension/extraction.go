@@ -32,7 +32,7 @@ func (e *InvalidNumberOfColumns) Error() string {
 	return fmt.Sprintf("invalid number of columns: [%d], needs to be divisible by 2", len(e.Line))
 }
 
-// InvalidNumberOfColumns is returned when the number of columns is not divisible by 2
+// MissingDimensionValues returns a list of missing dimension values
 type MissingDimensionValues struct {
 	Line []string
 }

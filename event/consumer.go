@@ -26,7 +26,7 @@ type Consumer struct {
 }
 
 // Start polling the kafka topic for incoming messages
-func (c *Consumer) Start(eventLoopDone chan bool, eventLoopContext context.Context) {
+func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone chan bool) {
 	go func() {
 		defer close(eventLoopDone)
 		for {
@@ -43,7 +43,7 @@ func (c *Consumer) Start(eventLoopDone chan bool, eventLoopContext context.Conte
 					if len(instanceID) == 0 {
 						log.ErrorC("instance_id is empty errorReporter.Notify will not be called", err, nil)
 					} else {
-						err := c.ErrorReporter.Notify(instanceID, "event failed to process", err)
+						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
 						if err != nil {
 							log.ErrorC("errorReporter.Notify returned an error", err, log.Data{"instance_id": instanceID})
 						}

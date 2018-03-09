@@ -2,14 +2,15 @@ package event
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/ONSdigital/dp-dimension-extractor/event/mocks"
 	"github.com/ONSdigital/dp-reporter-client/reporter/reportertest"
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/net/context"
-	"testing"
-	"time"
 )
 
 func TestConsumer_Start(t *testing.T) {
@@ -51,7 +52,7 @@ func TestConsumer_Start(t *testing.T) {
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When incoming receives a valid message", func() {
-			consumer.Start(eventLoopDone, ctx)
+			consumer.Start(ctx, eventLoopDone)
 			incomingChan <- msg
 
 			waitOrTimeout(t, eventLoopDone, commitAndRelease)
@@ -114,7 +115,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(eventLoopDone, ctx)
+			consumer.Start(ctx, eventLoopDone)
 
 			incomingChan <- msg
 
@@ -147,7 +148,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(eventLoopDone, ctx)
+			consumer.Start(ctx, eventLoopDone)
 
 			incomingChan <- msg
 

@@ -35,13 +35,16 @@ In order to run the service locally you will need the following:
 | DATASET_API_AUTH_TOKEN       | FD0108EA-825D-411C-9B1D-41EF7727F465  | Authentication token for access to dataset API
 | DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted                  | The kafka topic to write messages to
 | DIMENSION_EXTRACTOR_URL      | http://localhost:21400                | The dimension extractor url
+| ENCRYPTION_DISABLED          | true                                  | A boolean flag to identify if encryption of files is disabled or not
+| EVENT_REPORTER_TOPIC         | report-events                         | The kafka topic to send errors to
+| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                    | The graceful shutdown timeout in seconds
 | INPUT_FILE_AVAILABLE_GROUP   | input-file-available                  | The kafka consumer group to consume messages from
 | INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                  | The kafka topic to consume messages from
-| EVENT_REPORTER_TOPIC         | report-events                         | The kafka topic to send errors to
 | KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
 | KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
-| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                    | The graceful shutdown timeout in seconds
+| RSA_PRIVATE_KEY              | none                                  | The RSA private key to use to encrypt or decrypt files from AWS
+
 
 ### Contributing
 

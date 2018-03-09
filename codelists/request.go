@@ -3,10 +3,11 @@ package codelists
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 // Instance which contains a list of codes
@@ -22,7 +23,8 @@ type CodeList struct {
 }
 
 //go:generate moq -out testcodelist/importclient.go -pkg testcodelist . ImportClient
-// ImportClient
+
+// ImportClient provides a generic interface for import client
 type ImportClient interface {
 	Do(ctx context.Context, req *http.Request) (*http.Response, error)
 }
