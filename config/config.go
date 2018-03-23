@@ -24,6 +24,7 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
+	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
 }
 
 var cfg *Config
@@ -49,6 +50,7 @@ func Get() (*Config, error) {
 		InputFileAvailableGroup:  "input-file-available",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
+		ServiceAuthToken:         "E45F9BFC-3854-46AE-8187-11326A4E00F4",
 	}
 
 	return cfg, envconfig.Process("", cfg)

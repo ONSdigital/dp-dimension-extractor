@@ -86,6 +86,7 @@ func main() {
 	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
 
 	service := &service.Service{
+		AuthToken:                  cfg.ServiceAuthToken,
 		DatasetAPIURL:              cfg.DatasetAPIURL,
 		DatasetAPIAuthToken:        cfg.DatasetAPIAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,

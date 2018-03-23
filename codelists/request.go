@@ -10,6 +10,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+const authorizationHeader = "Authorization"
+
 // Instance which contains a list of codes
 type Instance struct {
 	CodeLists []CodeList `json:"dimensions"`
@@ -30,14 +32,18 @@ type ImportClient interface {
 }
 
 // GetFromInstance returns a map of dimension names to code list IDs
-func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, instanceID string, client ImportClient) (map[string]string, error) {
+func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, authToken, instanceID string, client ImportClient) (map[string]string, error) {
 	url := fmt.Sprintf("%s/instances/%s", datasetAPIUrl, instanceID)
 	codeList := make(map[string]string)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO Remove "intenral-token" header, now uses "Authorization" header
 	req.Header.Set("internal-token", datasetToken)
+	req.Header.Set(authorizationHeader, authToken)
+
 	response, err := client.Do(ctx, req)
 	if err != nil {
 		return nil, errors.Wrap(err, "ImportClient.Do returned error while attempting request to "+url)
@@ -47,10 +53,13 @@ func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, instanceI
 		return nil, errors.Errorf("unexpected status code expected: %d, actual: %s, url: %s", http.StatusOK, response.Status, url)
 	}
 
-	bytes, err := ioutil.ReadAll(response.Body)
+	b, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "error while attempting to read codelist response body")
+	}
 
 	var instance Instance
-	err = json.Unmarshal(bytes, &instance)
+	err = json.Unmarshal(b, &instance)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while attempting to unmarshal json response to codelists.Instance")
 	}

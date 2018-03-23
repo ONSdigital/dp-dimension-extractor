@@ -19,6 +19,8 @@ import (
 var (
 	url string
 	ctx context.Context
+
+	authToken = "1234"
 )
 
 func init() {
@@ -44,7 +46,7 @@ func TestGetFromInstanceReturnsCodes(t *testing.T) {
 			},
 		}
 
-		codeLists, err := GetFromInstance(ctx, url, "1234", "123", mockedImportClient)
+		codeLists, err := GetFromInstance(ctx, url, "1234", authToken, "123", mockedImportClient)
 
 		So(err, ShouldBeNil)
 		So(codeLists["time"], ShouldEqual, "321-9873")
@@ -59,7 +61,7 @@ func TestGetFromInstanceReturnsErrors(t *testing.T) {
 			},
 		}
 
-		_, err := GetFromInstance(context.Background(), url, "1234", "123", mockedImportClient)
+		_, err := GetFromInstance(context.Background(), url, "1234", authToken, "123", mockedImportClient)
 
 		So(err, ShouldNotBeNil)
 	})
@@ -73,7 +75,7 @@ func TestGetFromInstanceReturnsErrors(t *testing.T) {
 			},
 		}
 
-		_, err := GetFromInstance(ctx, url, "1234", "123", mockedImportClient)
+		_, err := GetFromInstance(ctx, url, "1234", authToken, "123", mockedImportClient)
 		So(err, ShouldNotBeNil)
 	})
 }

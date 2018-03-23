@@ -8,6 +8,7 @@ import (
 
 // Extract represents all information needed to extract dimensions
 type Extract struct {
+	AuthToken             string
 	Dimensions            map[string]string
 	DimensionColumnOffset int
 	HeaderRow             []string
@@ -92,6 +93,7 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 
 		request := Request{
 			Attempt:             1,
+			AuthToken:           extract.AuthToken,
 			DimensionID:         strings.ToLower(extract.HeaderRow[i+1]),
 			Code:                line[i],
 			Value:               dimensionValue,
