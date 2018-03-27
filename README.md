@@ -12,10 +12,17 @@ and creates an event by sending a message to a dimension-extracted kafka topic s
 Requirements
 -----------------
 In order to run the service locally you will need the following:
+
 - [Go](https://golang.org/doc/install)
 - [Git](https://git-scm.com/downloads)
 - [Kafka](https://kafka.apache.org/)
 - [Dataset API](https://github.com/ONSdigital/dp-dataset-api)
+- [Vault](https://www.vaultproject.io/)
+
+To run vault:
+
+- Run `brew install vault`
+- Run `vault server -dev`
 
 ### Getting started
 
@@ -43,7 +50,9 @@ In order to run the service locally you will need the following:
 | KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
 | KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
-| RSA_PRIVATE_KEY              | none                                  | The RSA private key to use to encrypt or decrypt files from AWS
+| VAULT_ADDR                   | http://localhost:8200                 | The vault address
+| VAULT_TOKEN                  | -                                     | Vault token required for the client to talk to vault. (Use `make debug` to create a vault token)
+| VAULT_PATH                   | secret/shared/psk                     | The path where the psks will be stored in for vault
 
 
 ### Contributing
