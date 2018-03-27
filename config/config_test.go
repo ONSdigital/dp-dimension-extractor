@@ -19,7 +19,6 @@ func TestSpec(t *testing.T) {
 			})
 
 			Convey("The values should be set to the expected defaults", func() {
-				So(cfg.AWSPrivateKey, ShouldEqual, "")
 				So(cfg.AWSRegion, ShouldEqual, "eu-west-1")
 				So(cfg.BindAddr, ShouldEqual, ":21400")
 				So(cfg.Brokers[0], ShouldEqual, "localhost:9092")

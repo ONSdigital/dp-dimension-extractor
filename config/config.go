@@ -9,7 +9,6 @@ import (
 
 // Config is the filing resource handler config
 type Config struct {
-	AWSPrivateKey            string        `envconfig:"RSA_PRIVATE_KEY"                json:"-"`
 	AWSRegion                string        `envconfig:"AWS_REGION"`
 	BindAddr                 string        `envconfig:"BIND_ADDR"`
 	Brokers                  []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
@@ -24,6 +23,9 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
+	VaultAddr                string        `envconfig:"VAULT_ADDR"`
+	VaultToken               string        `envconfig:"VAULT_TOKEN"                    json:"-"`
+	VaultPath                string        `envconfig:"VAULT_PATH"`
 }
 
 var cfg *Config
@@ -49,6 +51,9 @@ func Get() (*Config, error) {
 		InputFileAvailableGroup:  "input-file-available",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
+		VaultAddr:                "http://localhost:8200",
+		VaultToken:               "",
+		VaultPath:                "secret/shared/psk",
 	}
 
 	return cfg, envconfig.Process("", cfg)

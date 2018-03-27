@@ -1,8 +1,8 @@
 package service
 
 import (
-	"crypto/rsa"
 	"encoding/csv"
+	"encoding/hex"
 	"errors"
 	"io"
 	"strconv"
@@ -33,6 +33,11 @@ type inputFileAvailable struct {
 	InstanceID string `avro:"instance_id"`
 }
 
+// VaultClient is an interface to represent methods called to action upon vault
+type VaultClient interface {
+	ReadKey(path, key string) (string, error)
+}
+
 func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 	if strings.HasPrefix(inputFileAvailable.FileURL, "s3:") {
 		return inputFileAvailable.FileURL, nil
@@ -55,14 +60,15 @@ type Service struct {
 	EnvMax                     int64
 	HTTPClient                 *rchttp.Client
 	MaxRetries                 int
-	PrivateKey                 *rsa.PrivateKey
 	S3                         *session.Session
+	VaultClient                VaultClient
+	VaultPath                  string
 }
 
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, output, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.PrivateKey)
+	producerMessage, instanceID, output, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.VaultClient, svc.VaultPath)
 	if err != nil {
 		return instanceID, err
 	}
@@ -163,7 +169,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, privateKey *rsa.PrivateKey) ([]byte, string, *s3.GetObjectOutput, error) {
+func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, vc VaultClient, vaultPath string) ([]byte, string, *s3.GetObjectOutput, error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Error(err, log.Data{"schema": "failed to unmarshal event"})
@@ -199,9 +205,18 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	}
 
 	if !encryptionDisabled {
-		client := s3crypto.New(sess, &s3crypto.Config{PrivateKey: privateKey})
+		client := s3crypto.New(sess, &s3crypto.Config{HasUserDefinedPSK: true})
 
-		output, err = client.GetObject(getInput)
+		pskStr, err := vc.ReadKey(vaultPath, filename)
+		if err != nil {
+			return nil, event.InstanceID, nil, err
+		}
+		psk, err := hex.DecodeString(pskStr)
+		if err != nil {
+			return nil, event.InstanceID, nil, err
+		}
+
+		output, err = client.GetObjectWithPSK(getInput, psk)
 		if err != nil {
 			log.ErrorC("encountered error retrieving and decrypting csv file", err, logData)
 			return nil, event.InstanceID, nil, err
