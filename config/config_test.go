@@ -34,6 +34,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
 				So(cfg.MaxRetries, ShouldEqual, 3)
 				So(cfg.ServiceAuthToken, ShouldEqual, "E45F9BFC-3854-46AE-8187-11326A4E00F4")
+				So(cfg.ZebedeeURL, ShouldEqual, "http://localhost:8082")
 			})
 		})
 	})

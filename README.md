@@ -16,6 +16,7 @@ In order to run the service locally you will need the following:
 - [Git](https://git-scm.com/downloads)
 - [Kafka](https://kafka.apache.org/)
 - [Dataset API](https://github.com/ONSdigital/dp-dataset-api)
+- [API AUTH STUB](https://github.com/ONSdigital/dp-auth-api-stub)
 
 ### Getting started
 
@@ -23,7 +24,8 @@ In order to run the service locally you will need the following:
 * Run kafka and zookeeper
 * Run local S3 store
 * Run the dataset API, see documentation [here](https://github.com/ONSdigital/dp-dataset-api)
-* Run the application `make debug`
+* Run api auth stub, see documentation [here](https://github.com/ONSdigital/dp-auth-api-stub)
+* Run the application with `make debug`
 
 ### Configuration
 
@@ -44,6 +46,8 @@ In order to run the service locally you will need the following:
 | KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
 | RSA_PRIVATE_KEY              | none                                  | The RSA private key to use to encrypt or decrypt files from AWS
+| SERVICE_AUTH_TOKEN           | E45F9BFC-3854-46AE-8187-11326A4E00F4  | The service authorization token
+| ZEBEDEE_URL                  | "http://localhost:8082"               | The host name for Zebedee
 
 
 ### Contributing
