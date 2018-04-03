@@ -17,6 +17,7 @@ func TestConsumer_Start(t *testing.T) {
 
 	Convey("Given the Consumer has been configured correctly", t, func() {
 		eventLoopDone := make(chan bool, 1)
+		serviceIdentityValidated := make(chan bool, 1)
 		incomingChan := make(chan kafka.Message, 1)
 		commitAndRelease := make(chan bool, 1)
 
@@ -52,7 +53,8 @@ func TestConsumer_Start(t *testing.T) {
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When incoming receives a valid message", func() {
-			consumer.Start(ctx, eventLoopDone)
+			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			serviceIdentityValidated <- true
 			incomingChan <- msg
 
 			waitOrTimeout(t, eventLoopDone, commitAndRelease)
@@ -77,6 +79,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 	Convey("Given a valid message", t, func() {
 
 		eventLoopDone := make(chan bool, 1)
+		serviceIdentityValidated := make(chan bool, 1)
 		incomingChan := make(chan kafka.Message, 1)
 		release := make(chan bool, 1)
 
@@ -115,8 +118,8 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(ctx, eventLoopDone)
-
+			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			serviceIdentityValidated <- true
 			incomingChan <- msg
 
 			waitOrTimeout(t, eventLoopDone, release)
@@ -148,8 +151,8 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(ctx, eventLoopDone)
-
+			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			serviceIdentityValidated <- true
 			incomingChan <- msg
 
 			waitOrTimeout(t, eventLoopDone, release)

@@ -26,9 +26,11 @@ type Consumer struct {
 }
 
 // Start polling the kafka topic for incoming messages
-func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone chan bool) {
+func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, serviceIdentityValidated chan bool) {
 	go func() {
 		defer close(eventLoopDone)
+		// waiting to successfully validate service account (via zebedee)
+		<-serviceIdentityValidated
 		for {
 			select {
 			case <-eventLoopContext.Done():
