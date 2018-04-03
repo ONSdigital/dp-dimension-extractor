@@ -22,7 +22,7 @@ debug:
 	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) HUMAN_LOG=1 go run main.go
 
 acceptance:
-	ENCRYPTION_DISABLED=false HUMAN_LOG=1 go run main.go
+	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) ENCRYPTION_DISABLED=false HUMAN_LOG=1 go run main.go
 
 test:
 	go test -cover $(shell go list ./... | grep -v /vendor/)
