@@ -24,7 +24,7 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
-	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"`
+	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
 	ZebedeeURL               string        `envconfig:"ZEBEDEE_URL"`
 }
 
