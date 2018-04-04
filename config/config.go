@@ -24,7 +24,7 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
-	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
+	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"`
 	ZebedeeURL               string        `envconfig:"ZEBEDEE_URL"`
 }
 
@@ -55,9 +55,13 @@ func Get() (*Config, error) {
 		ZebedeeURL:               "http://localhost:8082",
 	}
 
+	if err := envconfig.Process("", cfg); err != nil {
+		return cfg, err
+	}
+
 	cfg.ServiceAuthToken = "Bearer " + cfg.ServiceAuthToken
 
-	return cfg, envconfig.Process("", cfg)
+	return cfg, nil
 }
 
 // String is implemented to prevent sensitive fields being logged.
