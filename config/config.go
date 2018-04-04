@@ -55,6 +55,8 @@ func Get() (*Config, error) {
 		ZebedeeURL:               "http://localhost:8082",
 	}
 
+	cfg.ServiceAuthToken = "Bearer " + cfg.ServiceAuthToken
+
 	return cfg, envconfig.Process("", cfg)
 }
 
