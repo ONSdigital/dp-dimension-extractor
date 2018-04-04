@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ONSdigital/go-ns/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -52,8 +53,14 @@ func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, authToken
 	if response.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("unexpected status code expected: %d, actual: %s, url: %s", http.StatusOK, response.Status, url)
 	}
+	body := response.Body
+	defer func() {
+		if err = body.Close(); err != nil {
+			log.ErrorC("failed to close response body", err, nil)
+		}
+	}()
 
-	b, err := ioutil.ReadAll(response.Body)
+	b, err := ioutil.ReadAll(body)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while attempting to read codelist response body")
 	}
