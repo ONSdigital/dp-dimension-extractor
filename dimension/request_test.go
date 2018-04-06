@@ -17,6 +17,7 @@ import (
 var (
 	request = &dimension.Request{
 		Attempt:       1,
+		AuthToken:     "asfe-34sfd-23",
 		DimensionID:   "123_sex_female",
 		Value:         "female",
 		DatasetAPIURL: "http://test-url.com",

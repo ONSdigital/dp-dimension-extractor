@@ -19,9 +19,9 @@ var headerNames []string
 var (
 	job = &instance.JobInstance{
 		Attempt:              1,
+		AuthToken:            "sfqr-4f345-f43534",
 		HeaderNames:          headerNames,
 		DatasetAPIURL:        "http://test-url.com",
-		DatasetAPIAuthToken:  "sfqr-4f345-f43534",
 		InstanceID:           "123",
 		MaxAttempts:          1,
 		NumberOfObservations: 1255,
@@ -67,7 +67,7 @@ func TestUnitRequest(t *testing.T) {
 	job.HeaderNames = headerNames
 
 	Convey("test creation of instance object/stuct", t, func() {
-		newJob := instance.NewJobInstance("http://test-url.com", job.DatasetAPIAuthToken, "123", 1255, headerNames, 1)
+		newJob := instance.NewJobInstance(job.AuthToken, "http://test-url.com", job.DatasetAPIAuthToken, "123", 1255, headerNames, 1)
 		So(newJob, ShouldResemble, job)
 	})
 

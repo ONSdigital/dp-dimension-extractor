@@ -16,6 +16,7 @@ In order to run the service locally you will need the following:
 - [Git](https://git-scm.com/downloads)
 - [Kafka](https://kafka.apache.org/)
 - [Dataset API](https://github.com/ONSdigital/dp-dataset-api)
+- [API AUTH STUB](https://github.com/ONSdigital/dp-auth-api-stub)
 
 ### Getting started
 
@@ -23,27 +24,30 @@ In order to run the service locally you will need the following:
 * Run kafka and zookeeper
 * Run local S3 store
 * Run the dataset API, see documentation [here](https://github.com/ONSdigital/dp-dataset-api)
-* Run the application `make debug`
+* Run api auth stub, see documentation [here](https://github.com/ONSdigital/dp-auth-api-stub)
+* Run the application with `make debug`
 
 ### Configuration
 
-| Environment variable         | Default                               | Description
-| ---------------------------- | ------------------------------------- | ----------------------------------------------------
-| AWS_REGION                   | eu-west-1                             | The AWS region to use
-| BIND_ADDR                    | :21400                                | The host and port to bind to
-| DATASET_API_URL              | http://localhost:22000                | The dataset API url
-| DATASET_API_AUTH_TOKEN       | FD0108EA-825D-411C-9B1D-41EF7727F465  | Authentication token for access to dataset API
-| DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted                  | The kafka topic to write messages to
-| DIMENSION_EXTRACTOR_URL      | http://localhost:21400                | The dimension extractor url
-| ENCRYPTION_DISABLED          | true                                  | A boolean flag to identify if encryption of files is disabled or not
-| EVENT_REPORTER_TOPIC         | report-events                         | The kafka topic to send errors to
-| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                    | The graceful shutdown timeout in seconds
-| INPUT_FILE_AVAILABLE_GROUP   | input-file-available                  | The kafka consumer group to consume messages from
-| INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                  | The kafka topic to consume messages from
-| KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
-| KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
-| REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
-| RSA_PRIVATE_KEY              | none                                  | The RSA private key to use to encrypt or decrypt files from AWS
+| Environment variable         | Default                              | Description
+| ---------------------------- | ------------------------------------ | ----------------------------------------------------
+| AWS_REGION                   | eu-west-1                            | The AWS region to use
+| BIND_ADDR                    | :21400                               | The host and port to bind to
+| DATASET_API_URL              | http://localhost:22000               | The dataset API url
+| DATASET_API_AUTH_TOKEN       | FD0108EA-825D-411C-9B1D-41EF7727F465 | Authentication token for access to dataset API
+| DIMENSIONS_EXTRACTED_TOPIC   | dimensions-extracted                 | The kafka topic to write messages to
+| DIMENSION_EXTRACTOR_URL      | http://localhost:21400               | The dimension extractor url
+| ENCRYPTION_DISABLED          | true                                 | A boolean flag to identify if encryption of files is disabled or not
+| EVENT_REPORTER_TOPIC         | report-events                        | The kafka topic to send errors to
+| GRACEFUL_SHUTDOWN_TIMEOUT    | 5s                                   | The graceful shutdown timeout in seconds (time.duration)
+| INPUT_FILE_AVAILABLE_GROUP   | input-file-available                 | The kafka consumer group to consume messages from
+| INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                 | The kafka topic to consume messages from
+| KAFKA_ADDR                   | localhost:9092                       | The kafka broker addresses (can be comma separated)
+| KAFKA_MAX_BYTES              | 2000000                              | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
+| REQUEST_MAX_RETRIES          | 3                                    | The maximum number of attempts for a single http request due to external service failure"
+| RSA_PRIVATE_KEY              | none                                 | The RSA private key to use to encrypt or decrypt files from AWS
+| SERVICE_AUTH_TOKEN           | E45F9BFC-3854-46AE-8187-11326A4E00F4 | The service authorization token
+| ZEBEDEE_URL                  | http://localhost:8082                | The host name for Zebedee
 
 
 ### Contributing

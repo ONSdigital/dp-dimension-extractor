@@ -13,21 +13,25 @@ import (
 	"github.com/ONSdigital/go-ns/rchttp"
 )
 
+const authorizationHeader = "Authorization"
+
 // JobInstance represents the details necessary to update a job instance
 type JobInstance struct {
 	Attempt              int
-	HeaderNames          []string `json:"headers"`
-	InstanceID           string
+	AuthToken            string
 	DatasetAPIURL        string
 	DatasetAPIAuthToken  string
+	HeaderNames          []string `json:"headers"`
+	InstanceID           string
 	MaxAttempts          int
 	NumberOfObservations int `json:"total_observations"`
 }
 
 // NewJobInstance returns a new JobInstance object for a given instance
-func NewJobInstance(datasetAPIURL string, datasetAPIAuthToken string, instanceID string, numberOfObservations int, headerNames []string, maxAttempts int) *JobInstance {
+func NewJobInstance(authToken, datasetAPIURL, datasetAPIAuthToken, instanceID string, numberOfObservations int, headerNames []string, maxAttempts int) *JobInstance {
 	return &JobInstance{
 		Attempt:              1,
+		AuthToken:            authToken,
 		HeaderNames:          headerNames,
 		DatasetAPIURL:        datasetAPIURL,
 		DatasetAPIAuthToken:  datasetAPIAuthToken,
@@ -57,7 +61,9 @@ func (instance *JobInstance) PutData(ctx context.Context, httpClient *rchttp.Cli
 	if err != nil {
 		return err
 	}
+	// TODO Remove "intenral-token" header, now uses "Authorization" header
 	req.Header.Set("internal-token", instance.DatasetAPIAuthToken)
+	req.Header.Set(authorizationHeader, instance.AuthToken)
 
 	res, err := httpClient.Do(ctx, req)
 	if err != nil {
