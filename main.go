@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -21,6 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
 )
+
+const authorizationHeader = "Authorization"
 
 func main() {
 	log.Namespace = "dp-dimension-extractor"
@@ -82,6 +86,7 @@ func main() {
 	}
 
 	service := &service.Service{
+		AuthToken:                  cfg.ServiceAuthToken,
 		DatasetAPIURL:              cfg.DatasetAPIURL,
 		DatasetAPIAuthToken:        cfg.DatasetAPIAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,
@@ -108,7 +113,17 @@ func main() {
 	}
 
 	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
-	eventConsumer.Start(eventLoopContext, eventLoopDone)
+
+	serviceIdentityValidated := make(chan bool)
+	go func() {
+		if err = checkServiceIdentity(eventLoopContext, cfg.ZebedeeURL, cfg.ServiceAuthToken); err != nil {
+			log.ErrorC("could not obtain valid service account", err, nil)
+			eventLoopDone <- true
+		}
+		serviceIdentityValidated <- true
+	}()
+
+	eventConsumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 
 	// block until a fatal error, signal or eventLoopDone - then proceed to shutdown
 	select {
@@ -164,4 +179,36 @@ func main() {
 		log.Info("done shutdown gracefully", log.Data{"context": ctx.Err()})
 	}
 	os.Exit(1)
+}
+
+func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken string) error {
+	// TODO switch out below to use gedges go-ns package
+	client := rchttp.DefaultClient
+
+	path := fmt.Sprintf("%s/identity", zebedeeURL)
+
+	var URL *url.URL
+	URL, err := url.Parse(path)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("GET", URL.String(), nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set(authorizationHeader, serviceAuthToken)
+
+	res, err := client.Do(ctx, req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, zebedeeURL)
+	}
+
+	log.Info("dimension extractor has a valid service account", nil)
+	return nil
 }

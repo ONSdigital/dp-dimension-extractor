@@ -17,12 +17,16 @@ In order to run the service locally you will need the following:
 - [Git](https://git-scm.com/downloads)
 - [Kafka](https://kafka.apache.org/)
 - [Dataset API](https://github.com/ONSdigital/dp-dataset-api)
+<<<<<<< HEAD
 - [Vault](https://www.vaultproject.io/)
 
 To run vault:
 
 - Run `brew install vault`
 - Run `vault server -dev`
+=======
+- [API AUTH STUB](https://github.com/ONSdigital/dp-auth-api-stub)
+>>>>>>> cmd-develop
 
 ### Getting started
 
@@ -30,7 +34,8 @@ To run vault:
 * Run kafka and zookeeper
 * Run local S3 store
 * Run the dataset API, see documentation [here](https://github.com/ONSdigital/dp-dataset-api)
-* Run the application `make debug`
+* Run api auth stub, see documentation [here](https://github.com/ONSdigital/dp-auth-api-stub)
+* Run the application with `make debug`
 
 ### Configuration
 
@@ -53,7 +58,8 @@ To run vault:
 | VAULT_ADDR                   | http://localhost:8200                 | The vault address
 | VAULT_TOKEN                  | -                                     | Vault token required for the client to talk to vault. (Use `make debug` to create a vault token)
 | VAULT_PATH                   | secret/shared/psk                     | The path where the psks will be stored in for vault
-
+| SERVICE_AUTH_TOKEN           | E45F9BFC-3854-46AE-8187-11326A4E00F4 | The service authorization token
+| ZEBEDEE_URL                  | http://localhost:8082                | The host name for Zebedee
 
 ### Contributing
 

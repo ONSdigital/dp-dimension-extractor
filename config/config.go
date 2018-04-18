@@ -26,6 +26,8 @@ type Config struct {
 	VaultAddr                string        `envconfig:"VAULT_ADDR"`
 	VaultToken               string        `envconfig:"VAULT_TOKEN"                    json:"-"`
 	VaultPath                string        `envconfig:"VAULT_PATH"`
+	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
+	ZebedeeURL               string        `envconfig:"ZEBEDEE_URL"`
 }
 
 var cfg *Config
@@ -54,9 +56,17 @@ func Get() (*Config, error) {
 		VaultAddr:                "http://localhost:8200",
 		VaultToken:               "",
 		VaultPath:                "secret/shared/psk",
+		ServiceAuthToken:         "E45F9BFC-3854-46AE-8187-11326A4E00F4",
+		ZebedeeURL:               "http://localhost:8082",
 	}
 
-	return cfg, envconfig.Process("", cfg)
+	if err := envconfig.Process("", cfg); err != nil {
+		return cfg, err
+	}
+
+	cfg.ServiceAuthToken = "Bearer " + cfg.ServiceAuthToken
+
+	return cfg, nil
 }
 
 // String is implemented to prevent sensitive fields being logged.

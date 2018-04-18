@@ -52,6 +52,7 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 
 // Service handles incoming messages.
 type Service struct {
+	AuthToken                  string
 	DatasetAPIURL              string
 	DatasetAPIAuthToken        string
 	DimensionExtractedProducer kafka.Producer
@@ -75,8 +76,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	file := output.Body
 	defer output.Body.Close()
 
-	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, svc.HTTPClient)
-
+	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, svc.AuthToken, instanceID, svc.HTTPClient)
 	if err != nil {
 		log.ErrorC("encountered error immediately when requesting data from the dataset api", err, log.Data{"instance_id": instanceID})
 		return instanceID, err
@@ -121,6 +121,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 		}
 
 		dim := dimension.Extract{
+			AuthToken:             svc.AuthToken,
 			Dimensions:            dimensions,
 			DimensionColumnOffset: dimensionColumnOffset,
 			HeaderRow:             headerRow,
@@ -151,7 +152,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	log.Trace("a count of the number of observations", log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	jobInstance := instance.NewJobInstance(svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
+	jobInstance := instance.NewJobInstance(svc.AuthToken, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
 
 	// PUT request to dataset API to pass the header row and the
 	// number of observations that exist against this job instance

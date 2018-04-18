@@ -13,27 +13,30 @@ import (
 	"github.com/ONSdigital/go-ns/rchttp"
 )
 
+const authorizationHeader = "Authorization"
+
 // Request represents the request details
 type Request struct {
 	Attempt             int
-	DimensionID         string
+	AuthToken           string
 	Code                string
-	Value               string
-	Label               string
 	CodeList            string
-	InstanceID          string
 	DatasetAPIURL       string
 	DatasetAPIAuthToken string
+	DimensionID         string
+	InstanceID          string
+	Label               string
 	MaxAttempts         int
+	Value               string
 }
 
 // Option to store in the dataset api
 type Option struct {
-	Name     string `json:"dimension"`
 	Code     string `json:"code"`
 	CodeList string `json:"code_list,omitempty"`
-	Option   string `json:"option"`
 	Label    string `json:"label"`
+	Name     string `json:"dimension"`
+	Option   string `json:"option"`
 }
 
 // Post executes a post request to the dataset API
@@ -56,7 +59,9 @@ func (request *Request) Post(ctx context.Context, httpClient *rchttp.Client) err
 	if err != nil {
 		return err
 	}
+	// TODO Remove "intenral-token" header, now uses "Authorization" header
 	req.Header.Set("internal-token", request.DatasetAPIAuthToken)
+	req.Header.Set(authorizationHeader, request.AuthToken)
 
 	res, err := httpClient.Do(ctx, req)
 	if err != nil {
