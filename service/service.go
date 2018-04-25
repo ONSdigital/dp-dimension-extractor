@@ -208,7 +208,10 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	if !encryptionDisabled {
 		client := s3crypto.New(sess, &s3crypto.Config{HasUserDefinedPSK: true})
 
-		pskStr, err := vc.ReadKey(vaultPath, filename)
+		path := vaultPath + "/" + filename
+		vaultKey := "key"
+
+		pskStr, err := vc.ReadKey(path, vaultKey)
 		if err != nil {
 			return nil, event.InstanceID, nil, err
 		}
