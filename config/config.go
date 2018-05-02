@@ -46,7 +46,7 @@ func Get() (*Config, error) {
 		DimensionExtractorURL:    "http://localhost:21400",
 		DatasetAPIURL:            "http://localhost:22000",
 		DatasetAPIAuthToken:      "FD0108EA-825D-411C-9B1D-41EF7727F465",
-		EncryptionDisabled:       true,
+		EncryptionDisabled:       false,
 		EventReporterTopic:       "report-events",
 		GracefulShutdownTimeout:  5 * time.Second,
 		InputFileAvailableTopic:  "input-file-available",
