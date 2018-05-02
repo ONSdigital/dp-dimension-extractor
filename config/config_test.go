@@ -26,7 +26,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.DatasetAPIAuthToken, ShouldEqual, "FD0108EA-825D-411C-9B1D-41EF7727F465")
 				So(cfg.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
 				So(cfg.DimensionExtractorURL, ShouldEqual, "http://localhost:21400")
-				So(cfg.EncryptionDisabled, ShouldEqual, true)
+				So(cfg.EncryptionDisabled, ShouldEqual, false)
 				So(cfg.EventReporterTopic, ShouldEqual, "report-events")
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
