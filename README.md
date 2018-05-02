@@ -17,16 +17,13 @@ In order to run the service locally you will need the following:
 - [Git](https://git-scm.com/downloads)
 - [Kafka](https://kafka.apache.org/)
 - [Dataset API](https://github.com/ONSdigital/dp-dataset-api)
-<<<<<<< HEAD
+- [API AUTH STUB](https://github.com/ONSdigital/dp-auth-api-stub)
 - [Vault](https://www.vaultproject.io/)
 
 To run vault:
 
 - Run `brew install vault`
 - Run `vault server -dev`
-=======
-- [API AUTH STUB](https://github.com/ONSdigital/dp-auth-api-stub)
->>>>>>> cmd-develop
 
 ### Getting started
 
