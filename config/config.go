@@ -9,7 +9,6 @@ import (
 
 // Config is the filing resource handler config
 type Config struct {
-	AWSPrivateKey            string        `envconfig:"RSA_PRIVATE_KEY"                json:"-"`
 	AWSRegion                string        `envconfig:"AWS_REGION"`
 	BindAddr                 string        `envconfig:"BIND_ADDR"`
 	Brokers                  []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
@@ -24,6 +23,9 @@ type Config struct {
 	InputFileAvailableTopic  string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 	KafkaMaxBytes            string        `envconfig:"KAFKA_MAX_BYTES"`
 	MaxRetries               int           `envconfig:"REQUEST_MAX_RETRIES"`
+	VaultAddr                string        `envconfig:"VAULT_ADDR"`
+	VaultToken               string        `envconfig:"VAULT_TOKEN"                    json:"-"`
+	VaultPath                string        `envconfig:"VAULT_PATH"`
 	ServiceAuthToken         string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
 	ZebedeeURL               string        `envconfig:"ZEBEDEE_URL"`
 }
@@ -44,13 +46,16 @@ func Get() (*Config, error) {
 		DimensionExtractorURL:    "http://localhost:21400",
 		DatasetAPIURL:            "http://localhost:22000",
 		DatasetAPIAuthToken:      "FD0108EA-825D-411C-9B1D-41EF7727F465",
-		EncryptionDisabled:       true,
+		EncryptionDisabled:       false,
 		EventReporterTopic:       "report-events",
 		GracefulShutdownTimeout:  5 * time.Second,
 		InputFileAvailableTopic:  "input-file-available",
 		InputFileAvailableGroup:  "input-file-available",
 		KafkaMaxBytes:            "2000000",
 		MaxRetries:               3,
+		VaultAddr:                "http://localhost:8200",
+		VaultToken:               "",
+		VaultPath:                "secret/shared/psk",
 		ServiceAuthToken:         "E45F9BFC-3854-46AE-8187-11326A4E00F4",
 		ZebedeeURL:               "http://localhost:8082",
 	}

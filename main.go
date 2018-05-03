@@ -1,10 +1,6 @@
 package main
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,6 +18,7 @@ import (
 	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/rchttp"
+	"github.com/ONSdigital/go-ns/vault"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
@@ -53,16 +50,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	var privateKey *rsa.PrivateKey
-	if !cfg.EncryptionDisabled {
-		privateKey, err = getPrivateKey([]byte(cfg.AWSPrivateKey))
-		if err != nil {
-			log.Error(err, nil)
-			log.Info("you must provide a valid RSA private key for file upload encryption or set the environment variable ENCRYPTION_DISABLED to be true", nil)
-			os.Exit(1)
-		}
-	}
-
 	s3, err := session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
 	if err != nil {
 		log.Error(err, nil)
@@ -89,6 +76,15 @@ func main() {
 
 	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
 
+	var vc service.VaultClient
+	if !cfg.EncryptionDisabled {
+		vc, err = vault.CreateVaultClient(cfg.VaultToken, cfg.VaultAddr, 3)
+		if err != nil {
+			log.Error(err, nil)
+			os.Exit(1)
+		}
+	}
+
 	service := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
 		DatasetAPIURL:              cfg.DatasetAPIURL,
@@ -99,8 +95,9 @@ func main() {
 		EnvMax:                     envMax,
 		HTTPClient:                 rchttp.DefaultClient,
 		MaxRetries:                 cfg.MaxRetries,
-		PrivateKey:                 privateKey,
 		S3:                         s3,
+		VaultClient:                vc,
+		VaultPath:                  cfg.VaultPath,
 	}
 
 	errorReporter, err := reporter.NewImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
@@ -182,15 +179,6 @@ func main() {
 		log.Info("done shutdown gracefully", log.Data{"context": ctx.Err()})
 	}
 	os.Exit(1)
-}
-
-func getPrivateKey(keyBytes []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(keyBytes)
-	if block == nil || block.Type != "RSA PRIVATE KEY" {
-		return nil, errors.New("invalid RSA PRIVATE KEY provided")
-	}
-
-	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
 
 func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken string) error {

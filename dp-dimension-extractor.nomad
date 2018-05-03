@@ -52,6 +52,9 @@ job "dp-dimension-extractor" {
 
       vault {
         policies = ["dp-dimension-extractor"]
+
+        change_mode   = "signal"
+        change_signal = "SIGTERM"
       }
     }
   }
