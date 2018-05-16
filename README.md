@@ -55,8 +55,10 @@ To run vault:
 | VAULT_ADDR                   | http://localhost:8200                 | The vault address
 | VAULT_TOKEN                  | -                                     | Vault token required for the client to talk to vault. (Use `make debug` to create a vault token)
 | VAULT_PATH                   | secret/shared/psk                     | The path where the psks will be stored in for vault
-| SERVICE_AUTH_TOKEN           | E45F9BFC-3854-46AE-8187-11326A4E00F4 | The service authorization token
-| ZEBEDEE_URL                  | http://localhost:8082                | The host name for Zebedee
+| SERVICE_AUTH_TOKEN           | E45F9BFC-3854-46AE-8187-11326A4E00F4  | The service authorization token
+| ZEBEDEE_URL                  | http://localhost:8082                 | The host name for Zebedee
+| AWS_ACCESS_KEY_ID            | -                                     | The AWS access key credential for the dimension extractor
+| AWS_SECRET_ACCESS_KEY        | -                                     | The AWS secret key credential for the dimension extractor
 
 ### Contributing
 
