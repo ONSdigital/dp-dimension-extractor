@@ -23,6 +23,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+const chunkSize = 5 * 1024 * 1024
+
 type dimensionExtracted struct {
 	FileURL    string `avro:"file_url"`
 	InstanceID string `avro:"instance_id"`
@@ -206,7 +208,7 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	}
 
 	if !encryptionDisabled {
-		client := s3crypto.New(sess, &s3crypto.Config{HasUserDefinedPSK: true})
+		client := s3crypto.New(sess, &s3crypto.Config{HasUserDefinedPSK: true, MultipartChunkSize: chunkSize})
 
 		path := vaultPath + "/" + filename
 		vaultKey := "key"
