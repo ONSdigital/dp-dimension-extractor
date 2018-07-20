@@ -9,7 +9,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -513,21 +512,19 @@ func encryptObjectContent(psk []byte, b io.Reader) ([]byte, error) {
 
 func decryptObjectContentChunks(size int, psk []byte, r io.ReadCloser) ([]byte, error) {
 
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
+	p := make([]byte, size)
 
 	var buf bytes.Buffer
-	for chunkOffset := 0; chunkOffset < len(b); chunkOffset += size {
-		chunkEnd := chunkOffset + size
-		if chunkEnd > len(b) {
-			chunkEnd = len(b)
+	for {
+		n, err := io.ReadFull(r, p)
+		if err != nil && err != io.ErrUnexpectedEOF {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
 		}
 
-		fmt.Println(len(b[chunkOffset:chunkEnd]))
-
-		unencryptedChunk, err := decryptObjectContent(psk, ioutil.NopCloser(bytes.NewReader(b[chunkOffset:chunkEnd])))
+		unencryptedChunk, err := decryptObjectContent(psk, ioutil.NopCloser(bytes.NewReader(p[:n])))
 		if err != nil {
 			return nil, err
 		}
