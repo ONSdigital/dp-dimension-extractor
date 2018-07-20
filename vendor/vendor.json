@@ -33,6 +33,12 @@
 			"revisionTime": "2017-10-20T14:01:57Z"
 		},
 		{
+			"checksumSHA1": "8GX4z3tt4e6rXHJtJv8q8YZrFwk=",
+			"path": "github.com/ONSdigital/go-ns/common",
+			"revision": "3fdd13a161b0d6221b2405cce8bbe5ec69168ab7",
+			"revisionTime": "2018-07-05T11:25:05Z"
+		},
+		{
 			"checksumSHA1": "J9OiPnhPHFPhQ+R+dq6LFj+dTxE=",
 			"path": "github.com/ONSdigital/go-ns/handlers/requestID",
 			"revision": "1c6e69223361205f4c50ba8f85b2abbdc1e39b5e",
@@ -45,10 +51,10 @@
 			"revisionTime": "2018-01-23T16:28:19Z"
 		},
 		{
-			"checksumSHA1": "AjbjbhFVAOP/1NU5HL+uy+X/yJo=",
+			"checksumSHA1": "g9flYl+PBs6cYflFY3EpG6IcJGM=",
 			"path": "github.com/ONSdigital/go-ns/log",
-			"revision": "1c6e69223361205f4c50ba8f85b2abbdc1e39b5e",
-			"revisionTime": "2017-10-20T14:01:57Z"
+			"revision": "3fdd13a161b0d6221b2405cce8bbe5ec69168ab7",
+			"revisionTime": "2018-07-05T11:25:05Z"
 		},
 		{
 			"checksumSHA1": "yDc9FMgs8F379i52A0wQgRhEyX4=",
@@ -179,12 +185,6 @@
 		{
 			"checksumSHA1": "wjxQlU1PYxrDRFoL1Vek8Wch7jk=",
 			"path": "github.com/aws/aws-sdk-go/internal/sdkio",
-			"revision": "57564ea051fab8ccbb8cac2aff285647a1aeefd1",
-			"revisionTime": "2018-04-10T22:21:59Z"
-		},
-		{
-			"checksumSHA1": "MYLldFRnsZh21TfCkgkXCT3maPU=",
-			"path": "github.com/aws/aws-sdk-go/internal/sdkrand",
 			"revision": "57564ea051fab8ccbb8cac2aff285647a1aeefd1",
 			"revisionTime": "2018-04-10T22:21:59Z"
 		},
