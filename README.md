@@ -34,6 +34,10 @@ To run vault:
 * Run api auth stub, see documentation [here](https://github.com/ONSdigital/dp-auth-api-stub)
 * Run the application with `make debug`
 
+### Kafka scripts
+
+Scripts for updating and debugging Kafka can be found [here](https://github.com/ONSdigital/dp-data-tools)(dp-data-tools)
+
 ### Configuration
 
 | Environment variable         | Default                               | Description
