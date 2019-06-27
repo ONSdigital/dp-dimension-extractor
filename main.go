@@ -32,6 +32,7 @@ var healthChan = make(chan bool, 1)
 func main() {
 
 	healthChan <- true
+	hasKafka := true
 
 	log.Namespace = "dp-dimension-extractor"
 
@@ -54,6 +55,7 @@ func main() {
 	if err != nil {
 		log.ErrorC("could not obtain consumer", err, nil)
 		markUnhealthy(healthChan)
+		hasKafka = false
 	}
 
 	s3, err := session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
@@ -66,12 +68,14 @@ func main() {
 	if err != nil {
 		log.Error(err, nil)
 		markUnhealthy(healthChan)
+		hasKafka = false
 	}
 
 	dimensionExtractedErrProducer, err := kafka.NewProducer(cfg.Brokers, cfg.EventReporterTopic, int(envMax))
 	if err != nil {
 		log.Error(err, nil)
 		markUnhealthy(healthChan)
+		hasKafka = false
 	}
 
 	signals := make(chan os.Signal, 1)
@@ -141,30 +145,38 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
 
 	go func() {
-		log.Debug("stopping kafka consumer listener", nil)
-		syncConsumerGroup.StopListeningToConsumer(ctx)
-		log.Debug("stopped kafka consumer listener", nil)
-		eventLoopCancel()
-		<-eventLoopDone
-		log.Debug("closing http server", nil)
+
+		// We'll need a switch of some sort to avoid kafka nil pointers
+		if hasKafka {
+			log.Debug("stopping kafka consumer listener", nil)
+			syncConsumerGroup.StopListeningToConsumer(ctx)
+			log.Debug("stopped kafka consumer listener", nil)
+			eventLoopCancel()
+			<-eventLoopDone
+			log.Debug("closing http server", nil)
+			if err := api.Close(ctx); err != nil {
+				log.ErrorC("failed to gracefully close http server", err, nil)
+			} else {
+				log.Debug("gracefully closed http server", nil)
+			}
+			log.Debug("closing dimension extracted kafka producer", nil)
+			service.DimensionExtractedProducer.Close(ctx)
+			log.Debug("closed dimension extracted kafka producer", nil)
+
+			log.Debug("closing down dimension extracted error producer", nil)
+			dimensionExtractedErrProducer.Close(ctx)
+			log.Debug("closed dimension extracted error producer", nil)
+
+			log.Debug("closing kafka consumer", nil)
+			syncConsumerGroup.Close(ctx)
+			log.Debug("closed kafka consumer", nil)
+		}
+
 		if err := api.Close(ctx); err != nil {
 			log.ErrorC("failed to gracefully close http server", err, nil)
 		} else {
 			log.Debug("gracefully closed http server", nil)
 		}
-		log.Debug("closing dimension extracted kafka producer", nil)
-		service.DimensionExtractedProducer.Close(ctx)
-		log.Debug("closed dimension extracted kafka producer", nil)
-
-		log.Debug("closing down dimension extracted error producer", nil)
-		dimensionExtractedErrProducer.Close(ctx)
-		log.Debug("closed dimension extracted error producer", nil)
-
-		log.Debug("closing kafka consumer", nil)
-		syncConsumerGroup.Close(ctx)
-		log.Debug("closed kafka consumer", nil)
-
-		log.Info("done shutdown - cancelling timeout context", nil)
 
 		cancel() // stop timer
 	}()
