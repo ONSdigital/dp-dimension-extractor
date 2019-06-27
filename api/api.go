@@ -18,9 +18,9 @@ type DimensionExtractorAPI struct {
 }
 
 // CreateDimensionExtractorAPI manages all the routes configured to API
-func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error) {
+func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error, healthChan chan bool) {
 	router := mux.NewRouter()
-	routes(host, router)
+	routes(host, router, healthChan)
 
 	httpServer = server.New(bindAddr, router)
 	// Disable this here to allow main to manage graceful shutdown of the entire app.
@@ -35,8 +35,8 @@ func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error) {
 	}()
 }
 
-func routes(host string, router *mux.Router) *DimensionExtractorAPI {
-	api := DimensionExtractorAPI{host: host, router: router}
+func routes(host string, router *mux.Router, healthChan chan bool) *DimensionExtractorAPI {
+	api := DimensionExtractorAPI{host: host, router: router, healthChan: healthChan}
 
 	api.router.Path("/healthcheck").Methods("GET").HandlerFunc(api.healthcheck)
 	return &api

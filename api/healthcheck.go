@@ -8,9 +8,9 @@ import (
 // HealthCheck returns the health of the application.
 func (api *DimensionExtractorAPI) healthcheck(w http.ResponseWriter, req *http.Request) {
 
-	// Check health
+	// Get health
 	h := <- api.healthChan
-	api.healthChan <- h
+	api.healthChan <- h // Put it back for next time :)
 
 	var code int
 	if h {

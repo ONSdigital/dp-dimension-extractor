@@ -26,7 +26,13 @@ import (
 
 const authorizationHeader = "Authorization"
 
+var healthChan = make(chan bool, 1)
+
+
 func main() {
+
+	healthChan <- true
+
 	log.Namespace = "dp-dimension-extractor"
 
 	cfg, err := config.Get()
@@ -41,31 +47,31 @@ func main() {
 	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
 	if err != nil {
 		log.ErrorC("encountered error parsing kafka max bytes", err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	syncConsumerGroup, err := kafka.NewSyncConsumer(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, kafka.OffsetNewest)
 	if err != nil {
 		log.ErrorC("could not obtain consumer", err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	s3, err := session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
 	if err != nil {
 		log.Error(err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	dimensionExtractedProducer, err := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
 	if err != nil {
 		log.Error(err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	dimensionExtractedErrProducer, err := kafka.NewProducer(cfg.Brokers, cfg.EventReporterTopic, int(envMax))
 	if err != nil {
 		log.Error(err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	signals := make(chan os.Signal, 1)
@@ -74,14 +80,14 @@ func main() {
 	eventLoopDone := make(chan bool)
 	apiErrors := make(chan error, 1)
 
-	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
+	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors, healthChan)
 
 	var vc service.VaultClient
 	if !cfg.EncryptionDisabled {
 		vc, err = vault.CreateVaultClient(cfg.VaultToken, cfg.VaultAddr, 3)
 		if err != nil {
 			log.Error(err, nil)
-			os.Exit(1)
+			markUnhealthy(healthChan)
 		}
 	}
 
@@ -103,7 +109,7 @@ func main() {
 	errorReporter, err := reporter.NewImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
 	if err != nil {
 		log.ErrorC("error while attempting to create error reporter client", err, nil)
-		os.Exit(1)
+		markUnhealthy(healthChan)
 	}
 
 	eventConsumer := event.Consumer{
@@ -125,18 +131,10 @@ func main() {
 
 	eventConsumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 
-	// block until a fatal error, signal or eventLoopDone - then proceed to shutdown
+	// block until sigkill
 	select {
-	case <-eventLoopDone:
-		log.Debug("quitting after done was closed", nil)
 	case signal := <-signals:
 		log.Debug("quitting after os signal received", log.Data{"signal": signal})
-	case consumerError := <-syncConsumerGroup.Errors():
-		log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
-	case producerError := <-service.DimensionExtractedProducer.Errors():
-		log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
-	case <-apiErrors:
-		log.Error(fmt.Errorf("server error forcing shutdown"), nil)
 	}
 
 	// give the app `Timeout` seconds to close gracefully before killing it.
@@ -211,4 +209,10 @@ func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken stri
 
 	log.Info("dimension extractor has a valid service account", nil)
 	return nil
+}
+
+
+func markUnhealthy(ch chan bool) {
+	_ = <- ch
+	ch <- false
 }
