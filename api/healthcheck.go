@@ -20,5 +20,5 @@ func (api *DimensionExtractorAPI) healthcheck(w http.ResponseWriter, req *http.R
 	}
 
 	w.WriteHeader(code)
-	w.Write([]byte{})
+	w.Write([]byte(""))
 }
