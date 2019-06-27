@@ -29,8 +29,11 @@ func TestHealthCheckReturnsOK(t *testing.T) {
 		So(err, ShouldBeNil)
 		w := httptest.NewRecorder()
 
+		healthChan := make(chan bool, 1)
+		healthChan <- true
+
 		router := mux.NewRouter()
-		api := routes(host, router)
+		api := routes(host, router, healthChan)
 		api.router.ServeHTTP(w, r)
 		So(w.Code, ShouldEqual, http.StatusOK)
 	})
