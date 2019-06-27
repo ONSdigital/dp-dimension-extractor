@@ -13,6 +13,7 @@ var httpServer *server.Server
 // DimensionExtractorAPI manages ...
 type DimensionExtractorAPI struct {
 	host   string
+	healthChan chan bool
 	router *mux.Router
 }
 
@@ -37,8 +38,7 @@ func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error) {
 func routes(host string, router *mux.Router) *DimensionExtractorAPI {
 	api := DimensionExtractorAPI{host: host, router: router}
 
-	api.router.Path("/healthcheck").Methods("GET").HandlerFunc(healthCheck)
-
+	api.router.Path("/healthcheck").Methods("GET").HandlerFunc(api.healthcheck)
 	return &api
 }
 
