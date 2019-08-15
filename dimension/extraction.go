@@ -57,24 +57,15 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 	}
 
 	for i := dimensionColumnOffset; i < len(line); i += dimensionColumns {
-		var dimensionValue string
-
-		// If a pair of columns represents time always use the value in the second
-		// column to represent dimension value
-		if i == extract.TimeColumn || i+1 == extract.TimeColumn {
+		// all dimensions should be represented by a pair of columns where
+		// the first contains the codes and the second the labels
+		dimensionValue := line[i]
+		if len(dimensionValue) == 0 {
 			dimensionValue = line[i+1]
-		} else {
-			// For all other dimensons use first column in pair; if this is empty use
-			// second column and lastly if both columns are empty then throw an error
-			if len(line[i]) > 0 {
-				dimensionValue = line[i]
-			} else {
-				if len(line[i+1]) > 0 {
-					dimensionValue = line[i+1]
-				} else {
-					return nil, &MissingDimensionValues{line}
-				}
-			}
+		}
+
+		if len(dimensionValue) == 0 {
+			return nil, &MissingDimensionValues{line}
 		}
 
 		dimension := extract.InstanceID + "_" + extract.HeaderRow[i+1]
