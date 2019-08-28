@@ -8,11 +8,11 @@ import (
 )
 
 var headerRow = []string{"Observation", "Data Marking", "Time Codelist", "Time", "League Codelist", "League"}
-var CSVLine = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League"}
-var CSVLine2 = []string{"20", "", "Year", "2015/16", "", "Championship"}
+var CSVLine = []string{"20", "", "2016-17", "2016/17", "PL01", "Premier-League"}
+var CSVLine2 = []string{"20", "", "2015-16", "2015/16", "", "Championship"}
 
-var badCSVLine = []string{"20", "", "Year", "2016/17", "", ""}
-var badCSVLine2 = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League", "test-failure"}
+var badCSVLine = []string{"20", "", "2016-17", "2016/17", "", ""}
+var badCSVLine2 = []string{"20", "", "2016-17", "2016/17", "PL01", "Premier-League", "test-failure"}
 
 var dimensionsData = make(map[string]string)
 
@@ -58,7 +58,7 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, AuthToken: extract.AuthToken, DimensionID: "time", Value: "2016/17", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
+			So(dimensions["123_Time"], ShouldResemble, dimension.Request{Attempt: 1, AuthToken: extract.AuthToken, DimensionID: "time", Value: "2016-17", Code: "2016-17", Label: "2016/17", CodeList: "1234-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 			So(dimensions["123_League"], ShouldResemble, dimension.Request{Attempt: 1, AuthToken: extract.AuthToken, DimensionID: "league", Value: "PL01", Code: "PL01", Label: "Premier-League", CodeList: "dgdfg-435435-5675", DatasetAPIURL: extract.DatasetAPIURL, InstanceID: extract.InstanceID, MaxAttempts: 3})
 		})
 
