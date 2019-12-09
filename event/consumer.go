@@ -32,22 +32,11 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 		// waiting to successfully validate service account (via zebedee)
 		<-serviceIdentityValidated
 		for {
-
-			// Create incomming channel to propagate kafka consumer incomming if it exists only
-			var consumerMsg chan (kafka.Message)
-			if c.KafkaConsumer != nil {
-				consumerMsg = c.KafkaConsumer.Incoming()
-			} else {
-				consumerMsg = make(chan kafka.Message, 1)
-			}
-
 			select {
-
 			case <-eventLoopContext.Done():
 				log.Trace("Event loop context done", log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
-
-			case message := <-consumerMsg:
+			case message := <-c.KafkaConsumer.Incoming():
 
 				instanceID, err := c.EventService.HandleMessage(eventLoopContext, message)
 				if err != nil {
