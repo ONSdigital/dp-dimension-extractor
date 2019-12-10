@@ -86,7 +86,7 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 // GetAwsSession returns an AWS client for the AWS region provided in Config
 func (e *ExternalServiceList) GetAwsSession(cfg *config.Config) (awsSession *session.Session, err error) {
 	awsSession, err = session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
-	if err != nil {
+	if err == nil {
 		e.AwsSession = true
 	}
 
@@ -101,7 +101,7 @@ func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProduc
 	}
 
 	errorReporter, err = reporter.NewImportErrorReporter(dimensionExtractedErrProducer, serviceName)
-	if err != nil {
+	if err == nil {
 		e.ErrorReporter = true
 	}
 
