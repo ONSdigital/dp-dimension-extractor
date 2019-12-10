@@ -30,12 +30,11 @@ const (
 	DimensionExtractedErr
 )
 
-var kafkaProducersNames = []string{"DimensionExtracted", "DimensionExtractedErr"}
+var kafkaProducerNames = []string{"DimensionExtracted", "DimensionExtractedErr"}
 
 // Values of the kafka producers names
 func (k KafkaProducerName) String() string {
-	// return [...]string{"DimensionExtracted", "DimensionExtractedErr"}[k]
-	return kafkaProducersNames[k]
+	return kafkaProducerNames[k]
 }
 
 // GetConsumer returns an initialised kafka consumer
@@ -47,10 +46,11 @@ func (e *ExternalServiceList) GetConsumer(kafkaBrokers []string, cfg *config.Con
 		kafka.OffsetNewest,
 	)
 
-	if err == nil {
-		e.Consumer = true
+	if err != nil {
+		return
 	}
 
+	e.Consumer = true
 	return
 }
 
@@ -67,7 +67,7 @@ func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic string, n
 	case name == DimensionExtractedErr:
 		e.DimensionExtractedErrProducer = true
 	default:
-		err = fmt.Errorf("Kafka producer name not recognised: '%s'. Valid names: %v", name.String(), kafkaProducersNames)
+		err = fmt.Errorf("Kafka producer name not recognised: '%s'. Valid names: %v", name.String(), kafkaProducerNames)
 	}
 
 	return
@@ -76,20 +76,22 @@ func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic string, n
 // GetVault returns a vault client
 func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client *vault.VaultClient, err error) {
 	client, err = vault.CreateVaultClient(cfg.VaultToken, cfg.VaultAddr, retries)
-	if err == nil {
-		e.Vault = true
+	if err != nil {
+		return
 	}
 
+	e.Vault = true
 	return
 }
 
 // GetAwsSession returns an AWS client for the AWS region provided in Config
 func (e *ExternalServiceList) GetAwsSession(cfg *config.Config) (awsSession *session.Session, err error) {
 	awsSession, err = session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
-	if err == nil {
-		e.AwsSession = true
+	if err != nil {
+		return
 	}
 
+	e.AwsSession = true
 	return
 }
 
@@ -97,13 +99,14 @@ func (e *ExternalServiceList) GetAwsSession(cfg *config.Config) (awsSession *ses
 func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProducer reporter.KafkaProducer, serviceName string) (errorReporter reporter.ImportErrorReporter, err error) {
 	if !e.DimensionExtractedErrProducer {
 		return reporter.ImportErrorReporter{},
-			fmt.Errorf("Cannot create ImportErrorReporter because kafka producer '%s' is not available", kafkaProducersNames[DimensionExtractedErr])
+			fmt.Errorf("Cannot create ImportErrorReporter because kafka producer '%s' is not available", kafkaProducerNames[DimensionExtractedErr])
 	}
 
 	errorReporter, err = reporter.NewImportErrorReporter(dimensionExtractedErrProducer, serviceName)
-	if err == nil {
-		e.ErrorReporter = true
+	if err != nil {
+		return
 	}
 
+	e.ErrorReporter = true
 	return
 }
