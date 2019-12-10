@@ -1,7 +1,7 @@
 package initialise
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
@@ -21,14 +21,22 @@ type ExternalServiceList struct {
 	ErrorReporter                 bool
 }
 
+// KafkaProducerName : Type for kafka producer name used by iota constants
+type KafkaProducerName int
+
+// Possible names of Kafa Producers
 const (
-	// DimensionExtractedProducer represents a name for
-	// the producer that writes to a dimesion extracted topic (DIMENSIONS_EXTRACTED_TOPIC)
-	DimensionExtractedProducer = "dimension-extracted-producer"
-	// DimensionExtractedErrProducer represents a name for
-	// the producer that writes to an error topic (EVENT_REPORTER_TOPIC)
-	DimensionExtractedErrProducer = "error-producer"
+	DimensionExtracted = iota
+	DimensionExtractedErr
 )
+
+var kafkaProducersNames = []string{"DimensionExtracted", "DimensionExtractedErr"}
+
+// Values of the kafka producers names
+func (k KafkaProducerName) String() string {
+	// return [...]string{"DimensionExtracted", "DimensionExtractedErr"}[k]
+	return kafkaProducersNames[k]
+}
 
 // GetConsumer returns an initialised kafka consumer
 func (e *ExternalServiceList) GetConsumer(kafkaBrokers []string, cfg *config.Config) (kafkaConsumer *kafka.ConsumerGroup, err error) {
@@ -47,15 +55,19 @@ func (e *ExternalServiceList) GetConsumer(kafkaBrokers []string, cfg *config.Con
 }
 
 // GetProducer returns a kafka producer
-func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic, name string, envMax int) (kafkaProducer kafka.Producer, err error) {
+func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic string, name KafkaProducerName, envMax int) (kafkaProducer kafka.Producer, err error) {
 	kafkaProducer, err = kafka.NewProducer(kafkaBrokers, topic, envMax)
-	if err == nil {
-		switch {
-		case name == DimensionExtractedProducer:
-			e.DimensionExtractedProducer = true
-		case name == DimensionExtractedErrProducer:
-			e.DimensionExtractedErrProducer = true
-		}
+	if err != nil {
+		return
+	}
+
+	switch {
+	case name == DimensionExtracted:
+		e.DimensionExtractedProducer = true
+	case name == DimensionExtractedErr:
+		e.DimensionExtractedErrProducer = true
+	default:
+		err = fmt.Errorf("Kafka producer name not recognised: '%s'. Valid names: %v", name.String(), kafkaProducersNames)
 	}
 
 	return
@@ -84,7 +96,8 @@ func (e *ExternalServiceList) GetAwsSession(cfg *config.Config) (awsSession *ses
 // GetImportErrorReporter returns an ErrorImportReporter to send error reports to the import-reporter (only if DimensionExtractedErrProducer is available)
 func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProducer reporter.KafkaProducer, serviceName string) (errorReporter reporter.ImportErrorReporter, err error) {
 	if !e.DimensionExtractedErrProducer {
-		return reporter.ImportErrorReporter{}, errors.New("Cannot create ImportErrorReporter because kafka producer 'DimensionExtractedErrProducer' is not available")
+		return reporter.ImportErrorReporter{},
+			fmt.Errorf("Cannot create ImportErrorReporter because kafka producer '%s' is not available", kafkaProducersNames[DimensionExtractedErr])
 	}
 
 	errorReporter, err = reporter.NewImportErrorReporter(dimensionExtractedErrProducer, serviceName)

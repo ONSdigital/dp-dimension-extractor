@@ -56,7 +56,7 @@ func main() {
 	dimensionExtractedProducer, err := serviceList.GetProducer(
 		cfg.Brokers,
 		cfg.DimensionsExtractedTopic,
-		initialise.DimensionExtractedProducer,
+		initialise.DimensionExtracted,
 		int(envMax),
 	)
 	logIfError("", err, nil)
@@ -65,7 +65,7 @@ func main() {
 	dimensionExtractedErrProducer, err := serviceList.GetProducer(
 		cfg.Brokers,
 		cfg.EventReporterTopic,
-		initialise.DimensionExtractedErrProducer,
+		initialise.DimensionExtractedErr,
 		int(envMax),
 	)
 	logIfError("", err, nil)
@@ -185,23 +185,23 @@ func main() {
 
 		// If DimensionExtracted kafka producer exists, close it
 		if serviceList.DimensionExtractedProducer {
-			log.Debug("closing dimension extracted kafka producer", nil)
+			log.Debug("closing kafka producer", log.Data{"producer": "DimensionExtracted"})
 			service.DimensionExtractedProducer.Close(ctx)
-			log.Debug("closed dimension extracted kafka producer", nil)
+			log.Debug("closed kafka producer", log.Data{"producer": "DimensionExtracted"})
 		}
 
 		// If DimentionExtractedError kafka producer exists, close it.
 		if serviceList.DimensionExtractedErrProducer {
-			log.Debug("closing down dimension extracted error producer", nil)
+			log.Debug("closing kafka producer", log.Data{"producer": "DimensionExtractedErr"})
 			dimensionExtractedErrProducer.Close(ctx)
-			log.Debug("closed dimension extracted error producer", nil)
+			log.Debug("closed kafka producer", log.Data{"producer": "DimensionExtractedErr"})
 		}
 
 		// If kafka consumer exists, close it.
 		if serviceList.Consumer {
-			log.Debug("closing kafka consumer", nil)
+			log.Debug("closing kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
 			syncConsumerGroup.Close(ctx)
-			log.Debug("closed kafka consumer", nil)
+			log.Debug("closed kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
 		}
 
 		log.Info("done shutdown - cancelling timeout context", nil)
