@@ -128,14 +128,14 @@ func main() {
 
 	// Log non-fatal errors, without exiting
 	go func() {
-		var consumerErrors chan (error)
+		var consumerErrors, producerErrors chan (error)
+
 		if serviceList.Consumer {
 			consumerErrors = syncConsumerGroup.Errors()
 		} else {
 			consumerErrors = make(chan error, 1)
 		}
 
-		var producerErrors chan (error)
 		if serviceList.DimensionExtractedProducer {
 			producerErrors = service.DimensionExtractedProducer.Errors()
 		} else {
@@ -149,13 +149,13 @@ func main() {
 			log.ErrorC("kafka producer", producerError, nil)
 		case apiError := <-apiErrors:
 			log.ErrorC("server error", apiError, nil)
+		case <-eventLoopDone:
+			log.ErrorC("event loop done", nil, nil)
 		}
 	}()
 
 	// Block until a fatal error occurs
 	select {
-	case <-eventLoopDone:
-		log.Debug("quitting after done was closed", nil)
 	case signal := <-signals:
 		log.Debug("quitting after os signal received", log.Data{"signal": signal})
 	}
