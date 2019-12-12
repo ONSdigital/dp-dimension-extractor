@@ -117,8 +117,9 @@ func main() {
 	go func() {
 		if err = checkServiceIdentity(eventLoopContext, cfg.ZebedeeURL, cfg.ServiceAuthToken); err != nil {
 			log.ErrorC("could not obtain valid service account", err, nil)
+		} else {
+			serviceIdentityValidated <- true
 		}
-		serviceIdentityValidated <- true
 	}()
 
 	// Start Event Consumer (only if it is available)
