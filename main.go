@@ -13,14 +13,10 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/api"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/event"
+	"github.com/ONSdigital/dp-dimension-extractor/initialise"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
-	"github.com/ONSdigital/dp-reporter-client/reporter"
-	"github.com/ONSdigital/go-ns/kafka"
 	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/rchttp"
-	"github.com/ONSdigital/go-ns/vault"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
 )
 
@@ -28,61 +24,64 @@ const authorizationHeader = "Authorization"
 
 func main() {
 	log.Namespace = "dp-dimension-extractor"
+	log.Info("Starting dimension extractor", nil)
 
-	cfg, err := config.Get()
-	if err != nil {
-		log.Error(err, nil)
-		os.Exit(1)
-	}
-
-	// sensitive fields are omitted from config.String().
-	log.Info("config on startup", log.Data{"config": cfg})
-
-	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
-	if err != nil {
-		log.ErrorC("encountered error parsing kafka max bytes", err, nil)
-		os.Exit(1)
-	}
-
-	syncConsumerGroup, err := kafka.NewSyncConsumer(cfg.Brokers, cfg.InputFileAvailableTopic, cfg.InputFileAvailableGroup, kafka.OffsetNewest)
-	if err != nil {
-		log.ErrorC("could not obtain consumer", err, nil)
-		os.Exit(1)
-	}
-
-	s3, err := session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
-	if err != nil {
-		log.Error(err, nil)
-		os.Exit(1)
-	}
-
-	dimensionExtractedProducer, err := kafka.NewProducer(cfg.Brokers, cfg.DimensionsExtractedTopic, int(envMax))
-	if err != nil {
-		log.Error(err, nil)
-		os.Exit(1)
-	}
-
-	dimensionExtractedErrProducer, err := kafka.NewProducer(cfg.Brokers, cfg.EventReporterTopic, int(envMax))
-	if err != nil {
-		log.Error(err, nil)
-		os.Exit(1)
-	}
-
+	// Signals channel to notify only of SIGING and SIGTERM
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
+	// Attempt to get config. Exit on failure.
+	cfg, err := config.Get()
+	exitIfError("", err, nil)
+
+	// Sensitive fields are omitted from config.String().
+	log.Info("config on startup", log.Data{"config": cfg})
+
+	// Attempt to parse envMax from config. Exit on failure.
+	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
+	exitIfError("encountered error parsing kafka max bytes", err, nil)
+
+	// External services and their initialization state
+	var serviceList initialise.ExternalServiceList
+
+	// Get syncConsumerGroup Kafka Consumer
+	syncConsumerGroup, err := serviceList.GetConsumer(cfg.Brokers, cfg)
+	logIfError("could not obtain consumer", err, nil)
+
+	// Get AWS Session to access S3
+	s3, err := serviceList.GetAwsSession(cfg)
+	logIfError("", err, nil)
+
+	// Get dimensionExtracted Kafka Producer
+	dimensionExtractedProducer, err := serviceList.GetProducer(
+		cfg.Brokers,
+		cfg.DimensionsExtractedTopic,
+		initialise.DimensionExtracted,
+		int(envMax),
+	)
+	logIfError("", err, nil)
+
+	// Get dimensionExtracted Error Kafka Producer
+	dimensionExtractedErrProducer, err := serviceList.GetProducer(
+		cfg.Brokers,
+		cfg.EventReporterTopic,
+		initialise.DimensionExtractedErr,
+		int(envMax),
+	)
+	logIfError("", err, nil)
+
+	// create Channels
 	eventLoopDone := make(chan bool)
 	apiErrors := make(chan error, 1)
 
+	// Create API
 	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
 
+	// If encryption is enabled, get Vault Client
 	var vc service.VaultClient
 	if !cfg.EncryptionDisabled {
-		vc, err = vault.CreateVaultClient(cfg.VaultToken, cfg.VaultAddr, 3)
-		if err != nil {
-			log.Error(err, nil)
-			os.Exit(1)
-		}
+		vc, err = serviceList.GetVault(cfg, 3)
+		logIfError("", err, nil)
 	}
 
 	service := &service.Service{
@@ -100,12 +99,11 @@ func main() {
 		VaultPath:                  cfg.VaultPath,
 	}
 
-	errorReporter, err := reporter.NewImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
-	if err != nil {
-		log.ErrorC("error while attempting to create error reporter client", err, nil)
-		os.Exit(1)
-	}
+	// Get Error reporter
+	errorReporter, err := serviceList.GetImportErrorReporter(dimensionExtractedErrProducer, log.Namespace)
+	logIfError("error while attempting to create error reporter client", err, nil)
 
+	// Initialize event Consumer struct with initialized kafka consumers/producers and services
 	eventConsumer := event.Consumer{
 		KafkaConsumer: syncConsumerGroup,
 		EventService:  service,
@@ -114,60 +112,100 @@ func main() {
 
 	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
 
+	// Validate this service against Zebedee
 	serviceIdentityValidated := make(chan bool)
 	go func() {
 		if err = checkServiceIdentity(eventLoopContext, cfg.ZebedeeURL, cfg.ServiceAuthToken); err != nil {
 			log.ErrorC("could not obtain valid service account", err, nil)
-			eventLoopDone <- true
+		} else {
+			serviceIdentityValidated <- true
 		}
-		serviceIdentityValidated <- true
 	}()
 
-	eventConsumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
+	// Start Event Consumer (only if it is available)
+	if serviceList.Consumer {
+		eventConsumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
+	}
 
-	// block until a fatal error, signal or eventLoopDone - then proceed to shutdown
+	// Log non-fatal errors, without exiting
+	go func() {
+		var consumerErrors, producerErrors chan (error)
+
+		if serviceList.Consumer {
+			consumerErrors = syncConsumerGroup.Errors()
+		} else {
+			consumerErrors = make(chan error, 1)
+		}
+
+		if serviceList.DimensionExtractedProducer {
+			producerErrors = service.DimensionExtractedProducer.Errors()
+		} else {
+			producerErrors = make(chan error, 1)
+		}
+
+		select {
+		case consumerError := <-consumerErrors:
+			log.ErrorC("kafka consumer", consumerError, nil)
+		case producerError := <-producerErrors:
+			log.ErrorC("kafka producer", producerError, nil)
+		case apiError := <-apiErrors:
+			log.ErrorC("server error", apiError, nil)
+		case <-eventLoopDone:
+			log.ErrorC("event loop done", nil, nil)
+		}
+	}()
+
+	// Block until a fatal error occurs
 	select {
-	case <-eventLoopDone:
-		log.Debug("quitting after done was closed", nil)
 	case signal := <-signals:
 		log.Debug("quitting after os signal received", log.Data{"signal": signal})
-	case consumerError := <-syncConsumerGroup.Errors():
-		log.Error(fmt.Errorf("aborting consumer"), log.Data{"message_received": consumerError})
-	case producerError := <-service.DimensionExtractedProducer.Errors():
-		log.Error(fmt.Errorf("aborting producer"), log.Data{"message_received": producerError})
-	case <-apiErrors:
-		log.Error(fmt.Errorf("server error forcing shutdown"), nil)
 	}
 
 	// give the app `Timeout` seconds to close gracefully before killing it.
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTimeout)
 
 	go func() {
-		log.Debug("stopping kafka consumer listener", nil)
-		syncConsumerGroup.StopListeningToConsumer(ctx)
-		log.Debug("stopped kafka consumer listener", nil)
+
+		// If kafka consumer exists, stop listening to it. (Will close later)
+		if serviceList.Consumer {
+			log.Debug("stopping kafka consumer listener", nil)
+			syncConsumerGroup.StopListeningToConsumer(ctx)
+			log.Debug("stopped kafka consumer listener", nil)
+		}
+
 		eventLoopCancel()
 		<-eventLoopDone
+
+		// Close API
 		log.Debug("closing http server", nil)
 		if err := api.Close(ctx); err != nil {
 			log.ErrorC("failed to gracefully close http server", err, nil)
 		} else {
 			log.Debug("gracefully closed http server", nil)
 		}
-		log.Debug("closing dimension extracted kafka producer", nil)
-		service.DimensionExtractedProducer.Close(ctx)
-		log.Debug("closed dimension extracted kafka producer", nil)
 
-		log.Debug("closing down dimension extracted error producer", nil)
-		dimensionExtractedErrProducer.Close(ctx)
-		log.Debug("closed dimension extracted error producer", nil)
+		// If DimensionExtracted kafka producer exists, close it
+		if serviceList.DimensionExtractedProducer {
+			log.Debug("closing kafka producer", log.Data{"producer": "DimensionExtracted"})
+			service.DimensionExtractedProducer.Close(ctx)
+			log.Debug("closed kafka producer", log.Data{"producer": "DimensionExtracted"})
+		}
 
-		log.Debug("closing kafka consumer", nil)
-		syncConsumerGroup.Close(ctx)
-		log.Debug("closed kafka consumer", nil)
+		// If DimentionExtractedError kafka producer exists, close it.
+		if serviceList.DimensionExtractedErrProducer {
+			log.Debug("closing kafka producer", log.Data{"producer": "DimensionExtractedErr"})
+			dimensionExtractedErrProducer.Close(ctx)
+			log.Debug("closed kafka producer", log.Data{"producer": "DimensionExtractedErr"})
+		}
+
+		// If kafka consumer exists, close it.
+		if serviceList.Consumer {
+			log.Debug("closing kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
+			syncConsumerGroup.Close(ctx)
+			log.Debug("closed kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
+		}
 
 		log.Info("done shutdown - cancelling timeout context", nil)
-
 		cancel() // stop timer
 	}()
 
@@ -211,4 +249,19 @@ func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken stri
 
 	log.Info("dimension extractor has a valid service account", nil)
 	return nil
+}
+
+// if error is not nil, log it and exit
+func exitIfError(correlationKey string, err error, data log.Data) {
+	if err != nil {
+		log.ErrorC(correlationKey, err, data)
+		os.Exit(1)
+	}
+}
+
+// if error is not nil, log it only
+func logIfError(correlationKey string, err error, data log.Data) {
+	if err != nil {
+		log.ErrorC(correlationKey, err, data)
+	}
 }
