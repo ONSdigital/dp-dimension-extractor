@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
-	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -17,7 +17,7 @@ const host = ":80"
 func TestHealthCheckReturnsOK(t *testing.T) {
 	cfg, err := config.Get()
 	if err != nil {
-		log.Error(err, nil)
+		log.Event(nil, "config error", log.ERROR, log.Error(err))
 		os.Exit(1)
 	}
 

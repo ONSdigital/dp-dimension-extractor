@@ -3,11 +3,11 @@ package api
 import (
 	"net/http"
 
-	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/log.go/log"
 )
 
 // HealthCheck returns the health of the application.
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	log.Debug("Healthcheck endpoint.", nil)
+	log.Event(nil, "Healthcheck endpoint.", log.INFO)
 	w.WriteHeader(http.StatusOK)
 }

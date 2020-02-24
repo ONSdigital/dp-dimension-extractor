@@ -1,12 +1,13 @@
 package initialise
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
+	kafka "github.com/ONSdigital/dp-kafka"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
-	"github.com/ONSdigital/go-ns/kafka"
-	"github.com/ONSdigital/go-ns/vault"
+	vault "github.com/ONSdigital/dp-vault"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
@@ -37,15 +38,18 @@ func (k KafkaProducerName) String() string {
 	return kafkaProducerNames[k]
 }
 
-// GetConsumer returns an initialised kafka consumer
-func (e *ExternalServiceList) GetConsumer(kafkaBrokers []string, cfg *config.Config) (kafkaConsumer *kafka.ConsumerGroup, err error) {
-	kafkaConsumer, err = kafka.NewSyncConsumer(
+// GetConsumer returns a kafka consumer, which might not be initialised yet.
+func (e *ExternalServiceList) GetConsumer(ctx context.Context, kafkaBrokers []string, cfg *config.Config) (kafkaConsumer *kafka.ConsumerGroup, err error) {
+	cgChannels := kafka.CreateConsumerGroupChannels(true)
+	kafkaConsumer, err = kafka.NewConsumerGroup(
+		ctx,
 		kafkaBrokers,
 		cfg.InputFileAvailableTopic,
 		cfg.InputFileAvailableGroup,
 		kafka.OffsetNewest,
+		true,
+		cgChannels,
 	)
-
 	if err != nil {
 		return
 	}
@@ -54,9 +58,10 @@ func (e *ExternalServiceList) GetConsumer(kafkaBrokers []string, cfg *config.Con
 	return
 }
 
-// GetProducer returns a kafka producer
-func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic string, name KafkaProducerName, envMax int) (kafkaProducer kafka.Producer, err error) {
-	kafkaProducer, err = kafka.NewProducer(kafkaBrokers, topic, envMax)
+// GetProducer returns a kafka producer, which might not be initialised yet.
+func (e *ExternalServiceList) GetProducer(ctx context.Context, kafkaBrokers []string, topic string, name KafkaProducerName, envMax int) (kafkaProducer *kafka.Producer, err error) {
+	pChannels := kafka.CreateProducerChannels()
+	kafkaProducer, err = kafka.NewProducer(ctx, kafkaBrokers, topic, envMax, pChannels)
 	if err != nil {
 		return
 	}
@@ -74,8 +79,8 @@ func (e *ExternalServiceList) GetProducer(kafkaBrokers []string, topic string, n
 }
 
 // GetVault returns a vault client
-func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client *vault.VaultClient, err error) {
-	client, err = vault.CreateVaultClient(cfg.VaultToken, cfg.VaultAddr, retries)
+func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client *vault.Client, err error) {
+	client, err = vault.CreateClient(cfg.VaultToken, cfg.VaultAddr, retries)
 	if err != nil {
 		return
 	}

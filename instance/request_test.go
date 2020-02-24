@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-dimension-extractor/instance"
-	"github.com/ONSdigital/go-ns/rchttp"
+	rchttp "github.com/ONSdigital/dp-rchttp"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/ONSdigital/dp-dimension-extractor/codelists/testcodelist"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
-	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/log.go/log"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"context"
@@ -26,7 +26,7 @@ var (
 func init() {
 	cfg, err := config.Get()
 	if err != nil {
-		log.Error(err, nil)
+		log.Event(nil, "config error", log.ERROR, log.Error(err))
 		os.Exit(1)
 	}
 

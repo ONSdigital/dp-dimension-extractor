@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/log.go/log"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -56,7 +56,7 @@ func GetFromInstance(ctx context.Context, datasetAPIUrl, datasetToken, authToken
 	body := response.Body
 	defer func() {
 		if err = body.Close(); err != nil {
-			log.ErrorC("failed to close response body", err, nil)
+			log.Event(ctx, "failed to close response body", log.ERROR, log.Error(err))
 		}
 	}()
 

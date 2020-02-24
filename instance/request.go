@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ONSdigital/go-ns/log"
-	"github.com/ONSdigital/go-ns/rchttp"
+	rchttp "github.com/ONSdigital/dp-rchttp"
+	"github.com/ONSdigital/log.go/log"
 )
 
 const authorizationHeader = "Authorization"
@@ -74,6 +74,6 @@ func (instance *JobInstance) PutData(ctx context.Context, httpClient *rchttp.Cli
 		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, instance.DatasetAPIURL)
 	}
 
-	log.Info("successfully sent request to dataset API", log.Data{"instance_id": instance.InstanceID, "number_of_observations": instance.NumberOfObservations})
+	log.Event(ctx, "successfully sent request to dataset API", log.INFO, log.Data{"instance_id": instance.InstanceID, "number_of_observations": instance.NumberOfObservations})
 	return nil
 }

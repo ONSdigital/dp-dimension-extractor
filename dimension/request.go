@@ -9,8 +9,8 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/ONSdigital/go-ns/log"
-	"github.com/ONSdigital/go-ns/rchttp"
+	rchttp "github.com/ONSdigital/dp-rchttp"
+	"github.com/ONSdigital/log.go/log"
 )
 
 const authorizationHeader = "Authorization"
@@ -73,6 +73,6 @@ func (request *Request) Post(ctx context.Context, httpClient *rchttp.Client) err
 		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, request.DatasetAPIURL)
 	}
 
-	log.Info("successfully sent request to dataset api", log.Data{"instance_id": request.InstanceID, "dimension_name": request.DimensionID, "dimension_value": request.Code})
+	log.Event(ctx, "successfully sent request to dataset api", log.INFO, log.Data{"instance_id": request.InstanceID, "dimension_name": request.DimensionID, "dimension_value": request.Code})
 	return nil
 }

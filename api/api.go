@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/ONSdigital/go-ns/log"
 	"github.com/ONSdigital/go-ns/server"
+	"github.com/ONSdigital/log.go/log"
 	"github.com/gorilla/mux"
 )
 
@@ -18,6 +18,7 @@ type DimensionExtractorAPI struct {
 
 // CreateDimensionExtractorAPI manages all the routes configured to API
 func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error) {
+	ctx := context.Background()
 	router := mux.NewRouter()
 	routes(host, router)
 
@@ -26,9 +27,9 @@ func CreateDimensionExtractorAPI(host, bindAddr string, errorChan chan error) {
 	httpServer.HandleOSSignals = false
 
 	go func() {
-		log.Debug("Starting api...", nil)
+		log.Event(ctx, "Starting api...", log.INFO)
 		if err := httpServer.ListenAndServe(); err != nil {
-			log.ErrorC("api http server returned error", err, nil)
+			log.Event(ctx, "api http server returned error", log.ERROR, log.Error(err))
 			errorChan <- err
 		}
 	}()
@@ -47,6 +48,6 @@ func Close(ctx context.Context) error {
 	if err := httpServer.Shutdown(ctx); err != nil {
 		return err
 	}
-	log.Info("http server gracefully closed ", nil)
+	log.Event(ctx, "http server gracefully closed ", log.INFO)
 	return nil
 }

@@ -1,15 +1,15 @@
 package event
 
 import (
+	kafka "github.com/ONSdigital/dp-kafka"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
-	"github.com/ONSdigital/go-ns/kafka"
-	"github.com/ONSdigital/go-ns/log"
+	"github.com/ONSdigital/log.go/log"
 	"golang.org/x/net/context"
 )
 
 // KafkaConsumer represents a Kafka consumer group instance
 type KafkaConsumer interface {
-	Incoming() chan kafka.Message
+	Channels() *kafka.ConsumerGroupChannels
 	CommitAndRelease(msg kafka.Message)
 }
 
@@ -34,28 +34,28 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 		for {
 			select {
 			case <-eventLoopContext.Done():
-				log.Trace("Event loop context done", log.Data{"eventLoopContextErr": eventLoopContext.Err()})
+				log.Event(nil, "Event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
-			case message := <-c.KafkaConsumer.Incoming():
+			case message := <-c.KafkaConsumer.Channels().Upstream:
 
 				instanceID, err := c.EventService.HandleMessage(eventLoopContext, message)
 				if err != nil {
-					log.ErrorC("event failed to process", err, log.Data{"instance_id": instanceID})
+					log.Event(nil, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 
 					if len(instanceID) == 0 {
-						log.ErrorC("instance_id is empty errorReporter.Notify will not be called", err, nil)
+						log.Event(nil, "instance_id is empty errorReporter.Notify will not be called", log.ERROR, log.Error(err))
 					} else {
 						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
 						if err != nil {
-							log.ErrorC("errorReporter.Notify returned an error", err, log.Data{"instance_id": instanceID})
+							log.Event(nil, "errorReporter.Notify returned an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 						}
 					}
 
 				} else {
-					log.Debug("event successfully processed", log.Data{"instance_id": instanceID})
+					log.Event(nil, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
 				}
 				c.KafkaConsumer.CommitAndRelease(message)
-				log.Debug("message committed", log.Data{"instance_id": instanceID})
+				log.Event(nil, "message committed", log.INFO, log.Data{"instance_id": instanceID})
 			}
 		}
 	}()
