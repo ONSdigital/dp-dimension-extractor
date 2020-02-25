@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
 	vault "github.com/ONSdigital/dp-vault"
@@ -20,6 +21,7 @@ type ExternalServiceList struct {
 	Vault                         bool
 	AwsSession                    bool
 	ErrorReporter                 bool
+	HealthCheck                   bool
 }
 
 // KafkaProducerName : Type for kafka producer name used by iota constants
@@ -114,4 +116,19 @@ func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProduc
 
 	e.ErrorReporter = true
 	return
+}
+
+// GetHealthCheck creates a healthcheck with versionInfo
+func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (healthcheck.HealthCheck, error) {
+
+	// Create healthcheck object with versionInfo
+	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)
+	if err != nil {
+		return healthcheck.HealthCheck{}, err
+	}
+	hc := healthcheck.New(versionInfo, cfg.HealthCheckRecoveryInterval, cfg.HealthCheckInterval)
+
+	e.HealthCheck = true
+
+	return hc, nil
 }

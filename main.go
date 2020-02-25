@@ -15,12 +15,24 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/event"
 	"github.com/ONSdigital/dp-dimension-extractor/initialise"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	kafka "github.com/ONSdigital/dp-kafka"
 	rchttp "github.com/ONSdigital/dp-rchttp"
+	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/log.go/log"
 	"golang.org/x/net/context"
 )
 
 const authorizationHeader = "Authorization"
+
+var (
+	// BuildTime represents the time in which the service was built
+	BuildTime string
+	// GitCommit represents the commit (SHA-1) hash of the service that is running
+	GitCommit string
+	// Version represents the version of the service that is running
+	Version string
+)
 
 func main() {
 	log.Namespace = "dp-dimension-extractor"
@@ -73,19 +85,27 @@ func main() {
 	)
 	exitIfError(ctx, "", err, nil)
 
-	// create Channels
-	eventLoopDone := make(chan bool)
-	apiErrors := make(chan error, 1)
-
-	// Create API
-	api.CreateDimensionExtractorAPI(cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors)
+	// Get HealthCheck
+	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
+	exitIfError(ctx, "", err, nil)
 
 	// If encryption is enabled, get Vault Client
-	var vc service.VaultClient
+	var vc *vault.Client
 	if !cfg.EncryptionDisabled {
 		vc, err = serviceList.GetVault(cfg, 3)
 		logIfError(ctx, "", err, nil)
 	}
+
+	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, vc); err != nil {
+		os.Exit(1)
+	}
+
+	// create Channels
+	eventLoopDone := make(chan bool)
+	apiErrors := make(chan error, 1)
+
+	// Create API with healthchecker
+	api.CreateDimensionExtractorAPI(ctx, cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors, &hc)
 
 	service := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
@@ -181,7 +201,7 @@ func main() {
 
 		// Close API
 		log.Event(shutdownContext, "closing http server", log.INFO)
-		if err := api.Close(shutdownContext); err != nil {
+		if err := api.Close(shutdownContext, &hc); err != nil {
 			log.Event(shutdownContext, "failed to gracefully close http server", log.ERROR, log.Error(err))
 		} else {
 			log.Event(shutdownContext, "gracefully closed http server", log.INFO)
@@ -252,6 +272,35 @@ func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken stri
 
 	log.Event(ctx, "dimension extractor has a valid service account", log.INFO)
 	return nil
+}
+
+// registerCheckers adds the checkers for the provided clients to the healthcheck object.
+// VaultClient health client will only be registered if encryption is enabled.
+func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
+	kafkaConsumer *kafka.ConsumerGroup,
+	dimensionExtractedProducer *kafka.Producer,
+	dimensionExtractedErrProducer *kafka.Producer,
+	vc *vault.Client) (err error) {
+
+	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
+		log.Event(nil, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
+	}
+
+	if err = hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
+		log.Event(nil, "Error Adding Check for Kafka Producer", log.ERROR, log.Error(err))
+	}
+
+	if err = hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
+		log.Event(nil, "Error Adding Check for Kafka Error Producer", log.ERROR, log.Error(err))
+	}
+
+	if isEncryptionEnabled {
+		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
+			log.Event(nil, "Error Adding Check for Vault", log.ERROR, log.Error(err))
+		}
+	}
+
+	return
 }
 
 // if error is not nil, log it and exit
