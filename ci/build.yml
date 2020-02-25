@@ -6,14 +6,14 @@ image_resource:
   type: docker-image
   source:
     repository: golang
-    tag: 1.10.0
+    tag: 1.13.7
 
 inputs:
   - name: dp-dimension-extractor
-    path: go/src/github.com/ONSdigital/dp-dimension-extractor
+    path: dp-dimension-extractor
 
 outputs:
   - name: build
 
 run:
-  path: go/src/github.com/ONSdigital/dp-dimension-extractor/ci/scripts/build.sh
+  path: dp-dimension-extractor/ci/scripts/build.sh
