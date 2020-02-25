@@ -49,6 +49,13 @@ job "dp-dimension-extractor" {
       service {
         name = "dp-dimension-extractor"
         tags = ["publishing"]
+        port = "http"
+        check {
+          type     = "http"
+          path     = "/health"
+          interval = "10s"
+          timeout  = "2s"
+        }
       }
 
       resources {
