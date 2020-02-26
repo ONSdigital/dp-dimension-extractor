@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
+	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -19,7 +20,7 @@ type ExternalServiceList struct {
 	DimensionExtractedProducer    bool
 	DimensionExtractedErrProducer bool
 	Vault                         bool
-	AwsSession                    bool
+	S3Clients                     bool
 	ErrorReporter                 bool
 	HealthCheck                   bool
 }
@@ -91,14 +92,22 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 	return
 }
 
-// GetAwsSession returns an AWS client for the AWS region provided in Config
-func (e *ExternalServiceList) GetAwsSession(cfg *config.Config) (awsSession *session.Session, err error) {
+// GetS3Clients returns a map of AWS S3 clients corresponding to the list of BucketNames
+// and the AWS region provided in the configuration
+func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *session.Session, s3Clients map[string]*s3client.S3, err error) {
+	// establish AWS session
 	awsSession, err = session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
 	if err != nil {
 		return
 	}
 
-	e.AwsSession = true
+	// create S3 clients for expected bucket names, so that they can be health-checked
+	s3Clients = map[string]*s3client.S3{}
+	for _, bucketName := range cfg.BucketsNames {
+		s3Clients[bucketName] = s3client.NewClientWithSession(bucketName, !cfg.EncryptionDisabled, awsSession)
+	}
+	e.S3Clients = true
+
 	return
 }
 

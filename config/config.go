@@ -9,7 +9,6 @@ import (
 
 // Config is the filing resource handler config
 type Config struct {
-	AWSRegion                   string        `envconfig:"AWS_REGION"`
 	BindAddr                    string        `envconfig:"BIND_ADDR"`
 	Brokers                     []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
 	DatasetAPIURL               string        `envconfig:"DATASET_API_URL"`
@@ -30,6 +29,8 @@ type Config struct {
 	ZebedeeURL                  string        `envconfig:"ZEBEDEE_URL"`
 	HealthCheckInterval         time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckRecoveryInterval time.Duration `envconfig:"HEALTHCHECK_RECOVERY_INTERVAL"`
+	AWSRegion                   string        `envconfig:"AWS_REGION"`
+	BucketsNames                []string      `envconfig:"BUCKETS_NAMES"                  json:"-"`
 }
 
 var cfg *Config
@@ -41,7 +42,6 @@ func Get() (*Config, error) {
 	}
 
 	cfg = &Config{
-		AWSRegion:                   "eu-west-1",
 		BindAddr:                    ":21400",
 		Brokers:                     []string{"localhost:9092"},
 		DimensionsExtractedTopic:    "dimensions-extracted",
@@ -62,6 +62,8 @@ func Get() (*Config, error) {
 		ZebedeeURL:                  "http://localhost:8082",
 		HealthCheckInterval:         10 * time.Second,
 		HealthCheckRecoveryInterval: 1 * time.Minute,
+		AWSRegion:                   "eu-west-1",
+		BucketsNames:                []string{"dp-frontend-florence-file-uploads"},
 	}
 
 	if err := envconfig.Process("", cfg); err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	kafka "github.com/ONSdigital/dp-kafka"
 	rchttp "github.com/ONSdigital/dp-rchttp"
+	s3client "github.com/ONSdigital/dp-s3"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/ONSdigital/s3crypto"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,6 +41,8 @@ type VaultClient interface {
 	ReadKey(path, key string) (string, error)
 }
 
+// s3URL assumes that FileURL is in AliasVirtualHosted style if 's3:' prefix is found.
+// Otherwise it assume it is in path style, and this function converts it into AliasVirtualHosted style
 func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
 	if strings.HasPrefix(inputFileAvailable.FileURL, "s3:") {
 		return inputFileAvailable.FileURL, nil
@@ -63,7 +66,8 @@ type Service struct {
 	EnvMax                     int64
 	HTTPClient                 *rchttp.Client
 	MaxRetries                 int
-	S3                         *session.Session
+	AwsSession                 *session.Session
+	S3Clients                  map[string]*s3client.S3
 	VaultClient                VaultClient
 	VaultPath                  string
 }
@@ -71,7 +75,7 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, output, err := retrieveData(message, svc.S3, svc.EncryptionDisabled, svc.VaultClient, svc.VaultPath)
+	producerMessage, instanceID, output, err := retrieveData(message, svc.AwsSession, svc.EncryptionDisabled, svc.VaultClient, svc.VaultPath)
 	if err != nil {
 		return instanceID, err
 	}
@@ -271,8 +275,11 @@ func checkHeaderForTime(headerNames []string) int {
 	return 0
 }
 
+// compatible with path-style, global path style, and alias virtual hosted
+
 // FIXME function will fail to retrieve correct file location if folder
 // structure is to be introduced in s3 bucket
+// TODO this functionality should be moved to dp-s3
 func getBucketAndFilename(s3URL string) (string, string, error) {
 	urlSplitz := strings.Split(s3URL, "/")
 	n := len(urlSplitz)

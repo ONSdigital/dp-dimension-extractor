@@ -18,6 +18,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
 	rchttp "github.com/ONSdigital/dp-rchttp"
+	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/log.go/log"
 	"golang.org/x/net/context"
@@ -62,7 +63,7 @@ func main() {
 	exitIfError(ctx, "could not obtain consumer", err, nil)
 
 	// Get AWS Session to access S3
-	s3, err := serviceList.GetAwsSession(cfg)
+	awsSession, s3Clients, err := serviceList.GetS3Clients(cfg)
 	logIfError(ctx, "", err, nil)
 
 	// Get dimensionExtracted Kafka Producer
@@ -96,7 +97,7 @@ func main() {
 		logIfError(ctx, "", err, nil)
 	}
 
-	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, vc); err != nil {
+	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc); err != nil {
 		os.Exit(1)
 	}
 
@@ -117,7 +118,8 @@ func main() {
 		EnvMax:                     envMax,
 		HTTPClient:                 rchttp.DefaultClient,
 		MaxRetries:                 cfg.MaxRetries,
-		S3:                         s3,
+		AwsSession:                 awsSession,
+		S3Clients:                  s3Clients,
 		VaultClient:                vc,
 		VaultPath:                  cfg.VaultPath,
 	}
@@ -280,6 +282,7 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	kafkaConsumer *kafka.ConsumerGroup,
 	dimensionExtractedProducer *kafka.Producer,
 	dimensionExtractedErrProducer *kafka.Producer,
+	s3Clients map[string]*s3client.S3,
 	vc *vault.Client) (err error) {
 
 	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
@@ -297,6 +300,12 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	if isEncryptionEnabled {
 		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
 			log.Event(nil, "Error Adding Check for Vault", log.ERROR, log.Error(err))
+		}
+	}
+
+	for bucketName, s3 := range s3Clients {
+		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
+			log.Event(nil, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
 		}
 	}
 
