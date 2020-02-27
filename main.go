@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 
@@ -10,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ONSdigital/dp-api-clients-go/health"
+	"github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-dimension-extractor/api"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/event"
@@ -97,7 +97,11 @@ func main() {
 		logIfError(ctx, "", err, nil)
 	}
 
-	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc); err != nil {
+	// Get Identity client for Zebedee serviceAuthToken validation
+	zhc := health.NewClient("Zebedee", cfg.ZebedeeURL)
+	idClient := identity.NewAPIClient(zhc.Client, cfg.ZebedeeURL)
+
+	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc); err != nil {
 		os.Exit(1)
 	}
 
@@ -140,7 +144,7 @@ func main() {
 	// Validate this service against Zebedee
 	serviceIdentityValidated := make(chan bool)
 	go func() {
-		if err = checkServiceIdentity(eventLoopContext, cfg.ZebedeeURL, cfg.ServiceAuthToken); err != nil {
+		if _, err = idClient.CheckTokenIdentity(eventLoopContext, cfg.ServiceAuthToken, identity.TokenTypeService); err != nil {
 			log.Event(eventLoopContext, "could not obtain valid service account", log.ERROR, log.Error(err))
 		} else {
 			serviceIdentityValidated <- true
@@ -244,38 +248,6 @@ func main() {
 	os.Exit(1)
 }
 
-func checkServiceIdentity(ctx context.Context, zebedeeURL, serviceAuthToken string) error {
-	// TODO switch out below to use Identity client
-	client := rchttp.DefaultClient
-
-	path := fmt.Sprintf("%s/identity", zebedeeURL)
-
-	var URL *url.URL
-	URL, err := url.Parse(path)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("GET", URL.String(), nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set(authorizationHeader, serviceAuthToken)
-
-	res, err := client.Do(ctx, req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid status [%d] returned from [%s]", res.StatusCode, zebedeeURL)
-	}
-
-	log.Event(ctx, "dimension extractor has a valid service account", log.INFO)
-	return nil
-}
-
 // registerCheckers adds the checkers for the provided clients to the healthcheck object.
 // VaultClient health client will only be registered if encryption is enabled.
 func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
@@ -283,7 +255,8 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	dimensionExtractedProducer *kafka.Producer,
 	dimensionExtractedErrProducer *kafka.Producer,
 	s3Clients map[string]*s3client.S3,
-	vc *vault.Client) (err error) {
+	vc *vault.Client,
+	zebedeeHealthClient *health.Client) (err error) {
 
 	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
 		log.Event(nil, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
@@ -297,16 +270,20 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 		log.Event(nil, "Error Adding Check for Kafka Error Producer", log.ERROR, log.Error(err))
 	}
 
+	for bucketName, s3 := range s3Clients {
+		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
+			log.Event(nil, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
+		}
+	}
+
 	if isEncryptionEnabled {
 		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
 			log.Event(nil, "Error Adding Check for Vault", log.ERROR, log.Error(err))
 		}
 	}
 
-	for bucketName, s3 := range s3Clients {
-		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
-			log.Event(nil, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
-		}
+	if err = hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
+		log.Event(nil, "Error Adding Check for Zebedee", log.ERROR, log.Error(err))
 	}
 
 	return

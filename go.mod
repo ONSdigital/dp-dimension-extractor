@@ -3,7 +3,7 @@ module github.com/ONSdigital/dp-dimension-extractor
 go 1.13
 
 require (
-	github.com/ONSdigital/dp-api-clients-go v1.4.0
+	github.com/ONSdigital/dp-api-clients-go v1.5.1-0.20200227154446-222e9a6ee040
 	github.com/ONSdigital/dp-healthcheck v1.0.0
 	github.com/ONSdigital/dp-kafka v1.0.1-0.20200225131420-07aed54eab74
 	github.com/ONSdigital/dp-rchttp v0.0.0-20200114090501-463a529590e8
