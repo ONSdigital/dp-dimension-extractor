@@ -3,12 +3,9 @@ package service
 import (
 	"encoding/csv"
 	"encoding/hex"
-	"errors"
 	"io"
 	"strconv"
 	"strings"
-
-	"net/url"
 
 	"github.com/ONSdigital/dp-dimension-extractor/codelists"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
@@ -18,13 +15,9 @@ import (
 	rchttp "github.com/ONSdigital/dp-rchttp"
 	s3client "github.com/ONSdigital/dp-s3"
 	"github.com/ONSdigital/log.go/log"
-	"github.com/ONSdigital/s3crypto"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"golang.org/x/net/context"
 )
-
-const chunkSize = 5 * 1024 * 1024
 
 type dimensionExtracted struct {
 	FileURL    string `avro:"file_url"`
@@ -41,18 +34,20 @@ type VaultClient interface {
 	ReadKey(path, key string) (string, error)
 }
 
-// s3URL assumes that FileURL is in AliasVirtualHosted style if 's3:' prefix is found.
-// Otherwise it assume it is in path style, and this function converts it into AliasVirtualHosted style
-func (inputFileAvailable *inputFileAvailable) s3URL() (string, error) {
+// s3URL parses the fileURL into an S3Url struct. s3:// prefix is interpreted as
+// DNS-Alias-virtual-hosted style. Otherwise, path-style is assumed.
+func (inputFileAvailable *inputFileAvailable) s3URL() (*s3client.S3Url, error) {
 	if strings.HasPrefix(inputFileAvailable.FileURL, "s3:") {
-		return inputFileAvailable.FileURL, nil
+		// Assume DNS Alias Virtual Hosted style URL (e.g. s3://bucket/key)
+		return s3client.ParseAliasVirtualHostedURL(inputFileAvailable.FileURL)
 	}
-	url, err := url.Parse(inputFileAvailable.FileURL)
+	// Assume Path-style / Global-path-style URL (e.g. https://https://s3-eu-west-1.amazonaws.com/bucket/key)
+	s3URL, err := s3client.ParseGlobalPathStyleURL(inputFileAvailable.FileURL)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return "s3:/" + url.Path, nil
+	s3URL.Scheme = "s3"
+	return s3URL, nil
 }
 
 // Service handles incoming messages.
@@ -75,12 +70,11 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, output, err := retrieveData(message, svc.AwsSession, svc.EncryptionDisabled, svc.VaultClient, svc.VaultPath)
+	producerMessage, instanceID, file, err := svc.retrieveData(message)
 	if err != nil {
 		return instanceID, err
 	}
-	file := output.Body
-	defer output.Body.Close()
+	defer file.Close()
 
 	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, svc.AuthToken, instanceID, svc.HTTPClient)
 	if err != nil {
@@ -176,7 +170,8 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabled bool, vc VaultClient, vaultPath string) ([]byte, string, *s3.GetObjectOutput, error) {
+func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.ReadCloser, error) {
+
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Event(nil, "error reading message", log.ERROR, log.Error(err), log.Data{"schema": "failed to unmarshal event"})
@@ -190,34 +185,33 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 		log.Event(nil, "encountered error parsing file URL", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
-
-	bucket, filename, err := getBucketAndFilename(s3URL)
+	s3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
 	if err != nil {
-		log.Event(nil, "unable to find bucket and filename in event file url", log.ERROR, log.Error(err), logData)
+		log.Event(nil, "unable to represent S3URL from parsed file URL", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
+
 	logData["file_url"] = event.FileURL
-	logData["s3_url"] = s3URL
-	logData["bucket"] = bucket
-	logData["filename"] = filename
+	logData["s3_url"] = s3URLStr
+	logData["bucket"] = s3URL.BucketName
+	logData["filename"] = s3URL.Key
 
 	log.Event(nil, "event received", log.INFO, logData)
 
-	var output *s3.GetObjectOutput
-
-	// Get csv from S3 bucket
-	getInput := &s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &filename,
+	// Get S3 Client corresponding to the Bucket extracted from URL, or create one if not available
+	s3, ok := svc.S3Clients[s3URL.BucketName]
+	if !ok {
+		log.Event(nil, "Retreiving data from unexpected S3 bucket", log.WARN, log.Data{"RequestedBucket": s3URL.BucketName})
+		s3 = s3client.NewClientWithSession(s3URL.BucketName, !svc.EncryptionDisabled, svc.AwsSession)
 	}
 
-	if !encryptionDisabled {
-		client := s3crypto.New(sess, &s3crypto.Config{HasUserDefinedPSK: true, MultipartChunkSize: chunkSize})
+	var output io.ReadCloser
 
-		path := vaultPath + "/" + filename
+	if !svc.EncryptionDisabled {
+		path := svc.VaultPath + "/" + s3URL.Key
 		vaultKey := "key"
 
-		pskStr, err := vc.ReadKey(path, vaultKey)
+		pskStr, err := svc.VaultClient.ReadKey(path, vaultKey)
 		if err != nil {
 			return nil, event.InstanceID, nil, err
 		}
@@ -226,15 +220,13 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 			return nil, event.InstanceID, nil, err
 		}
 
-		output, err = client.GetObjectWithPSK(getInput, psk)
+		output, err = s3.GetWithPSK(s3URL.Key, psk)
 		if err != nil {
 			log.Event(nil, "encountered error retrieving and decrypting csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err
 		}
 	} else {
-		client := s3.New(sess)
-
-		output, err = client.GetObject(getInput)
+		output, err = s3.Get(s3URL.Key)
 		if err != nil {
 			log.Event(nil, "encountered error retrieving csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err
@@ -244,11 +236,11 @@ func retrieveData(message kafka.Message, sess *session.Session, encryptionDisabl
 	log.Event(nil, "file successfully read from aws", log.INFO, logData)
 
 	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{
-		FileURL:    s3URL,
+		FileURL:    s3URLStr,
 		InstanceID: event.InstanceID,
 	})
 	if err != nil {
-		output.Body.Close()
+		output.Close()
 		return nil, event.InstanceID, nil, err
 	}
 
@@ -273,27 +265,4 @@ func checkHeaderForTime(headerNames []string) int {
 	}
 
 	return 0
-}
-
-// compatible with path-style, global path style, and alias virtual hosted
-
-// FIXME function will fail to retrieve correct file location if folder
-// structure is to be introduced in s3 bucket
-// TODO this functionality should be moved to dp-s3
-func getBucketAndFilename(s3URL string) (string, string, error) {
-	urlSplitz := strings.Split(s3URL, "/")
-	n := len(urlSplitz)
-	if n < 3 {
-		return "", "", errors.New("could not find bucket or filename in file url")
-	}
-	bucket := urlSplitz[n-2]
-	filename := urlSplitz[n-1]
-	if filename == "" {
-		return "", "", errors.New("missing filename in file url")
-	}
-	if bucket == "" {
-		return "", "", errors.New("missing bucket name in file url")
-	}
-
-	return bucket, filename, nil
 }
