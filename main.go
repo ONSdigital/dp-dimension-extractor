@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-api-clients-go/identity"
 	"github.com/ONSdigital/dp-dimension-extractor/api"
@@ -17,7 +18,6 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
-	rchttp "github.com/ONSdigital/dp-rchttp"
 	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/log.go/log"
@@ -86,10 +86,6 @@ func main() {
 	)
 	exitIfError(ctx, "", err, nil)
 
-	// Get HealthCheck
-	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
-	exitIfError(ctx, "", err, nil)
-
 	// If encryption is enabled, get Vault Client
 	var vc *vault.Client
 	if !cfg.EncryptionDisabled {
@@ -101,7 +97,14 @@ func main() {
 	zhc := health.NewClient("Zebedee", cfg.ZebedeeURL)
 	idClient := identity.NewAPIClient(zhc.Client, cfg.ZebedeeURL)
 
-	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc); err != nil {
+	// Dataset API Client with Max retries
+	dc := dataset.NewAPIClientWithMaxRetries(cfg.DatasetAPIURL, cfg.MaxRetries)
+
+	// Get HealthCheck
+	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
+	exitIfError(ctx, "", err, nil)
+
+	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
 		os.Exit(1)
 	}
 
@@ -114,14 +117,10 @@ func main() {
 
 	service := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
-		DatasetAPIURL:              cfg.DatasetAPIURL,
-		DatasetAPIAuthToken:        cfg.DatasetAPIAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,
 		DimensionExtractorURL:      cfg.DimensionExtractorURL,
 		EncryptionDisabled:         cfg.EncryptionDisabled,
 		EnvMax:                     envMax,
-		HTTPClient:                 rchttp.DefaultClient,
-		MaxRetries:                 cfg.MaxRetries,
 		AwsSession:                 awsSession,
 		S3Clients:                  s3Clients,
 		VaultClient:                vc,
@@ -256,7 +255,8 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	dimensionExtractedErrProducer *kafka.Producer,
 	s3Clients map[string]*s3client.S3,
 	vc *vault.Client,
-	zebedeeHealthClient *health.Client) (err error) {
+	zebedeeHealthClient *health.Client,
+	dc *dataset.Client) (err error) {
 
 	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
 		log.Event(nil, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
@@ -284,6 +284,10 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 
 	if err = hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
 		log.Event(nil, "Error Adding Check for Zebedee", log.ERROR, log.Error(err))
+	}
+
+	if err = hc.AddCheck("Dataset API", dc.Checker); err != nil {
+		log.Event(nil, "Error Adding Check for Dataset API", log.ERROR, log.Error(err))
 	}
 
 	return

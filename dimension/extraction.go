@@ -4,19 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	dataset "github.com/ONSdigital/dp-api-clients-go/dataset"
 )
 
 // Extract represents all information needed to extract dimensions
 type Extract struct {
-	AuthToken             string
 	Dimensions            map[string]string
 	DimensionColumnOffset int
 	HeaderRow             []string
-	DatasetAPIURL         string
-	DatasetAPIAuthToken   string
 	InstanceID            string
 	Line                  []string
-	MaxRetries            int
 	TimeColumn            int
 	CodelistMap           map[string]string
 }
@@ -43,8 +41,8 @@ func (e *MissingDimensionValues) Error() string {
 }
 
 // Extract method checks within csv line for unique dimensions from the consumed dataset and returns them
-func (extract *Extract) Extract() (map[string]Request, error) {
-	dimensions := make(map[string]Request)
+func (extract *Extract) Extract() (map[string]dataset.OptionPost, error) {
+	dimensions := make(map[string]dataset.OptionPost)
 	line := extract.Line
 
 	// dimensionColumnOffset is the number of columns that exist
@@ -91,22 +89,15 @@ func (extract *Extract) Extract() (map[string]Request, error) {
 
 		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
-		request := Request{
-			Attempt:             1,
-			AuthToken:           extract.AuthToken,
-			DimensionID:         strings.ToLower(extract.HeaderRow[i+1]),
-			Code:                line[i],
-			Value:               dimensionValue,
-			Label:               line[i+1],
-			CodeList:            dimensionCodeList,
-			DatasetAPIURL:       extract.DatasetAPIURL,
-			DatasetAPIAuthToken: extract.DatasetAPIAuthToken,
-			InstanceID:          extract.InstanceID,
-			MaxAttempts:         extract.MaxRetries,
+		optionToPost := dataset.OptionPost{
+			Name:     strings.ToLower(extract.HeaderRow[i+1]),
+			Option:   dimensionValue,
+			Label:    line[i+1],
+			CodeList: dimensionCodeList,
+			Code:     line[i],
 		}
 
-		dimensions[dimension] = request
+		dimensions[dimension] = optionToPost
 	}
-
 	return dimensions, nil
 }

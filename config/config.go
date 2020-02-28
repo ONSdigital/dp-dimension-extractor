@@ -12,7 +12,6 @@ type Config struct {
 	BindAddr                    string        `envconfig:"BIND_ADDR"`
 	Brokers                     []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
 	DatasetAPIURL               string        `envconfig:"DATASET_API_URL"`
-	DatasetAPIAuthToken         string        `envconfig:"DATASET_API_AUTH_TOKEN"         json:"-"`
 	DimensionsExtractedTopic    string        `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
 	DimensionExtractorURL       string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
 	EncryptionDisabled          bool          `envconfig:"ENCRYPTION_DISABLED"`
@@ -47,7 +46,6 @@ func Get() (*Config, error) {
 		DimensionsExtractedTopic:    "dimensions-extracted",
 		DimensionExtractorURL:       "http://localhost:21400",
 		DatasetAPIURL:               "http://localhost:22000",
-		DatasetAPIAuthToken:         "FD0108EA-825D-411C-9B1D-41EF7727F465",
 		EncryptionDisabled:          false,
 		EventReporterTopic:          "report-events",
 		GracefulShutdownTimeout:     5 * time.Second,

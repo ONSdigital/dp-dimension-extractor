@@ -7,12 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ONSdigital/dp-dimension-extractor/codelists"
+	dataset "github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
-	"github.com/ONSdigital/dp-dimension-extractor/instance"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	kafka "github.com/ONSdigital/dp-kafka"
-	rchttp "github.com/ONSdigital/dp-rchttp"
 	s3client "github.com/ONSdigital/dp-s3"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -53,14 +51,11 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (*s3client.S3Url, error) {
 // Service handles incoming messages.
 type Service struct {
 	AuthToken                  string
-	DatasetAPIURL              string
-	DatasetAPIAuthToken        string
 	DimensionExtractedProducer *kafka.Producer
 	DimensionExtractorURL      string
 	EncryptionDisabled         bool
 	EnvMax                     int64
-	HTTPClient                 *rchttp.Client
-	MaxRetries                 int
+	DatasetClient              *dataset.Client
 	AwsSession                 *session.Session
 	S3Clients                  map[string]*s3client.S3
 	VaultClient                VaultClient
@@ -76,10 +71,15 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 	defer file.Close()
 
-	codelistMap, err := codelists.GetFromInstance(ctx, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, svc.AuthToken, instanceID, svc.HTTPClient)
+	codeLists, err := svc.DatasetClient.GetInstance(ctx, "", svc.AuthToken, "", instanceID)
 	if err != nil {
 		log.Event(ctx, "encountered error immediately when requesting data from the dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 		return instanceID, err
+	}
+
+	codelistMap := make(map[string]string)
+	for _, cl := range codeLists.Dimensions {
+		codelistMap[cl.Name] = cl.ID
 	}
 
 	csvReader := csv.NewReader(file)
@@ -121,15 +121,11 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 		}
 
 		dim := dimension.Extract{
-			AuthToken:             svc.AuthToken,
 			Dimensions:            dimensions,
 			DimensionColumnOffset: dimensionColumnOffset,
 			HeaderRow:             headerRow,
-			DatasetAPIURL:         svc.DatasetAPIURL,
-			DatasetAPIAuthToken:   svc.DatasetAPIAuthToken,
 			InstanceID:            instanceID,
 			Line:                  line,
-			MaxRetries:            svc.MaxRetries,
 			TimeColumn:            timeColumn,
 			CodelistMap:           codelistMap,
 		}
@@ -140,8 +136,8 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			return instanceID, err
 		}
 
-		for _, request := range lineDimensions {
-			if err := request.Post(ctx, svc.HTTPClient); err != nil {
+		for _, optionToPost := range lineDimensions {
+			if err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost); err != nil {
 				log.Event(ctx, "encountered error sending request to datset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "csv_line": line})
 				return instanceID, err
 			}
@@ -149,17 +145,22 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 		numberOfObservations++
 	}
-
 	log.Event(ctx, "a count of the number of observations", log.INFO, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	jobInstance := instance.NewJobInstance(svc.AuthToken, svc.DatasetAPIURL, svc.DatasetAPIAuthToken, instanceID, numberOfObservations, headerRow, svc.MaxRetries)
-
-	// PUT request to dataset API to pass the header row and the
-	// number of observations that exist against this job instance
-	if err := jobInstance.PutData(ctx, svc.HTTPClient); err != nil {
+	// PUT request to dataset API to pass the header row and the number of observations that exist against this job instance
+	err = svc.DatasetClient.PutInstanceData(
+		ctx,
+		svc.AuthToken,
+		instanceID,
+		dataset.JobInstance{
+			HeaderNames:          headerRow,
+			NumberOfObservations: numberOfObservations,
+		})
+	if err != nil {
 		log.Event(ctx, "encountered error sending request to the dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err
 	}
+	log.Event(ctx, "successfully sent request to dataset API", log.INFO, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
 	log.Event(ctx, "a list of headers", log.INFO, log.Data{"instance_id": instanceID, "header_row": headerRow})
 	// Once csv file has been iterated over and there were no errors,

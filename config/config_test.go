@@ -23,7 +23,6 @@ func TestSpec(t *testing.T) {
 				So(cfg.BindAddr, ShouldEqual, ":21400")
 				So(cfg.Brokers[0], ShouldEqual, "localhost:9092")
 				So(cfg.DatasetAPIURL, ShouldEqual, "http://localhost:22000")
-				So(cfg.DatasetAPIAuthToken, ShouldEqual, "FD0108EA-825D-411C-9B1D-41EF7727F465")
 				So(cfg.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
 				So(cfg.DimensionExtractorURL, ShouldEqual, "http://localhost:21400")
 				So(cfg.EncryptionDisabled, ShouldEqual, false)
