@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ONSdigital/dp-dimension-extractor/config"
+	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
@@ -28,7 +29,7 @@ type ExternalServiceList struct {
 // KafkaProducerName : Type for kafka producer name used by iota constants
 type KafkaProducerName int
 
-// Possible names of Kafa Producers
+// Possible names of Kakfa Producers
 const (
 	DimensionExtracted = iota
 	DimensionExtractedErr
@@ -94,7 +95,7 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 
 // GetS3Clients returns a map of AWS S3 clients corresponding to the list of BucketNames
 // and the AWS region provided in the configuration
-func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *session.Session, s3Clients map[string]*s3client.S3, err error) {
+func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *session.Session, s3Clients map[string]service.S3Client, err error) {
 	// establish AWS session
 	awsSession, err = session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
 	if err != nil {
@@ -102,7 +103,7 @@ func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *sess
 	}
 
 	// create S3 clients for expected bucket names, so that they can be health-checked
-	s3Clients = map[string]*s3client.S3{}
+	s3Clients = make(map[string]service.S3Client)
 	for _, bucketName := range cfg.BucketsNames {
 		s3Clients[bucketName] = s3client.NewClientWithSession(bucketName, !cfg.EncryptionDisabled, awsSession)
 	}

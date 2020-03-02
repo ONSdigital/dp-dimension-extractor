@@ -17,24 +17,21 @@ import (
 	"golang.org/x/net/context"
 )
 
-type dimensionExtracted struct {
+// DimensionExtracted represents a kafka avro model for a dimension extracted file for an instance
+type DimensionExtracted struct {
 	FileURL    string `avro:"file_url"`
 	InstanceID string `avro:"instance_id"`
 }
 
-type inputFileAvailable struct {
+// InputFileAvailable represents a kafka avro model for an available input file fo an instance
+type InputFileAvailable struct {
 	FileURL    string `avro:"file_url"`
 	InstanceID string `avro:"instance_id"`
 }
 
-// VaultClient is an interface to represent methods called to action upon vault
-type VaultClient interface {
-	ReadKey(path, key string) (string, error)
-}
-
-// s3URL parses the fileURL into an S3Url struct. s3:// prefix is interpreted as
+// S3URL parses the fileURL into an S3Url struct. s3:// prefix is interpreted as
 // DNS-Alias-virtual-hosted style. Otherwise, path-style is assumed.
-func (inputFileAvailable *inputFileAvailable) s3URL() (*s3client.S3Url, error) {
+func (inputFileAvailable *InputFileAvailable) S3URL() (*s3client.S3Url, error) {
 	if strings.HasPrefix(inputFileAvailable.FileURL, "s3:") {
 		// Assume DNS Alias Virtual Hosted style URL (e.g. s3://bucket/key)
 		return s3client.ParseAliasVirtualHostedURL(inputFileAvailable.FileURL)
@@ -51,13 +48,13 @@ func (inputFileAvailable *inputFileAvailable) s3URL() (*s3client.S3Url, error) {
 // Service handles incoming messages.
 type Service struct {
 	AuthToken                  string
-	DimensionExtractedProducer *kafka.Producer
+	DimensionExtractedProducer KafkaProducer
 	DimensionExtractorURL      string
 	EncryptionDisabled         bool
 	EnvMax                     int64
-	DatasetClient              *dataset.Client
+	DatasetClient              DatasetClient
 	AwsSession                 *session.Session
-	S3Clients                  map[string]*s3client.S3
+	S3Clients                  map[string]S3Client
 	VaultClient                VaultClient
 	VaultPath                  string
 }
@@ -181,7 +178,7 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 
 	logData := log.Data{"instance_id": event.InstanceID, "event": event}
 
-	s3URL, err := event.s3URL()
+	s3URL, err := event.S3URL()
 	if err != nil {
 		log.Event(nil, "encountered error parsing file URL", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
@@ -236,7 +233,7 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 
 	log.Event(nil, "file successfully read from aws", log.INFO, logData)
 
-	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&dimensionExtracted{
+	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&DimensionExtracted{
 		FileURL:    s3URLStr,
 		InstanceID: event.InstanceID,
 	})
@@ -248,8 +245,8 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 	return producerMessage, event.InstanceID, output, nil
 }
 
-func readMessage(eventValue []byte) (*inputFileAvailable, error) {
-	var i inputFileAvailable
+func readMessage(eventValue []byte) (*InputFileAvailable, error) {
+	var i InputFileAvailable
 
 	if err := schema.InputFileAvailableSchema.Unmarshal(eventValue, &i); err != nil {
 		return nil, err

@@ -18,7 +18,6 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
-	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/log.go/log"
 	"golang.org/x/net/context"
@@ -100,10 +99,9 @@ func main() {
 	// Dataset API Client with Max retries
 	dc := dataset.NewAPIClientWithMaxRetries(cfg.DatasetAPIURL, cfg.MaxRetries)
 
-	// Get HealthCheck
+	// Get HealthCheck and register checkers
 	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
 	exitIfError(ctx, "", err, nil)
-
 	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
 		os.Exit(1)
 	}
@@ -155,27 +153,12 @@ func main() {
 		eventConsumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 	}
 
-	// Log non-fatal errors, without exiting
+	// Log non-fatal errors, without exiting. Note that the structs and channels will always exist even if Kafka has not been initialised yet.
+	syncConsumerGroup.Channels().LogErrors(ctx, "Kafka consumer error")
+	dimensionExtractedProducer.Channels().LogErrors(ctx, "Kafka dimension extracted producer")
+	dimensionExtractedErrProducer.Channels().LogErrors(ctx, "Kafka dimension extracted error producer")
 	go func() {
-		var consumerErrors, producerErrors chan (error)
-
-		if serviceList.Consumer {
-			consumerErrors = syncConsumerGroup.Channels().Errors
-		} else {
-			consumerErrors = make(chan error, 1)
-		}
-
-		if serviceList.DimensionExtractedProducer {
-			producerErrors = service.DimensionExtractedProducer.Channels().Errors
-		} else {
-			producerErrors = make(chan error, 1)
-		}
-
 		select {
-		case consumerError := <-consumerErrors:
-			log.Event(ctx, "kafka consumer", log.ERROR, log.Error(consumerError))
-		case producerError := <-producerErrors:
-			log.Event(ctx, "kafka producer", log.ERROR, log.Error(producerError))
 		case apiError := <-apiErrors:
 			log.Event(ctx, "server error", log.ERROR, log.Error(apiError))
 		case <-eventLoopDone:
@@ -215,7 +198,7 @@ func main() {
 		// If DimensionExtracted kafka producer exists, close it
 		if serviceList.DimensionExtractedProducer {
 			log.Event(shutdownContext, "closing kafka producer", log.INFO, log.Data{"producer": "DimensionExtracted"})
-			service.DimensionExtractedProducer.Close(shutdownContext)
+			dimensionExtractedProducer.Close(shutdownContext)
 			log.Event(shutdownContext, "closed kafka producer", log.INFO, log.Data{"producer": "DimensionExtracted"})
 		}
 
@@ -253,7 +236,7 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	kafkaConsumer *kafka.ConsumerGroup,
 	dimensionExtractedProducer *kafka.Producer,
 	dimensionExtractedErrProducer *kafka.Producer,
-	s3Clients map[string]*s3client.S3,
+	s3Clients map[string]service.S3Client,
 	vc *vault.Client,
 	zebedeeHealthClient *health.Client,
 	dc *dataset.Client) (err error) {
