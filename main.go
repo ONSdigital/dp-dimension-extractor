@@ -116,9 +116,7 @@ func main() {
 	service := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,
-		DimensionExtractorURL:      cfg.DimensionExtractorURL,
 		EncryptionDisabled:         cfg.EncryptionDisabled,
-		EnvMax:                     envMax,
 		AwsSession:                 awsSession,
 		S3Clients:                  s3Clients,
 		VaultClient:                vc,

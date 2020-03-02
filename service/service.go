@@ -49,9 +49,7 @@ func (inputFileAvailable *InputFileAvailable) S3URL() (*s3client.S3Url, error) {
 type Service struct {
 	AuthToken                  string
 	DimensionExtractedProducer KafkaProducer
-	DimensionExtractorURL      string
 	EncryptionDisabled         bool
-	EnvMax                     int64
 	DatasetClient              DatasetClient
 	AwsSession                 *session.Session
 	S3Clients                  map[string]S3Client
