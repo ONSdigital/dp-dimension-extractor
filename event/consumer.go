@@ -15,7 +15,7 @@ type KafkaConsumer interface {
 
 // Service is kafka message handler
 type Service interface {
-	HandleMessage(eventLoopContext context.Context, message kafka.Message) (string, error)
+	HandleMessage(ctx context.Context, message kafka.Message) (string, error)
 }
 
 // Consumer polls a kafka topic for incoming messages
@@ -37,8 +37,9 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 				log.Event(nil, "Event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
 			case message := <-c.KafkaConsumer.Channels().Upstream:
-
-				instanceID, err := c.EventService.HandleMessage(eventLoopContext, message)
+				// In the future, kafka message will provice the context
+				kafkaContext := context.Background()
+				instanceID, err := c.EventService.HandleMessage(kafkaContext, message)
 				if err != nil {
 					log.Event(nil, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 

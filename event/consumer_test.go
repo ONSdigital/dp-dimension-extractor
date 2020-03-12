@@ -14,6 +14,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+var ctx = context.Background()
+
 func TestConsumer_Start(t *testing.T) {
 
 	Convey("Given the Consumer has been configured correctly", t, func() {
@@ -23,7 +25,7 @@ func TestConsumer_Start(t *testing.T) {
 		msg := kafkatest.NewMessage(nil, 1)
 
 		cgChannels := kafka.CreateConsumerGroupChannels(true)
-		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels)
+		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels, true)
 
 		handler := &mocks.MessageHandler{
 			EventLoopContextArgs: make([]context.Context, 0),
@@ -41,7 +43,7 @@ func TestConsumer_Start(t *testing.T) {
 			ErrorReporter: errorReporter,
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(ctx)
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When incoming receives a valid message", func() {
@@ -57,7 +59,7 @@ func TestConsumer_Start(t *testing.T) {
 			})
 
 			Convey("And message.CommitAndRelease is called once", func() {
-				So(kafkaConsumerMock.CommitAndReleaseCalls(), ShouldEqual, 1)
+				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
@@ -76,7 +78,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 		msg := kafkatest.NewMessage(nil, 1)
 
 		cgChannels := kafka.CreateConsumerGroupChannels(true)
-		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels)
+		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels, true)
 
 		errorReporter := reportertest.NewImportErrorReporterMock(nil)
 
@@ -85,7 +87,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			ErrorReporter: errorReporter,
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(ctx)
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When handler.HandleMessage returns an error and an instanceID", func() {
@@ -113,7 +115,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			})
 
 			Convey("And message.CommitAndRelease is called once", func() {
-				So(kafkaConsumerMock.CommitAndReleaseCalls(), ShouldEqual, 1)
+				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is called once", func() {
@@ -146,7 +148,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			})
 
 			Convey("And message.CommitAndRelease is called once", func() {
-				So(kafkaConsumerMock.CommitAndReleaseCalls(), ShouldEqual, 1)
+				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {

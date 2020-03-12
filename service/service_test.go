@@ -51,9 +51,11 @@ V4_0,Time,Time,UK-only,Geography,Cpih1dim1aggid,Aggregate
 	testChannels = kafka.CreateProducerChannels()
 )
 
+var ctx = context.Background()
+
 // mock functions for testing
 var (
-	mockChannelsFunc    = func() *kafka.ProducerChannels { return &testChannels }
+	mockChannelsFunc    = func() *kafka.ProducerChannels { return testChannels }
 	mockGetInstanceFunc = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
 		if instanceID == validInstanceID {
 			return testInstance, nil
@@ -162,7 +164,7 @@ func TestHandleMessage(t *testing.T) {
 
 			Convey("When a message with unexpected avro format is is received, HandleMessage returns an error", func() {
 				msg := kafkatest.NewMessage([]byte("wrongMessageFormat"), 1)
-				_, err := svc.HandleMessage(context.Background(), msg)
+				_, err := svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("Invalid string length"))
 			})
 
@@ -174,7 +176,7 @@ func TestHandleMessage(t *testing.T) {
 				msgPayload, err := schema.InputFileAvailableSchema.Marshal(msgIn)
 				So(err, ShouldBeNil)
 				msg := kafkatest.NewMessage(msgPayload, 1)
-				_, err = svc.HandleMessage(context.Background(), msg)
+				_, err = svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("could not find bucket or filename in file path-style url wrongS3PathFormat"))
 			})
 
@@ -201,7 +203,7 @@ func TestHandleMessage(t *testing.T) {
 				msgPayload, err := schema.InputFileAvailableSchema.Marshal(msgIn)
 				So(err, ShouldBeNil)
 				msg := kafkatest.NewMessage(msgPayload, 1)
-				_, err = svc.HandleMessage(context.Background(), msg)
+				_, err = svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("Unexpected instance ID"))
 				validateS3Get(mockS3Client, validS3ObjKey)
 				So(len(mockVaultClient.ReadKeyCalls()), ShouldEqual, 0)
@@ -218,7 +220,7 @@ func TestHandleMessage(t *testing.T) {
 				msgPayload, err := schema.InputFileAvailableSchema.Marshal(msgIn)
 				So(err, ShouldBeNil)
 				msg := kafkatest.NewMessage(msgPayload, 1)
-				_, err = svc.HandleMessage(context.Background(), msg)
+				_, err = svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("wrong S3 Key"))
 				validateS3Get(mockS3Client, "dir1/inexistent.csv")
 				So(len(mockVaultClient.ReadKeyCalls()), ShouldEqual, 0)
@@ -238,7 +240,7 @@ func TestHandleMessage(t *testing.T) {
 					c.So(producedMessage, ShouldResemble, expectedProducerMessage)
 				}()
 
-				_, err := svc.HandleMessage(context.Background(), createValidMessage())
+				_, err := svc.HandleMessage(ctx, createValidMessage())
 				So(err, ShouldBeNil)
 
 				validateS3Get(mockS3Client, validS3ObjKey)
@@ -278,7 +280,7 @@ func TestHandleMessage(t *testing.T) {
 				msgPayload, err := schema.InputFileAvailableSchema.Marshal(msgIn)
 				So(err, ShouldBeNil)
 				msg := kafkatest.NewMessage(msgPayload, 1)
-				_, err = svc.HandleMessage(context.Background(), msg)
+				_, err = svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("wrong vault path"))
 				So(len(mockVaultClient.ReadKeyCalls()), ShouldEqual, 1)
 				So(len(mockS3Client.GetWithPSKCalls()), ShouldEqual, 0)
@@ -298,7 +300,7 @@ func TestHandleMessage(t *testing.T) {
 					c.So(producedMessage, ShouldResemble, expectedProducerMessage)
 				}()
 
-				_, err := svc.HandleMessage(context.Background(), createValidMessage())
+				_, err := svc.HandleMessage(ctx, createValidMessage())
 				So(err, ShouldBeNil)
 
 				validateS3GetWithPSK(mockS3Client, validS3ObjKey, validPsk)

@@ -134,7 +134,7 @@ func main() {
 		ErrorReporter: errorReporter,
 	}
 
-	eventLoopContext, eventLoopCancel := context.WithCancel(context.Background())
+	eventLoopContext, eventLoopCancel := context.WithCancel(ctx)
 
 	// Validate this service against Zebedee
 	serviceIdentityValidated := make(chan bool)
