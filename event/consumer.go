@@ -34,29 +34,29 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 		for {
 			select {
 			case <-eventLoopContext.Done():
-				log.Event(nil, "Event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
+				log.Event(eventLoopContext, "Event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
 			case message := <-c.KafkaConsumer.Channels().Upstream:
 				// In the future, kafka message will provice the context
 				kafkaContext := context.Background()
 				instanceID, err := c.EventService.HandleMessage(kafkaContext, message)
 				if err != nil {
-					log.Event(nil, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+					log.Event(kafkaContext, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 
 					if len(instanceID) == 0 {
-						log.Event(nil, "instance_id is empty errorReporter.Notify will not be called", log.ERROR, log.Error(err))
+						log.Event(kafkaContext, "instance_id is empty errorReporter.Notify will not be called", log.ERROR, log.Error(err))
 					} else {
 						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
 						if err != nil {
-							log.Event(nil, "errorReporter.Notify returned an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+							log.Event(kafkaContext, "errorReporter.Notify returned an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 						}
 					}
 
 				} else {
-					log.Event(nil, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
+					log.Event(kafkaContext, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
 				}
 				c.KafkaConsumer.CommitAndRelease(message)
-				log.Event(nil, "message committed", log.INFO, log.Data{"instance_id": instanceID})
+				log.Event(eventLoopContext, "message committed", log.INFO, log.Data{"instance_id": instanceID})
 			}
 		}
 	}()

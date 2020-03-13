@@ -161,11 +161,11 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 func waitOrTimeout(t *testing.T, eventLoopDone chan bool, expected chan bool) {
 	select {
 	case <-eventLoopDone:
-		log.Event(nil, "Event loop done.", log.INFO)
+		log.Event(ctx, "Event loop done.", log.INFO)
 	case <-expected:
-		log.Event(nil, "expected behavior invoked", log.INFO)
+		log.Event(ctx, "expected behavior invoked", log.INFO)
 	case <-time.After(time.Second * 3):
-		log.Event(nil, "test timed out", log.INFO)
+		log.Event(ctx, "test timed out", log.INFO)
 		t.FailNow()
 	}
 }
@@ -175,9 +175,9 @@ func closeDown(t *testing.T, cancel context.CancelFunc, eventLoopDone chan bool)
 
 	select {
 	case <-eventLoopDone:
-		log.Event(nil, "Close down successfully", log.INFO)
+		log.Event(ctx, "Close down successfully", log.INFO)
 	case <-time.After(time.Second * 5):
-		log.Event(nil, "consumer failed to stop.", log.INFO)
+		log.Event(ctx, "consumer failed to stop.", log.INFO)
 		t.FailNow()
 	}
 }

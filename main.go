@@ -102,7 +102,7 @@ func main() {
 	// Get HealthCheck and register checkers
 	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
 	exitIfError(ctx, "", err, nil)
-	if err := registerCheckers(&hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
+	if err := registerCheckers(ctx, &hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
 		os.Exit(1)
 	}
 
@@ -230,7 +230,7 @@ func main() {
 
 // registerCheckers adds the checkers for the provided clients to the healthcheck object.
 // VaultClient health client will only be registered if encryption is enabled.
-func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
+func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	kafkaConsumer *kafka.ConsumerGroup,
 	dimensionExtractedProducer *kafka.Producer,
 	dimensionExtractedErrProducer *kafka.Producer,
@@ -240,35 +240,35 @@ func registerCheckers(hc *healthcheck.HealthCheck, isEncryptionEnabled bool,
 	dc *dataset.Client) (err error) {
 
 	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
-		log.Event(nil, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
+		log.Event(ctx, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
-		log.Event(nil, "Error Adding Check for Kafka Producer", log.ERROR, log.Error(err))
+		log.Event(ctx, "Error Adding Check for Kafka Producer", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
-		log.Event(nil, "Error Adding Check for Kafka Error Producer", log.ERROR, log.Error(err))
+		log.Event(ctx, "Error Adding Check for Kafka Error Producer", log.ERROR, log.Error(err))
 	}
 
 	for bucketName, s3 := range s3Clients {
 		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
-			log.Event(nil, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
+			log.Event(ctx, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
 		}
 	}
 
 	if isEncryptionEnabled {
 		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
-			log.Event(nil, "Error Adding Check for Vault", log.ERROR, log.Error(err))
+			log.Event(ctx, "Error Adding Check for Vault", log.ERROR, log.Error(err))
 		}
 	}
 
 	if err = hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
-		log.Event(nil, "Error Adding Check for Zebedee", log.ERROR, log.Error(err))
+		log.Event(ctx, "Error Adding Check for Zebedee", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Dataset API", dc.Checker); err != nil {
-		log.Event(nil, "Error Adding Check for Dataset API", log.ERROR, log.Error(err))
+		log.Event(ctx, "Error Adding Check for Dataset API", log.ERROR, log.Error(err))
 	}
 
 	return

@@ -60,7 +60,7 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-	producerMessage, instanceID, file, err := svc.retrieveData(message)
+	producerMessage, instanceID, file, err := svc.retrieveData(ctx, message)
 	if err != nil {
 		return instanceID, err
 	}
@@ -166,11 +166,11 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.ReadCloser, error) {
+func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]byte, string, io.ReadCloser, error) {
 
 	event, err := readMessage(message.GetData())
 	if err != nil {
-		log.Event(nil, "error reading message", log.ERROR, log.Error(err), log.Data{"schema": "failed to unmarshal event"})
+		log.Event(ctx, "error reading message", log.ERROR, log.Error(err), log.Data{"schema": "failed to unmarshal event"})
 		return nil, "", nil, err
 	}
 
@@ -178,12 +178,12 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 
 	s3URL, err := event.S3URL()
 	if err != nil {
-		log.Event(nil, "encountered error parsing file URL", log.ERROR, log.Error(err), logData)
+		log.Event(ctx, "encountered error parsing file URL", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
 	s3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
 	if err != nil {
-		log.Event(nil, "unable to represent S3URL from parsed file URL", log.ERROR, log.Error(err), logData)
+		log.Event(ctx, "unable to represent S3URL from parsed file URL", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
 
@@ -192,12 +192,12 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 	logData["bucket"] = s3URL.BucketName
 	logData["filename"] = s3URL.Key
 
-	log.Event(nil, "event received", log.INFO, logData)
+	log.Event(ctx, "event received", log.INFO, logData)
 
 	// Get S3 Client corresponding to the Bucket extracted from URL, or create one if not available
 	s3, ok := svc.S3Clients[s3URL.BucketName]
 	if !ok {
-		log.Event(nil, "Retreiving data from unexpected S3 bucket", log.WARN, log.Data{"RequestedBucket": s3URL.BucketName})
+		log.Event(ctx, "Retreiving data from unexpected S3 bucket", log.WARN, log.Data{"RequestedBucket": s3URL.BucketName})
 		s3 = s3client.NewClientWithSession(s3URL.BucketName, !svc.EncryptionDisabled, svc.AwsSession)
 	}
 
@@ -218,18 +218,18 @@ func (svc *Service) retrieveData(message kafka.Message) ([]byte, string, io.Read
 
 		output, err = s3.GetWithPSK(s3URL.Key, psk)
 		if err != nil {
-			log.Event(nil, "encountered error retrieving and decrypting csv file", log.ERROR, log.Error(err), logData)
+			log.Event(ctx, "encountered error retrieving and decrypting csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err
 		}
 	} else {
 		output, err = s3.Get(s3URL.Key)
 		if err != nil {
-			log.Event(nil, "encountered error retrieving csv file", log.ERROR, log.Error(err), logData)
+			log.Event(ctx, "encountered error retrieving csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err
 		}
 	}
 
-	log.Event(nil, "file successfully read from aws", log.INFO, logData)
+	log.Event(ctx, "file successfully read from aws", log.INFO, logData)
 
 	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&DimensionExtracted{
 		FileURL:    s3URLStr,
