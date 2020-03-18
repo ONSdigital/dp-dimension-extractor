@@ -178,12 +178,12 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 
 	s3URL, err := event.S3URL()
 	if err != nil {
-		log.Event(ctx, "encountered error parsing file URL", log.ERROR, log.Error(err), logData)
+		log.Event(ctx, "encountered error parsing file url", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
 	s3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
 	if err != nil {
-		log.Event(ctx, "unable to represent S3URL from parsed file URL", log.ERROR, log.Error(err), logData)
+		log.Event(ctx, "unable to represent s3 url from parsed file url", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
 
@@ -197,7 +197,7 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 	// Get S3 Client corresponding to the Bucket extracted from URL, or create one if not available
 	s3, ok := svc.S3Clients[s3URL.BucketName]
 	if !ok {
-		log.Event(ctx, "Retreiving data from unexpected S3 bucket", log.WARN, log.Data{"RequestedBucket": s3URL.BucketName})
+		log.Event(ctx, "retreiving data from unexpected s3 bucket", log.WARN, log.Data{"RequestedBucket": s3URL.BucketName})
 		s3 = s3client.NewClientWithSession(s3URL.BucketName, !svc.EncryptionDisabled, svc.AwsSession)
 	}
 

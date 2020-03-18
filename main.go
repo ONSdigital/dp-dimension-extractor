@@ -37,7 +37,7 @@ var (
 func main() {
 	log.Namespace = "dp-dimension-extractor"
 	ctx := context.Background()
-	log.Event(ctx, "Starting dimension extractor", log.INFO)
+	log.Event(ctx, "starting dimension extractor", log.INFO)
 
 	// Signals channel to notify only of SIGING and SIGTERM
 	signals := make(chan os.Signal, 1)
@@ -240,35 +240,35 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 	dc *dataset.Client) (err error) {
 
 	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
-		log.Event(ctx, "Error Adding Check for Kafka Consumer", log.ERROR, log.Error(err))
+		log.Event(ctx, "error adding check for kafka consumer", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
-		log.Event(ctx, "Error Adding Check for Kafka Producer", log.ERROR, log.Error(err))
+		log.Event(ctx, "error adding check for kafka producer", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
-		log.Event(ctx, "Error Adding Check for Kafka Error Producer", log.ERROR, log.Error(err))
+		log.Event(ctx, "error adding check for kafka error producer", log.ERROR, log.Error(err))
 	}
 
 	for bucketName, s3 := range s3Clients {
 		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
-			log.Event(ctx, "Error Adding Check for S3 Client", log.ERROR, log.Error(err))
+			log.Event(ctx, "error adding check for s3 client", log.ERROR, log.Error(err))
 		}
 	}
 
 	if isEncryptionEnabled {
 		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
-			log.Event(ctx, "Error Adding Check for Vault", log.ERROR, log.Error(err))
+			log.Event(ctx, "error adding check for vault", log.ERROR, log.Error(err))
 		}
 	}
 
 	if err = hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
-		log.Event(ctx, "Error Adding Check for Zebedee", log.ERROR, log.Error(err))
+		log.Event(ctx, "error adding check for zebedee", log.ERROR, log.Error(err))
 	}
 
 	if err = hc.AddCheck("Dataset API", dc.Checker); err != nil {
-		log.Event(ctx, "Error Adding Check for Dataset API", log.ERROR, log.Error(err))
+		log.Event(ctx, "error adding check for dataset api", log.ERROR, log.Error(err))
 	}
 
 	return

@@ -161,7 +161,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 func waitOrTimeout(t *testing.T, eventLoopDone chan bool, expected chan bool) {
 	select {
 	case <-eventLoopDone:
-		log.Event(ctx, "Event loop done.", log.INFO)
+		log.Event(ctx, "event loop done.", log.INFO)
 	case <-expected:
 		log.Event(ctx, "expected behavior invoked", log.INFO)
 	case <-time.After(time.Second * 3):
@@ -175,7 +175,7 @@ func closeDown(t *testing.T, cancel context.CancelFunc, eventLoopDone chan bool)
 
 	select {
 	case <-eventLoopDone:
-		log.Event(ctx, "Close down successfully", log.INFO)
+		log.Event(ctx, "close down successfully", log.INFO)
 	case <-time.After(time.Second * 5):
 		log.Event(ctx, "consumer failed to stop.", log.INFO)
 		t.FailNow()

@@ -34,7 +34,7 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 		for {
 			select {
 			case <-eventLoopContext.Done():
-				log.Event(eventLoopContext, "Event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
+				log.Event(eventLoopContext, "event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
 			case message := <-c.KafkaConsumer.Channels().Upstream:
 				// In the future, kafka message will provice the context
@@ -44,11 +44,11 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 					log.Event(kafkaContext, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 
 					if len(instanceID) == 0 {
-						log.Event(kafkaContext, "instance_id is empty errorReporter.Notify will not be called", log.ERROR, log.Error(err))
+						log.Event(kafkaContext, "instance_id is empty, the error will not be reported", log.ERROR, log.Error(err))
 					} else {
 						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
 						if err != nil {
-							log.Event(kafkaContext, "errorReporter.Notify returned an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+							log.Event(kafkaContext, "error while trying to report an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 						}
 					}
 
