@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"strconv"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-api-clients-go/identity"
-	"github.com/ONSdigital/dp-dimension-extractor/api"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/event"
 	"github.com/ONSdigital/dp-dimension-extractor/initialise"
@@ -19,7 +19,9 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka"
 	vault "github.com/ONSdigital/dp-vault"
+	"github.com/ONSdigital/go-ns/server"
 	"github.com/ONSdigital/log.go/log"
+	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 )
 
@@ -110,13 +112,27 @@ func main() {
 	eventLoopDone := make(chan bool)
 	apiErrors := make(chan error, 1)
 
-	// Create API with healthchecker
-	api.CreateDimensionExtractorAPI(ctx, cfg.DimensionExtractorURL, cfg.BindAddr, apiErrors, &hc)
+	// Create HTTP server for healthcheck
+	router := mux.NewRouter()
+	router.HandleFunc("/health", hc.Handler)
+	hc.Start(ctx)
+	httpServer := server.New(cfg.BindAddr, router)
+	httpServer.HandleOSSignals = false // Disable this here to allow main to manage graceful shutdown of the entire app.
+
+	go func() {
+		log.Event(ctx, "Starting api...", log.INFO)
+		if err := httpServer.ListenAndServe(); err != nil {
+			log.Event(ctx, "api http server returned error", log.ERROR, log.Error(err))
+			hc.Stop()
+			apiErrors <- err
+		}
+	}()
 
 	service := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,
 		EncryptionDisabled:         cfg.EncryptionDisabled,
+		DatasetClient:              dc,
 		AwsSession:                 awsSession,
 		S3Clients:                  s3Clients,
 		VaultClient:                vc,
@@ -185,13 +201,15 @@ func main() {
 		eventLoopCancel()
 		<-eventLoopDone
 
-		// Close API
+		// Shutdown HTTP server
 		log.Event(shutdownContext, "closing http server", log.INFO)
-		if err := api.Close(shutdownContext, &hc); err != nil {
+		if err := httpServer.Shutdown(ctx); err != nil {
 			log.Event(shutdownContext, "failed to gracefully close http server", log.ERROR, log.Error(err))
-		} else {
-			log.Event(shutdownContext, "gracefully closed http server", log.INFO)
 		}
+		log.Event(ctx, "http server gracefully closed ", log.INFO)
+
+		// Stop healthcheck
+		hc.Stop()
 
 		// If DimensionExtracted kafka producer exists, close it
 		if serviceList.DimensionExtractedProducer {
@@ -237,41 +255,53 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 	s3Clients map[string]service.S3Client,
 	vc *vault.Client,
 	zebedeeHealthClient *health.Client,
-	dc *dataset.Client) (err error) {
+	dc *dataset.Client) error {
 
-	if err = hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
+	anyError := false
+
+	if err := hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
+		anyError = true
 		log.Event(ctx, "error adding check for kafka consumer", log.ERROR, log.Error(err))
 	}
 
-	if err = hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
+	if err := hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
+		anyError = true
 		log.Event(ctx, "error adding check for kafka producer", log.ERROR, log.Error(err))
 	}
 
-	if err = hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
+	if err := hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
+		anyError = true
 		log.Event(ctx, "error adding check for kafka error producer", log.ERROR, log.Error(err))
 	}
 
 	for bucketName, s3 := range s3Clients {
-		if err = hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
+		if err := hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
+			anyError = true
 			log.Event(ctx, "error adding check for s3 client", log.ERROR, log.Error(err))
 		}
 	}
 
 	if isEncryptionEnabled {
-		if err = hc.AddCheck("Vault", vc.Checker); err != nil {
+		if err := hc.AddCheck("Vault", vc.Checker); err != nil {
+			anyError = true
 			log.Event(ctx, "error adding check for vault", log.ERROR, log.Error(err))
 		}
 	}
 
-	if err = hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
+	if err := hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
+		anyError = true
 		log.Event(ctx, "error adding check for zebedee", log.ERROR, log.Error(err))
 	}
 
-	if err = hc.AddCheck("Dataset API", dc.Checker); err != nil {
+	if err := hc.AddCheck("Dataset API", dc.Checker); err != nil {
+		anyError = true
 		log.Event(ctx, "error adding check for dataset api", log.ERROR, log.Error(err))
 	}
 
-	return
+	if anyError {
+		return errors.New("Error(s) registering checkers for healthcheck")
+	}
+	return nil
 }
 
 // if error is not nil, log it and exit

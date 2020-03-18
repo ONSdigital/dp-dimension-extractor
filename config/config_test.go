@@ -38,7 +38,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.ZebedeeURL, ShouldEqual, "http://localhost:8082")
 				So(cfg.HealthCheckInterval, ShouldEqual, 10*time.Second)
 				So(cfg.HealthCheckRecoveryInterval, ShouldEqual, 1*time.Minute)
-				So(cfg.BucketsNames, ShouldResemble, []string{"dp-frontend-florence-file-uploads"})
+				So(cfg.BucketNames, ShouldResemble, []string{"dp-frontend-florence-file-uploads"})
 			})
 		})
 	})

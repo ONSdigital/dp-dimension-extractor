@@ -29,7 +29,7 @@ type Config struct {
 	HealthCheckInterval         time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckRecoveryInterval time.Duration `envconfig:"HEALTHCHECK_RECOVERY_INTERVAL"`
 	AWSRegion                   string        `envconfig:"AWS_REGION"`
-	BucketsNames                []string      `envconfig:"BUCKETS_NAMES"                  json:"-"`
+	BucketNames                 []string      `envconfig:"BUCKET_NAMES"                  json:"-"`
 }
 
 var cfg *Config
@@ -61,7 +61,7 @@ func Get() (*Config, error) {
 		HealthCheckInterval:         10 * time.Second,
 		HealthCheckRecoveryInterval: 1 * time.Minute,
 		AWSRegion:                   "eu-west-1",
-		BucketsNames:                []string{"dp-frontend-florence-file-uploads"},
+		BucketNames:                 []string{"dp-frontend-florence-file-uploads"},
 	}
 
 	if err := envconfig.Process("", cfg); err != nil {

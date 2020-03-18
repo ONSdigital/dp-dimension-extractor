@@ -104,7 +104,7 @@ func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *sess
 
 	// create S3 clients for expected bucket names, so that they can be health-checked
 	s3Clients = make(map[string]service.S3Client)
-	for _, bucketName := range cfg.BucketsNames {
+	for _, bucketName := range cfg.BucketNames {
 		s3Clients[bucketName] = s3client.NewClientWithSession(bucketName, !cfg.EncryptionDisabled, awsSession)
 	}
 	e.S3Clients = true

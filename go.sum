@@ -8,8 +8,8 @@ github.com/ONSdigital/dp-healthcheck v0.0.0-20200131122546-9db6d3f0494e/go.mod h
 github.com/ONSdigital/dp-healthcheck v1.0.0 h1:bySQU8kQRs4n3WbgH8QtVwCJLqG9ri722saATjvNNfc=
 github.com/ONSdigital/dp-healthcheck v1.0.0/go.mod h1:zighxZ/0m5u7zo0eAr8XFlA+Dz2ic7A1vna6YXvhCjQ=
 github.com/ONSdigital/dp-kafka v1.1.1/go.mod h1:5wrPA3e92d82nOIhdzTsKW5hecJ14LO5URWGUEvPkQU=
-github.com/ONSdigital/dp-kafka v1.1.4-0.20200312103148-c4d7cec5b792 h1:KnV86KAj7GSyjivnMovDnPsq1rSuv31HIdZI/f5Ts3o=
-github.com/ONSdigital/dp-kafka v1.1.4-0.20200312103148-c4d7cec5b792/go.mod h1:5wrPA3e92d82nOIhdzTsKW5hecJ14LO5URWGUEvPkQU=
+github.com/ONSdigital/dp-kafka v1.1.4 h1:cLdE2hOT4MufGwQK0GwZyvaFTxsIi1dw5z6+Sa7VlFU=
+github.com/ONSdigital/dp-kafka v1.1.4/go.mod h1:5wrPA3e92d82nOIhdzTsKW5hecJ14LO5URWGUEvPkQU=
 github.com/ONSdigital/dp-mocking v0.0.0-20190905163309-fee2702ad1b9/go.mod h1:BcIRgitUju//qgNePRBmNjATarTtynAgc0yV29VpLEk=
 github.com/ONSdigital/dp-rchttp v0.0.0-20190919143000-bb5699e6fd59/go.mod h1:KkW68U3FPuivW4ogi9L8CPKNj9ZxGko4qcUY7KoAAkQ=
 github.com/ONSdigital/dp-rchttp v0.0.0-20200114090501-463a529590e8 h1:MWIHCr/ud5ur9elhfvKtSjMJInqf3iUY8F4J27qGQPA=
@@ -34,8 +34,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/aws/aws-sdk-go v1.29.2/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
-github.com/aws/aws-sdk-go v1.29.22 h1:3WmsCj3C30l6/4f50mPkDZoTPWSvaRCjcVJOWdCJoIE=
-github.com/aws/aws-sdk-go v1.29.22/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
+github.com/aws/aws-sdk-go v1.29.26 h1:T8LJNOVt0HZgJQySeE+1Pr3ClcX+rb7ddq/ZAjnHzDc=
+github.com/aws/aws-sdk-go v1.29.26/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bsm/sarama-cluster v2.1.15+incompatible h1:RkV6WiNRnqEEbp81druK8zYhmnIgdOjqSVi0+9Cnl2A=
 github.com/bsm/sarama-cluster v2.1.15+incompatible/go.mod h1:r7ao+4tTNXvWm+VRpRJchr2kQhqxgmAp2iEX5W96gMM=
