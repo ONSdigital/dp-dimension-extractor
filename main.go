@@ -120,7 +120,7 @@ func main() {
 	httpServer.HandleOSSignals = false // Disable this here to allow main to manage graceful shutdown of the entire app.
 
 	go func() {
-		log.Event(ctx, "Starting api...", log.INFO)
+		log.Event(ctx, "starting api...", log.INFO)
 		if err := httpServer.ListenAndServe(); err != nil {
 			log.Event(ctx, "api http server returned error", log.ERROR, log.Error(err))
 			hc.Stop()
@@ -257,48 +257,48 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 	zebedeeHealthClient *health.Client,
 	dc *dataset.Client) error {
 
-	anyError := false
+	hasErrors := false
 
 	if err := hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
-		anyError = true
+		hasErrors = true
 		log.Event(ctx, "error adding check for kafka consumer", log.ERROR, log.Error(err))
 	}
 
 	if err := hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
-		anyError = true
+		hasErrors = true
 		log.Event(ctx, "error adding check for kafka producer", log.ERROR, log.Error(err))
 	}
 
 	if err := hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
-		anyError = true
+		hasErrors = true
 		log.Event(ctx, "error adding check for kafka error producer", log.ERROR, log.Error(err))
 	}
 
 	for bucketName, s3 := range s3Clients {
 		if err := hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
-			anyError = true
+			hasErrors = true
 			log.Event(ctx, "error adding check for s3 client", log.ERROR, log.Error(err))
 		}
 	}
 
 	if isEncryptionEnabled {
 		if err := hc.AddCheck("Vault", vc.Checker); err != nil {
-			anyError = true
+			hasErrors = true
 			log.Event(ctx, "error adding check for vault", log.ERROR, log.Error(err))
 		}
 	}
 
 	if err := hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
-		anyError = true
+		hasErrors = true
 		log.Event(ctx, "error adding check for zebedee", log.ERROR, log.Error(err))
 	}
 
 	if err := hc.AddCheck("Dataset API", dc.Checker); err != nil {
-		anyError = true
+		hasErrors = true
 		log.Event(ctx, "error adding check for dataset api", log.ERROR, log.Error(err))
 	}
 
-	if anyError {
+	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
 	return nil

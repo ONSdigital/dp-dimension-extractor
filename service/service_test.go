@@ -37,10 +37,10 @@ var (
 		Version: dataset.Version{
 			ID:         "versionId",
 			InstanceID: validInstanceID,
-			Dimensions: []dataset.Dimension{
-				dataset.Dimension{ID: "Time", Name: "time"},
-				dataset.Dimension{ID: "Geography", Name: "geography"},
-				dataset.Dimension{ID: "Aggregate", Name: "aggregate"},
+			Dimensions: []dataset.VersionDimension{
+				dataset.VersionDimension{ID: "Time", Name: "time"},
+				dataset.VersionDimension{ID: "Geography", Name: "geography"},
+				dataset.VersionDimension{ID: "Aggregate", Name: "aggregate"},
 			},
 		},
 	}
