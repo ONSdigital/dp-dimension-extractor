@@ -37,7 +37,7 @@ func TestSpec(t *testing.T) {
 				So(cfg.ServiceAuthToken, ShouldEqual, "Bearer E45F9BFC-3854-46AE-8187-11326A4E00F4")
 				So(cfg.ZebedeeURL, ShouldEqual, "http://localhost:8082")
 				So(cfg.HealthCheckInterval, ShouldEqual, 10*time.Second)
-				So(cfg.HealthCheckRecoveryInterval, ShouldEqual, 1*time.Minute)
+				So(cfg.HealthCheckCriticalTimeout, ShouldEqual, 1*time.Minute)
 				So(cfg.BucketNames, ShouldResemble, []string{"dp-frontend-florence-file-uploads"})
 			})
 		})

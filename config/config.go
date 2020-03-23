@@ -9,27 +9,27 @@ import (
 
 // Config is the filing resource handler config
 type Config struct {
-	BindAddr                    string        `envconfig:"BIND_ADDR"`
-	Brokers                     []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
-	DatasetAPIURL               string        `envconfig:"DATASET_API_URL"`
-	DimensionsExtractedTopic    string        `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
-	DimensionExtractorURL       string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
-	EncryptionDisabled          bool          `envconfig:"ENCRYPTION_DISABLED"`
-	EventReporterTopic          string        `envconfig:"EVENT_REPORTER_TOPIC"`
-	GracefulShutdownTimeout     time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
-	InputFileAvailableGroup     string        `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
-	InputFileAvailableTopic     string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
-	KafkaMaxBytes               string        `envconfig:"KAFKA_MAX_BYTES"`
-	MaxRetries                  int           `envconfig:"REQUEST_MAX_RETRIES"`
-	VaultAddr                   string        `envconfig:"VAULT_ADDR"`
-	VaultToken                  string        `envconfig:"VAULT_TOKEN"                    json:"-"`
-	VaultPath                   string        `envconfig:"VAULT_PATH"`
-	ServiceAuthToken            string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
-	ZebedeeURL                  string        `envconfig:"ZEBEDEE_URL"`
-	HealthCheckInterval         time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
-	HealthCheckRecoveryInterval time.Duration `envconfig:"HEALTHCHECK_RECOVERY_INTERVAL"`
-	AWSRegion                   string        `envconfig:"AWS_REGION"`
-	BucketNames                 []string      `envconfig:"BUCKET_NAMES"                  json:"-"`
+	BindAddr                   string        `envconfig:"BIND_ADDR"`
+	Brokers                    []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
+	DatasetAPIURL              string        `envconfig:"DATASET_API_URL"`
+	DimensionsExtractedTopic   string        `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
+	DimensionExtractorURL      string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
+	EncryptionDisabled         bool          `envconfig:"ENCRYPTION_DISABLED"`
+	EventReporterTopic         string        `envconfig:"EVENT_REPORTER_TOPIC"`
+	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
+	InputFileAvailableGroup    string        `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
+	InputFileAvailableTopic    string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
+	KafkaMaxBytes              string        `envconfig:"KAFKA_MAX_BYTES"`
+	MaxRetries                 int           `envconfig:"REQUEST_MAX_RETRIES"`
+	VaultAddr                  string        `envconfig:"VAULT_ADDR"`
+	VaultToken                 string        `envconfig:"VAULT_TOKEN"                    json:"-"`
+	VaultPath                  string        `envconfig:"VAULT_PATH"`
+	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"             json:"-"`
+	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
+	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
+	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	AWSRegion                  string        `envconfig:"AWS_REGION"`
+	BucketNames                []string      `envconfig:"BUCKET_NAMES"                  json:"-"`
 }
 
 var cfg *Config
@@ -41,27 +41,27 @@ func Get() (*Config, error) {
 	}
 
 	cfg = &Config{
-		BindAddr:                    ":21400",
-		Brokers:                     []string{"localhost:9092"},
-		DimensionsExtractedTopic:    "dimensions-extracted",
-		DimensionExtractorURL:       "http://localhost:21400",
-		DatasetAPIURL:               "http://localhost:22000",
-		EncryptionDisabled:          false,
-		EventReporterTopic:          "report-events",
-		GracefulShutdownTimeout:     5 * time.Second,
-		InputFileAvailableTopic:     "input-file-available",
-		InputFileAvailableGroup:     "input-file-available",
-		KafkaMaxBytes:               "2000000",
-		MaxRetries:                  3,
-		VaultAddr:                   "http://localhost:8200",
-		VaultToken:                  "",
-		VaultPath:                   "secret/shared/psk",
-		ServiceAuthToken:            "E45F9BFC-3854-46AE-8187-11326A4E00F4",
-		ZebedeeURL:                  "http://localhost:8082",
-		HealthCheckInterval:         10 * time.Second,
-		HealthCheckRecoveryInterval: 1 * time.Minute,
-		AWSRegion:                   "eu-west-1",
-		BucketNames:                 []string{"dp-frontend-florence-file-uploads"},
+		BindAddr:                   ":21400",
+		Brokers:                    []string{"localhost:9092"},
+		DimensionsExtractedTopic:   "dimensions-extracted",
+		DimensionExtractorURL:      "http://localhost:21400",
+		DatasetAPIURL:              "http://localhost:22000",
+		EncryptionDisabled:         false,
+		EventReporterTopic:         "report-events",
+		GracefulShutdownTimeout:    5 * time.Second,
+		InputFileAvailableTopic:    "input-file-available",
+		InputFileAvailableGroup:    "input-file-available",
+		KafkaMaxBytes:              "2000000",
+		MaxRetries:                 3,
+		VaultAddr:                  "http://localhost:8200",
+		VaultToken:                 "",
+		VaultPath:                  "secret/shared/psk",
+		ServiceAuthToken:           "E45F9BFC-3854-46AE-8187-11326A4E00F4",
+		ZebedeeURL:                 "http://localhost:8082",
+		HealthCheckInterval:        10 * time.Second,
+		HealthCheckCriticalTimeout: 1 * time.Minute,
+		AWSRegion:                  "eu-west-1",
+		BucketNames:                []string{"dp-frontend-florence-file-uploads"},
 	}
 
 	if err := envconfig.Process("", cfg); err != nil {

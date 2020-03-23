@@ -29,7 +29,7 @@ type ExternalServiceList struct {
 // KafkaProducerName : Type for kafka producer name used by iota constants
 type KafkaProducerName int
 
-// Possible names of Kakfa Producers
+// Possible names of Kafka Producers
 const (
 	DimensionExtracted = iota
 	DimensionExtractedErr
@@ -136,7 +136,7 @@ func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitC
 	if err != nil {
 		return healthcheck.HealthCheck{}, err
 	}
-	hc := healthcheck.New(versionInfo, cfg.HealthCheckRecoveryInterval, cfg.HealthCheckInterval)
+	hc := healthcheck.New(versionInfo, cfg.HealthCheckCriticalTimeout, cfg.HealthCheckInterval)
 
 	e.HealthCheck = true
 

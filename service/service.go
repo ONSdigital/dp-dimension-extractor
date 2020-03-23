@@ -157,7 +157,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 	log.Event(ctx, "successfully sent request to dataset API", log.INFO, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 
-	log.Event(ctx, "a list of headers", log.INFO, log.Data{"instance_id": instanceID, "header_row": headerRow})
 	// Once csv file has been iterated over and there were no errors,
 	// send a completed messsage to the dimensions-extracted topic
 
