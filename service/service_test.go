@@ -117,7 +117,7 @@ func TestS3URL(t *testing.T) {
 					Key:        "dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv",
 					Region:     "",
 				})
-				S3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
+				S3URLStr, err := s3URL.String(s3client.AliasVirtualHostedStyle)
 				So(err, ShouldBeNil)
 				So(S3URLStr, ShouldEqual, "s3://csv-exported/dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv")
 			})
@@ -131,7 +131,7 @@ func TestS3URL(t *testing.T) {
 					Key:        "dir2/2137bad0-737c-4221-b75a-042e1.csv",
 					Region:     "",
 				})
-				S3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
+				S3URLStr, err := s3URL.String(s3client.AliasVirtualHostedStyle)
 				So(err, ShouldBeNil)
 				So(S3URLStr, ShouldEqual, "s3://csv-exported/dir2/2137bad0-737c-4221-b75a-042e1.csv")
 			})

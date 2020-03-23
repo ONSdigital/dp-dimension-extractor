@@ -180,7 +180,7 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 		log.Event(ctx, "encountered error parsing file url", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
 	}
-	s3URLStr, err := s3URL.String(s3client.StyleAliasVirtualHosted)
+	s3URLStr, err := s3URL.String(s3client.AliasVirtualHostedStyle)
 	if err != nil {
 		log.Event(ctx, "unable to represent s3 url from parsed file url", log.ERROR, log.Error(err), logData)
 		return nil, event.InstanceID, nil, err
