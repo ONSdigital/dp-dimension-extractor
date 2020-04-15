@@ -63,6 +63,8 @@ Scripts for updating and debugging Kafka can be found [here](https://github.com/
 | ZEBEDEE_URL                  | http://localhost:8082                 | The host name for Zebedee
 | AWS_ACCESS_KEY_ID            | -                                     | The AWS access key credential for the dimension extractor
 | AWS_SECRET_ACCESS_KEY        | -                                     | The AWS secret key credential for the dimension extractor
+| HEALTHCHECK_INTERVAL         | 30s                                   | The period of time between health checks
+| HEALTHCHECK_CRITICAL_TIMEOUT | 90s                                   | The period of time after which failing checks will result in critical global check
 
 ### Contributing
 
