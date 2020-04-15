@@ -58,8 +58,8 @@ func Get() (*Config, error) {
 		VaultPath:                  "secret/shared/psk",
 		ServiceAuthToken:           "E45F9BFC-3854-46AE-8187-11326A4E00F4",
 		ZebedeeURL:                 "http://localhost:8082",
-		HealthCheckInterval:        10 * time.Second,
-		HealthCheckCriticalTimeout: 1 * time.Minute,
+		HealthCheckInterval:        30 * time.Second,
+		HealthCheckCriticalTimeout: 90 * time.Second,
 		AWSRegion:                  "eu-west-1",
 		BucketNames:                []string{"dp-frontend-florence-file-uploads"},
 	}
