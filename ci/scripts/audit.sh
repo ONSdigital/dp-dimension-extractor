@@ -2,6 +2,6 @@
 
 export cwd=$(pwd)
 
-pushd $cwd/dp-frontend-router
+pushd $cwd/dp-dimension-extractor
   make audit
 popd
