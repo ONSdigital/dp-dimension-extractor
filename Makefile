@@ -19,19 +19,31 @@ VAULT_POLICY:="$(shell vault policy write -address=$(VAULT_ADDR) read-psk policy
 TOKEN_INFO:="$(shell vault token create -address=$(VAULT_ADDR) -policy=read-psk -period=24h -display-name=dp-dimension-extractor)"
 APP_TOKEN:="$(shell echo $(TOKEN_INFO) | awk '{print $$6}')"
 
+.PHONY: all
+all: audit test build
+
+.PHONY: audit
+audit:
+	nancy go.sum
+
+.PHONY: build
 build:
 	@mkdir -p $(BUILD_ARCH)/$(BIN_DIR)
 	go build $(LDFLAGS) -o $(BUILD_ARCH)/$(BIN_DIR)/dp-dimension-extractor main.go
 
+.PHONY: debug
 debug:
 	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) HUMAN_LOG=1 go run $(LDFLAGS) main.go
 
+.PHONY: acceptance
 acceptance:
 	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) ENCRYPTION_DISABLED=false HUMAN_LOG=1 go run $(LDFLAGS) main.go
 
+.PHONY: test
 test:
 	go test -cover -race ./...
 
+.PHONY: vault
 vault:
 	@echo "$(VAULT_POLICY)"
 	@echo "$(TOKEN_INFO)"
