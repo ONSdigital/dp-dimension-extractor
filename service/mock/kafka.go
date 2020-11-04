@@ -6,13 +6,8 @@ package mock
 import (
 	"context"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
-	"github.com/ONSdigital/dp-kafka"
+	"github.com/ONSdigital/dp-kafka/v2"
 	"sync"
-)
-
-var (
-	lockKafkaProducerMockChannels sync.RWMutex
-	lockKafkaProducerMockClose    sync.RWMutex
 )
 
 // Ensure, that KafkaProducerMock does implement service.KafkaProducer.
@@ -55,6 +50,8 @@ type KafkaProducerMock struct {
 			Ctx context.Context
 		}
 	}
+	lockChannels sync.RWMutex
+	lockClose    sync.RWMutex
 }
 
 // Channels calls ChannelsFunc.
@@ -64,9 +61,9 @@ func (mock *KafkaProducerMock) Channels() *kafka.ProducerChannels {
 	}
 	callInfo := struct {
 	}{}
-	lockKafkaProducerMockChannels.Lock()
+	mock.lockChannels.Lock()
 	mock.calls.Channels = append(mock.calls.Channels, callInfo)
-	lockKafkaProducerMockChannels.Unlock()
+	mock.lockChannels.Unlock()
 	return mock.ChannelsFunc()
 }
 
@@ -77,9 +74,9 @@ func (mock *KafkaProducerMock) ChannelsCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockKafkaProducerMockChannels.RLock()
+	mock.lockChannels.RLock()
 	calls = mock.calls.Channels
-	lockKafkaProducerMockChannels.RUnlock()
+	mock.lockChannels.RUnlock()
 	return calls
 }
 
@@ -93,9 +90,9 @@ func (mock *KafkaProducerMock) Close(ctx context.Context) error {
 	}{
 		Ctx: ctx,
 	}
-	lockKafkaProducerMockClose.Lock()
+	mock.lockClose.Lock()
 	mock.calls.Close = append(mock.calls.Close, callInfo)
-	lockKafkaProducerMockClose.Unlock()
+	mock.lockClose.Unlock()
 	return mock.CloseFunc(ctx)
 }
 
@@ -108,8 +105,8 @@ func (mock *KafkaProducerMock) CloseCalls() []struct {
 	var calls []struct {
 		Ctx context.Context
 	}
-	lockKafkaProducerMockClose.RLock()
+	mock.lockClose.RLock()
 	calls = mock.calls.Close
-	lockKafkaProducerMockClose.RUnlock()
+	mock.lockClose.RUnlock()
 	return calls
 }

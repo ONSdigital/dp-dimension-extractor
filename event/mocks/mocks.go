@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	kafka "github.com/ONSdigital/dp-kafka"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"golang.org/x/net/context"
 )
 

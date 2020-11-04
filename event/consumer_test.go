@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-dimension-extractor/event/mocks"
-	kafka "github.com/ONSdigital/dp-kafka"
-	"github.com/ONSdigital/dp-kafka/kafkatest"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
+	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
 	"github.com/ONSdigital/dp-reporter-client/reporter/reportertest"
 	"github.com/ONSdigital/log.go/log"
 	. "github.com/smartystreets/goconvey/convey"
@@ -24,7 +24,7 @@ func TestConsumer_Start(t *testing.T) {
 
 		msg := kafkatest.NewMessage(nil, 1)
 
-		cgChannels := kafka.CreateConsumerGroupChannels(true)
+		cgChannels := kafka.CreateConsumerGroupChannels(1)
 		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels, true)
 
 		handler := &mocks.MessageHandler{
@@ -51,16 +51,16 @@ func TestConsumer_Start(t *testing.T) {
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 
-			waitOrTimeout(t, eventLoopDone, cgChannels.UpstreamDone)
+			waitOrTimeout(t, eventLoopDone, msg.UpstreamDone())
 
 			Convey("Then handler.HandleMessage is called once with the expected parameters", func() {
 				So(len(handler.MessageArgs), ShouldEqual, 1)
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.CommitAndRelease is called once", func() {
-				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
-			})
+			// Convey("And message.CommitAndRelease is called once", func() {
+			// 	So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
+			// })
 
 			Convey("And errorReporter.Notify is never called", func() {
 				So(len(errorReporter.NotifyCalls()), ShouldEqual, 0)
@@ -77,7 +77,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 		msg := kafkatest.NewMessage(nil, 1)
 
-		cgChannels := kafka.CreateConsumerGroupChannels(true)
+		cgChannels := kafka.CreateConsumerGroupChannels(1)
 		kafkaConsumerMock := kafkatest.NewMessageConsumerWithChannels(cgChannels, true)
 
 		errorReporter := reportertest.NewImportErrorReporterMock(nil)
@@ -107,15 +107,15 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 
-			waitOrTimeout(t, eventLoopDone, cgChannels.UpstreamDone)
+			waitOrTimeout(t, eventLoopDone, msg.UpstreamDone())
 
 			Convey("Then handler.HandleMessage is called once with the expected parameters", func() {
 				So(len(handler.MessageArgs), ShouldEqual, 1)
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.CommitAndRelease is called once", func() {
-				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
+			Convey("And message.Commit is called once", func() {
+				So(len(msg.CommitCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is called once", func() {
@@ -140,15 +140,15 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 
-			waitOrTimeout(t, eventLoopDone, cgChannels.UpstreamDone)
+			waitOrTimeout(t, eventLoopDone, msg.UpstreamDone())
 
 			Convey("Then handler.HandleMessage is called once with the expected parameters", func() {
 				So(len(handler.MessageArgs), ShouldEqual, 1)
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.CommitAndRelease is called once", func() {
-				So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
+			Convey("And message.Commit is called once", func() {
+				So(len(msg.CommitCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
@@ -158,7 +158,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 	})
 }
 
-func waitOrTimeout(t *testing.T, eventLoopDone chan bool, expected chan bool) {
+func waitOrTimeout(t *testing.T, eventLoopDone chan bool, expected chan struct{}) {
 	select {
 	case <-eventLoopDone:
 		log.Event(ctx, "event loop done.", log.INFO)

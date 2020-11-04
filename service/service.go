@@ -10,7 +10,7 @@ import (
 	dataset "github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
-	kafka "github.com/ONSdigital/dp-kafka"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	s3client "github.com/ONSdigital/dp-s3"
 	"github.com/ONSdigital/log.go/log"
 	"github.com/aws/aws-sdk-go/aws/session"

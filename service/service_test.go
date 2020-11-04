@@ -13,8 +13,8 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-dimension-extractor/service/mock"
-	kafka "github.com/ONSdigital/dp-kafka"
-	"github.com/ONSdigital/dp-kafka/kafkatest"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
+	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
 	s3client "github.com/ONSdigital/dp-s3"
 	. "github.com/smartystreets/goconvey/convey"
 )

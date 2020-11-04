@@ -17,7 +17,7 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/initialise"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	kafka "github.com/ONSdigital/dp-kafka"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/go-ns/server"
 	"github.com/ONSdigital/log.go/log"

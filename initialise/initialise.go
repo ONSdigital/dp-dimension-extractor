@@ -7,7 +7,7 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
-	kafka "github.com/ONSdigital/dp-kafka"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
 	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
@@ -37,6 +37,8 @@ const (
 
 var kafkaProducerNames = []string{"DimensionExtracted", "DimensionExtractedErr"}
 
+var kafkaOffset = kafka.OffsetOldest
+
 // Values of the kafka producers names
 func (k KafkaProducerName) String() string {
 	return kafkaProducerNames[k]
@@ -44,15 +46,17 @@ func (k KafkaProducerName) String() string {
 
 // GetConsumer returns a kafka consumer, which might not be initialised yet.
 func (e *ExternalServiceList) GetConsumer(ctx context.Context, kafkaBrokers []string, cfg *config.Config) (kafkaConsumer *kafka.ConsumerGroup, err error) {
-	cgChannels := kafka.CreateConsumerGroupChannels(true)
+	cgChannels := kafka.CreateConsumerGroupChannels(1)
+	cgConfig := &kafka.ConsumerGroupConfig{
+		Offset: &kafkaOffset,
+	}
 	kafkaConsumer, err = kafka.NewConsumerGroup(
 		ctx,
 		kafkaBrokers,
 		cfg.InputFileAvailableTopic,
 		cfg.InputFileAvailableGroup,
-		kafka.OffsetNewest,
-		true,
 		cgChannels,
+		cgConfig,
 	)
 	if err != nil {
 		return
@@ -65,7 +69,7 @@ func (e *ExternalServiceList) GetConsumer(ctx context.Context, kafkaBrokers []st
 // GetProducer returns a kafka producer, which might not be initialised yet.
 func (e *ExternalServiceList) GetProducer(ctx context.Context, kafkaBrokers []string, topic string, name KafkaProducerName, envMax int) (kafkaProducer *kafka.Producer, err error) {
 	pChannels := kafka.CreateProducerChannels()
-	kafkaProducer, err = kafka.NewProducer(ctx, kafkaBrokers, topic, envMax, pChannels)
+	kafkaProducer, err = kafka.NewProducer(ctx, kafkaBrokers, topic, pChannels, nil)
 	if err != nil {
 		return
 	}

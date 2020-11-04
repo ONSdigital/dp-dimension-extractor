@@ -10,12 +10,6 @@ import (
 	"sync"
 )
 
-var (
-	lockDatasetClientMockGetInstance            sync.RWMutex
-	lockDatasetClientMockPostInstanceDimensions sync.RWMutex
-	lockDatasetClientMockPutInstanceData        sync.RWMutex
-)
-
 // Ensure, that DatasetClientMock does implement service.DatasetClient.
 // If this is not the case, regenerate this file with moq.
 var _ service.DatasetClient = &DatasetClientMock{}
@@ -89,6 +83,9 @@ type DatasetClientMock struct {
 			Data dataset.JobInstance
 		}
 	}
+	lockGetInstance            sync.RWMutex
+	lockPostInstanceDimensions sync.RWMutex
+	lockPutInstanceData        sync.RWMutex
 }
 
 // GetInstance calls GetInstanceFunc.
@@ -109,9 +106,9 @@ func (mock *DatasetClientMock) GetInstance(ctx context.Context, userAuthToken st
 		CollectionID:     collectionID,
 		InstanceID:       instanceID,
 	}
-	lockDatasetClientMockGetInstance.Lock()
+	mock.lockGetInstance.Lock()
 	mock.calls.GetInstance = append(mock.calls.GetInstance, callInfo)
-	lockDatasetClientMockGetInstance.Unlock()
+	mock.lockGetInstance.Unlock()
 	return mock.GetInstanceFunc(ctx, userAuthToken, serviceAuthToken, collectionID, instanceID)
 }
 
@@ -132,9 +129,9 @@ func (mock *DatasetClientMock) GetInstanceCalls() []struct {
 		CollectionID     string
 		InstanceID       string
 	}
-	lockDatasetClientMockGetInstance.RLock()
+	mock.lockGetInstance.RLock()
 	calls = mock.calls.GetInstance
-	lockDatasetClientMockGetInstance.RUnlock()
+	mock.lockGetInstance.RUnlock()
 	return calls
 }
 
@@ -154,9 +151,9 @@ func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, servi
 		InstanceID:       instanceID,
 		Data:             data,
 	}
-	lockDatasetClientMockPostInstanceDimensions.Lock()
+	mock.lockPostInstanceDimensions.Lock()
 	mock.calls.PostInstanceDimensions = append(mock.calls.PostInstanceDimensions, callInfo)
-	lockDatasetClientMockPostInstanceDimensions.Unlock()
+	mock.lockPostInstanceDimensions.Unlock()
 	return mock.PostInstanceDimensionsFunc(ctx, serviceAuthToken, instanceID, data)
 }
 
@@ -175,9 +172,9 @@ func (mock *DatasetClientMock) PostInstanceDimensionsCalls() []struct {
 		InstanceID       string
 		Data             dataset.OptionPost
 	}
-	lockDatasetClientMockPostInstanceDimensions.RLock()
+	mock.lockPostInstanceDimensions.RLock()
 	calls = mock.calls.PostInstanceDimensions
-	lockDatasetClientMockPostInstanceDimensions.RUnlock()
+	mock.lockPostInstanceDimensions.RUnlock()
 	return calls
 }
 
@@ -197,9 +194,9 @@ func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthT
 		InstanceID:       instanceID,
 		Data:             data,
 	}
-	lockDatasetClientMockPutInstanceData.Lock()
+	mock.lockPutInstanceData.Lock()
 	mock.calls.PutInstanceData = append(mock.calls.PutInstanceData, callInfo)
-	lockDatasetClientMockPutInstanceData.Unlock()
+	mock.lockPutInstanceData.Unlock()
 	return mock.PutInstanceDataFunc(ctx, serviceAuthToken, instanceID, data)
 }
 
@@ -218,8 +215,8 @@ func (mock *DatasetClientMock) PutInstanceDataCalls() []struct {
 		InstanceID       string
 		Data             dataset.JobInstance
 	}
-	lockDatasetClientMockPutInstanceData.RLock()
+	mock.lockPutInstanceData.RLock()
 	calls = mock.calls.PutInstanceData
-	lockDatasetClientMockPutInstanceData.RUnlock()
+	mock.lockPutInstanceData.RUnlock()
 	return calls
 }

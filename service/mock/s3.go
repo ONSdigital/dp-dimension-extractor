@@ -11,12 +11,6 @@ import (
 	"sync"
 )
 
-var (
-	lockS3ClientMockChecker    sync.RWMutex
-	lockS3ClientMockGet        sync.RWMutex
-	lockS3ClientMockGetWithPSK sync.RWMutex
-)
-
 // Ensure, that S3ClientMock does implement service.S3Client.
 // If this is not the case, regenerate this file with moq.
 var _ service.S3Client = &S3ClientMock{}
@@ -74,6 +68,9 @@ type S3ClientMock struct {
 			Psk []byte
 		}
 	}
+	lockChecker    sync.RWMutex
+	lockGet        sync.RWMutex
+	lockGetWithPSK sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -88,9 +85,9 @@ func (mock *S3ClientMock) Checker(ctx context.Context, state *healthcheck.CheckS
 		Ctx:   ctx,
 		State: state,
 	}
-	lockS3ClientMockChecker.Lock()
+	mock.lockChecker.Lock()
 	mock.calls.Checker = append(mock.calls.Checker, callInfo)
-	lockS3ClientMockChecker.Unlock()
+	mock.lockChecker.Unlock()
 	return mock.CheckerFunc(ctx, state)
 }
 
@@ -105,9 +102,9 @@ func (mock *S3ClientMock) CheckerCalls() []struct {
 		Ctx   context.Context
 		State *healthcheck.CheckState
 	}
-	lockS3ClientMockChecker.RLock()
+	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
-	lockS3ClientMockChecker.RUnlock()
+	mock.lockChecker.RUnlock()
 	return calls
 }
 
@@ -121,9 +118,9 @@ func (mock *S3ClientMock) Get(key string) (io.ReadCloser, error) {
 	}{
 		Key: key,
 	}
-	lockS3ClientMockGet.Lock()
+	mock.lockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
-	lockS3ClientMockGet.Unlock()
+	mock.lockGet.Unlock()
 	return mock.GetFunc(key)
 }
 
@@ -136,9 +133,9 @@ func (mock *S3ClientMock) GetCalls() []struct {
 	var calls []struct {
 		Key string
 	}
-	lockS3ClientMockGet.RLock()
+	mock.lockGet.RLock()
 	calls = mock.calls.Get
-	lockS3ClientMockGet.RUnlock()
+	mock.lockGet.RUnlock()
 	return calls
 }
 
@@ -154,9 +151,9 @@ func (mock *S3ClientMock) GetWithPSK(key string, psk []byte) (io.ReadCloser, err
 		Key: key,
 		Psk: psk,
 	}
-	lockS3ClientMockGetWithPSK.Lock()
+	mock.lockGetWithPSK.Lock()
 	mock.calls.GetWithPSK = append(mock.calls.GetWithPSK, callInfo)
-	lockS3ClientMockGetWithPSK.Unlock()
+	mock.lockGetWithPSK.Unlock()
 	return mock.GetWithPSKFunc(key, psk)
 }
 
@@ -171,8 +168,8 @@ func (mock *S3ClientMock) GetWithPSKCalls() []struct {
 		Key string
 		Psk []byte
 	}
-	lockS3ClientMockGetWithPSK.RLock()
+	mock.lockGetWithPSK.RLock()
 	calls = mock.calls.GetWithPSK
-	lockS3ClientMockGetWithPSK.RUnlock()
+	mock.lockGetWithPSK.RUnlock()
 	return calls
 }

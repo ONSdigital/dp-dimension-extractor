@@ -1,7 +1,7 @@
 package event
 
 import (
-	kafka "github.com/ONSdigital/dp-kafka"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
 	"github.com/ONSdigital/log.go/log"
 	"golang.org/x/net/context"
@@ -10,7 +10,6 @@ import (
 // KafkaConsumer represents a Kafka consumer group instance
 type KafkaConsumer interface {
 	Channels() *kafka.ConsumerGroupChannels
-	CommitAndRelease(msg kafka.Message)
 }
 
 // Service is kafka message handler
@@ -55,7 +54,7 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 				} else {
 					log.Event(kafkaContext, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
 				}
-				c.KafkaConsumer.CommitAndRelease(message)
+				message.Commit()
 				log.Event(eventLoopContext, "message committed", log.INFO, log.Data{"instance_id": instanceID})
 			}
 		}
