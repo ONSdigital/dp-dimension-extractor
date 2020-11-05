@@ -58,9 +58,9 @@ func TestConsumer_Start(t *testing.T) {
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			// Convey("And message.CommitAndRelease is called once", func() {
-			// 	So(len(kafkaConsumerMock.CommitAndReleaseCalls()), ShouldEqual, 1)
-			// })
+			Convey("And message.CommitAndRelease is called once", func() {
+				So(len(msg.CommitCalls()), ShouldEqual, 1)
+			})
 
 			Convey("And errorReporter.Notify is never called", func() {
 				So(len(errorReporter.NotifyCalls()), ShouldEqual, 0)
