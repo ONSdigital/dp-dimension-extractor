@@ -60,7 +60,7 @@ func main() {
 	var serviceList initialise.ExternalServiceList
 
 	// Get syncConsumerGroup Kafka Consumer
-	syncConsumerGroup, err := serviceList.GetConsumer(ctx, cfg.Brokers, cfg)
+	syncConsumerGroup, err := serviceList.GetConsumer(ctx, cfg)
 	exitIfError(ctx, "could not obtain consumer", err, nil)
 
 	// Get AWS Session to access S3
@@ -70,20 +70,20 @@ func main() {
 	// Get dimensionExtracted Kafka Producer
 	dimensionExtractedProducer, err := serviceList.GetProducer(
 		ctx,
-		cfg.Brokers,
 		cfg.DimensionsExtractedTopic,
 		initialise.DimensionExtracted,
 		int(envMax),
+		cfg,
 	)
 	exitIfError(ctx, "", err, nil)
 
 	// Get dimensionExtracted Error Kafka Producer
 	dimensionExtractedErrProducer, err := serviceList.GetProducer(
 		ctx,
-		cfg.Brokers,
 		cfg.EventReporterTopic,
 		initialise.DimensionExtractedErr,
 		int(envMax),
+		cfg,
 	)
 	exitIfError(ctx, "", err, nil)
 
