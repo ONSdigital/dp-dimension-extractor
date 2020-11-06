@@ -30,6 +30,7 @@ type Config struct {
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	AWSRegion                  string        `envconfig:"AWS_REGION"`
 	BucketNames                []string      `envconfig:"BUCKET_NAMES"                  json:"-"`
+	KafkaVersion               string        `envconfig:"KAFKA_VERSION"`
 }
 
 var cfg *Config
@@ -62,6 +63,7 @@ func Get() (*Config, error) {
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		AWSRegion:                  "eu-west-1",
 		BucketNames:                []string{"dp-frontend-florence-file-uploads"},
+		KafkaVersion:               "1.0.2",
 	}
 
 	if err := envconfig.Process("", cfg); err != nil {
