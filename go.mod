@@ -16,5 +16,4 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/smartystreets/goconvey v1.6.4
 	golang.org/x/net v0.0.0-20200528225125-3c3fba18258b
-	gopkg.in/avro.v0 v0.0.0-20171217001914-a730b5802183 // indirect
 )
