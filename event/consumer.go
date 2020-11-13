@@ -54,8 +54,8 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 				} else {
 					log.Event(kafkaContext, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
 				}
-				message.Commit()
-				log.Event(eventLoopContext, "message committed", log.INFO, log.Data{"instance_id": instanceID})
+				message.CommitAndRelease()
+				log.Event(eventLoopContext, "message committed and released", log.INFO, log.Data{"instance_id": instanceID})
 			}
 		}
 	}()

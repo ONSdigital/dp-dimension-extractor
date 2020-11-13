@@ -59,7 +59,9 @@ func TestConsumer_Start(t *testing.T) {
 			})
 
 			Convey("And message.CommitAndRelease is called once", func() {
-				So(len(msg.CommitCalls()), ShouldEqual, 1)
+				So(msg.IsMarked(), ShouldBeTrue)
+				So(msg.IsCommitted(), ShouldBeTrue)
+				So(len(msg.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
@@ -114,8 +116,10 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.Commit is called once", func() {
-				So(len(msg.CommitCalls()), ShouldEqual, 1)
+			Convey("And message.CommitAndRelease is called once", func() {
+				So(msg.IsMarked(), ShouldBeTrue)
+				So(msg.IsCommitted(), ShouldBeTrue)
+				So(len(msg.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is called once", func() {
@@ -147,8 +151,10 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 				So(len(handler.EventLoopContextArgs), ShouldEqual, 1)
 			})
 
-			Convey("And message.Commit is called once", func() {
-				So(len(msg.CommitCalls()), ShouldEqual, 1)
+			Convey("And message.CommitAndRelease is called once", func() {
+				So(msg.IsMarked(), ShouldBeTrue)
+				So(msg.IsCommitted(), ShouldBeTrue)
+				So(len(msg.CommitAndReleaseCalls()), ShouldEqual, 1)
 			})
 
 			Convey("And errorReporter.Notify is never called", func() {
