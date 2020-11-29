@@ -60,6 +60,13 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Event(ctx, "panic in handle message", log.ERROR, log.Data{"err": err})
+		}
+	}()
+
 	producerMessage, instanceID, file, err := svc.retrieveData(ctx, message)
 	if err != nil {
 		return instanceID, err

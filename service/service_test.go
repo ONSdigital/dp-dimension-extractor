@@ -141,6 +141,34 @@ func TestS3URL(t *testing.T) {
 
 func TestHandleMessage(t *testing.T) {
 
+	Convey("Given a panic occurs when ", t, func() {
+		datasetClient := &mock.DatasetClientMock{
+			GetInstanceFunc: func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
+				panic("panic message")
+			},
+		}
+		mockS3Client := &mock.S3ClientMock{GetFunc: mockGetFunc, GetWithPSKFunc: mockGetWithPskFunc}
+		svc := &service.Service{
+			AuthToken:                  validAuthToken,
+			DimensionExtractedProducer: &mock.KafkaProducerMock{},
+			EncryptionDisabled:         true,
+			DatasetClient:              datasetClient,
+			AwsSession:                 nil,
+			S3Clients:                  map[string]service.S3Client{validBucket: mockS3Client},
+			VaultClient:                &mock.VaultClientMock{},
+			VaultPath:                  validVaultPath,
+		}
+
+		Convey("When HandleMessage is called with a valid message", func(c C) {
+
+			_, err := svc.HandleMessage(ctx, createValidMessage())
+
+			Convey("Then no panic should occur", func(c C) {
+				So(err, ShouldBeNil)
+			})
+		})
+	})
+
 	Convey("Given the intention to Handle a message ", t, func() {
 		mockVaultClient := &mock.VaultClientMock{ReadKeyFunc: mockReadKeyFunc}
 		mockDatasetClient := &mock.DatasetClientMock{
@@ -318,6 +346,7 @@ func TestHandleMessage(t *testing.T) {
 					NumberOfObservations: 1})
 			})
 		})
+
 	})
 }
 
