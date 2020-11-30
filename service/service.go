@@ -3,7 +3,10 @@ package service
 import (
 	"encoding/csv"
 	"encoding/hex"
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"io"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -63,7 +66,12 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	defer func() {
 		if err := recover(); err != nil {
-			log.Event(ctx, "panic in handle message", log.ERROR, log.Data{"err": err})
+			log.Event(ctx, "panic in handle message", log.ERROR,
+				log.Data{
+					"err":      fmt.Sprintf("%+v", err),
+					"err_spew": spew.Sdump(err),
+					"stack":    string(debug.Stack()),
+				})
 		}
 	}()
 
