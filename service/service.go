@@ -139,7 +139,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 				continue
 			}
 
-			log.Event(ctx, "adding dimension to post", log.INFO, log.Data{"instance_id": instanceID, "dimension_option": optionKey})
 			dimensionOptions[optionKey] = optionToPost
 			numberOfOptions++
 		}
@@ -154,9 +153,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	})
 
 	for optionKey, optionToPost := range dimensionOptions {
-
-		log.Event(ctx, "posting dimension option", log.INFO, log.Data{"instance_id": instanceID, "dimension_option": optionKey})
-
 		if err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost); err != nil {
 			log.Event(ctx, "encountered error sending request to dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "dimension_option": optionKey})
 			return instanceID, err
