@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/csv"
 	"encoding/hex"
-	"fmt"
 	"github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
 	"io"
-	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -61,16 +59,6 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-
-	defer func() {
-		if err := recover(); err != nil {
-			log.Event(ctx, "panic in handle message", log.ERROR,
-				log.Data{
-					"err":   fmt.Sprintf("%+v", err),
-					"stack": string(debug.Stack()),
-				})
-		}
-	}()
 
 	producerMessage, instanceID, file, err := svc.retrieveData(ctx, message)
 	if err != nil {
