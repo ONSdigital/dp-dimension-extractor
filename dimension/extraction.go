@@ -10,7 +10,6 @@ import (
 
 // Extract represents all information needed to extract dimensions
 type Extract struct {
-	Dimensions            map[string]string
 	DimensionColumnOffset int
 	HeaderRow             []string
 	InstanceID            string
@@ -42,7 +41,7 @@ func (e *MissingDimensionValues) Error() string {
 
 // Extract method checks within csv line for unique dimensions from the consumed dataset and returns them
 func (extract *Extract) Extract() (map[string]dataset.OptionPost, error) {
-	dimensions := make(map[string]dataset.OptionPost)
+	dimensionOptions := make(map[string]dataset.OptionPost)
 	line := extract.Line
 
 	// dimensionColumnOffset is the number of columns that exist
@@ -75,29 +74,22 @@ func (extract *Extract) Extract() (map[string]dataset.OptionPost, error) {
 			}
 		}
 
-		dimension := extract.InstanceID + "_" + extract.HeaderRow[i+1]
-
-		// If dimension already exists add dimension to map
-		if _, ok := extract.Dimensions[dimension+"_"+dimensionValue]; ok {
-			continue
-		}
-
-		dimensionCodeList, ok := extract.CodelistMap[strings.ToLower(extract.HeaderRow[i+1])]
+		dimensionName := extract.HeaderRow[i+1]
+		dimensionCodeList, ok := extract.CodelistMap[strings.ToLower(dimensionName)]
 		if !ok {
-			return nil, errors.New("Failed to map dimension to code list, " + extract.HeaderRow[i+1])
+			return nil, errors.New("Failed to map dimension to code list, " + dimensionName)
 		}
-
-		extract.Dimensions[dimension+"_"+dimensionValue] = dimension
 
 		optionToPost := dataset.OptionPost{
-			Name:     strings.ToLower(extract.HeaderRow[i+1]),
+			Name:     strings.ToLower(dimensionName),
 			Option:   dimensionValue,
 			Label:    line[i+1],
 			CodeList: dimensionCodeList,
 			Code:     line[i],
 		}
 
-		dimensions[dimension] = optionToPost
+		dimensionOptionKey := dimensionName + "_" + dimensionValue
+		dimensionOptions[dimensionOptionKey] = optionToPost
 	}
-	return dimensions, nil
+	return dimensionOptions, nil
 }

@@ -4,13 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"io"
-	"runtime/debug"
-	"strconv"
-	"strings"
-
-	dataset "github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
@@ -18,6 +12,10 @@ import (
 	"github.com/ONSdigital/log.go/log"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
+	"io"
+	"runtime/debug"
+	"strconv"
+	"strings"
 )
 
 // DimensionExtracted represents a kafka avro model for a dimension extracted file for an instance
@@ -68,9 +66,8 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 		if err := recover(); err != nil {
 			log.Event(ctx, "panic in handle message", log.ERROR,
 				log.Data{
-					"err":      fmt.Sprintf("%+v", err),
-					"err_spew": spew.Sdump(err),
-					"stack":    string(debug.Stack()),
+					"err":   fmt.Sprintf("%+v", err),
+					"stack": string(debug.Stack()),
 				})
 		}
 	}()
@@ -116,8 +113,9 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	log.Event(ctx, "a list of headers", log.INFO, log.Data{"instance_id": instanceID, "header_row": headerRow})
 
-	dimensions := make(map[string]string)
+	dimensionOptions := make(map[string]dataset.OptionPost)
 	numberOfObservations := 0
+	numberOfOptions := 0
 
 	// Iterate over csv file pulling out unique dimensions
 	for {
@@ -131,7 +129,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 		}
 
 		dim := dimension.Extract{
-			Dimensions:            dimensions,
 			DimensionColumnOffset: dimensionColumnOffset,
 			HeaderRow:             headerRow,
 			InstanceID:            instanceID,
@@ -146,16 +143,37 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			return instanceID, err
 		}
 
-		for _, optionToPost := range lineDimensions {
-			if err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost); err != nil {
-				log.Event(ctx, "encountered error sending request to datset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "csv_line": line})
-				return instanceID, err
+		// loop through each dimension option identified in the CSV row
+		for optionKey, optionToPost := range lineDimensions {
+
+			// if the option is already in the full map of options then do not add it
+			if _, ok := dimensionOptions[optionKey]; ok {
+				continue
 			}
+
+			log.Event(ctx, "adding dimension to post", log.INFO, log.Data{"instance_id": instanceID, "dimension_option": optionKey})
+			dimensionOptions[optionKey] = optionToPost
+			numberOfOptions++
 		}
 
 		numberOfObservations++
 	}
-	log.Event(ctx, "a count of the number of observations", log.INFO, log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
+
+	log.Event(ctx, "dimensions extracted from the import file", log.INFO, log.Data{
+		"instance_id":                 instanceID,
+		"number_of_observations":      numberOfObservations,
+		"number_of_dimension_options": numberOfOptions,
+	})
+
+	for optionKey, optionToPost := range dimensionOptions {
+
+		log.Event(ctx, "posting dimension option", log.INFO, log.Data{"instance_id": instanceID, "dimension_option": optionKey})
+
+		if err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost); err != nil {
+			log.Event(ctx, "encountered error sending request to dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "dimension_option": optionKey})
+			return instanceID, err
+		}
+	}
 
 	// PUT request to dataset API to pass the header row and the number of observations that exist against this job instance
 	err = svc.DatasetClient.PutInstanceData(

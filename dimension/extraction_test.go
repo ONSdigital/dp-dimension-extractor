@@ -18,7 +18,6 @@ var badCSVLine2 = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League"
 var dimensionsData = make(map[string]string)
 
 var extract = &dimension.Extract{
-	Dimensions:            dimensionsData,
 	DimensionColumnOffset: 2,
 	HeaderRow:             headerRow,
 	Line:                  CSVLine,
@@ -38,7 +37,6 @@ func TestUnitExtract(t *testing.T) {
 
 	Convey("test creation of extract object/stuct", t, func() {
 		newExtract := &dimension.Extract{
-			Dimensions:            dimensionsData,
 			DimensionColumnOffset: 2,
 			HeaderRow:             headerRow,
 			InstanceID:            "123",
@@ -53,23 +51,8 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["123_Time"], ShouldResemble, dataset.OptionPost{Name: "time", Option: "2016/17", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675"})
-			So(dimensions["123_League"], ShouldResemble, dataset.OptionPost{Name: "league", Option: "PL01", Code: "PL01", Label: "Premier-League", CodeList: "dgdfg-435435-5675"})
-		})
-
-		Convey("where some dimensions are unique", func() {
-			extract.Line = CSVLine2
-			extract.Dimensions["123_Year"] = "2015/16"
-			dimensions, err := extract.Extract()
-			So(err, ShouldBeNil)
-			So(dimensions["123_League"], ShouldResemble, dataset.OptionPost{Name: "league", Option: "Championship", Label: "Championship", CodeList: "dgdfg-435435-5675"})
-		})
-
-		Convey("where no dimensions are unique", func() {
-			extract.Line = CSVLine2
-			dimensions, err := extract.Extract()
-			So(err, ShouldBeNil)
-			So(dimensions["123_League"], ShouldResemble, dataset.OptionPost{Name: "", Option: ""})
+			So(dimensions["Time_2016/17"], ShouldResemble, dataset.OptionPost{Name: "time", Option: "2016/17", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675"})
+			So(dimensions["League_PL01"], ShouldResemble, dataset.OptionPost{Name: "league", Option: "PL01", Code: "PL01", Label: "Premier-League", CodeList: "dgdfg-435435-5675"})
 		})
 	})
 

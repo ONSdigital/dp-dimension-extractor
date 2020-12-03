@@ -29,6 +29,8 @@ github.com/ONSdigital/dp-reporter-client v1.0.1 h1:9ds+ZROIlvScbkis6x9dZCuSC67D9
 github.com/ONSdigital/dp-reporter-client v1.0.1/go.mod h1:i4PajSeDB6Ber2VzyzDlRjrMKqVZGAgM2Hcq9Fg1uWo=
 github.com/ONSdigital/dp-s3 v1.4.0 h1:qpWy4yttSEsJQrPDotFSzfv8JXx8m73Zgy5yo9HKyRE=
 github.com/ONSdigital/dp-s3 v1.4.0/go.mod h1:5bZUUdWajH/La/YOYhFOdr8opzmJQEdgfm5bK2mzsgI=
+github.com/ONSdigital/dp-s3 v1.5.1 h1:BpWqWyg8PCXsEIEEtDTFWhb/lV6GhHALfGn8YS93p1I=
+github.com/ONSdigital/dp-s3 v1.5.1/go.mod h1:dQEoujkOIQciAItcN/fYKQVUD5rittrnUB22R5oB0Qs=
 github.com/ONSdigital/dp-vault v1.1.1 h1:oenA0oci08viJrg5kGY+jTaX9jGWNOKyIEZCTbDAaQM=
 github.com/ONSdigital/dp-vault v1.1.1/go.mod h1:ZcC6ZNL4c94JCKK4a8uVUcMBTiMg5zdn/e7ZIYUGeh8=
 github.com/ONSdigital/go-ns v0.0.0-20191104121206-f144c4ec2e58/go.mod h1:iWos35il+NjbvDEqwtB736pyHru0MPFE/LqcwkV1wDc=
@@ -211,7 +213,6 @@ github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.6.0 h1:jlIyCplCJFULU/01vCkhKuTyc3OorI3bJFuw6obfgho=
 github.com/stretchr/testify v1.6.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=

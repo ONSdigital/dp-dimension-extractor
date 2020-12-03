@@ -141,7 +141,7 @@ func TestS3URL(t *testing.T) {
 
 func TestHandleMessage(t *testing.T) {
 
-	Convey("Given a panic occurs when ", t, func() {
+	Convey("Given a panic occurs when GetInstance is called ", t, func() {
 		datasetClient := &mock.DatasetClientMock{
 			GetInstanceFunc: func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
 				panic("panic message")
@@ -346,7 +346,6 @@ func TestHandleMessage(t *testing.T) {
 					NumberOfObservations: 1})
 			})
 		})
-
 	})
 }
 
