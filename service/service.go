@@ -3,6 +3,10 @@ package service
 import (
 	"encoding/csv"
 	"encoding/hex"
+	"io"
+	"strconv"
+	"strings"
+
 	"github.com/ONSdigital/dp-api-clients-go/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
@@ -11,9 +15,6 @@ import (
 	"github.com/ONSdigital/log.go/log"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"golang.org/x/net/context"
-	"io"
-	"strconv"
-	"strings"
 )
 
 // DimensionExtracted represents a kafka avro model for a dimension extracted file for an instance
@@ -232,13 +233,13 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 			return nil, event.InstanceID, nil, err
 		}
 
-		output, err = s3.GetWithPSK(s3URL.Key, psk)
+		output, _, err = s3.GetWithPSK(s3URL.Key, psk)
 		if err != nil {
 			log.Event(ctx, "encountered error retrieving and decrypting csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err
 		}
 	} else {
-		output, err = s3.Get(s3URL.Key)
+		output, _, err = s3.Get(s3URL.Key)
 		if err != nil {
 			log.Event(ctx, "encountered error retrieving csv file", log.ERROR, log.Error(err), logData)
 			return nil, event.InstanceID, nil, err

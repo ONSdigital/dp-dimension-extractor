@@ -69,20 +69,20 @@ var (
 		return nil
 	}
 
-	mockGetFunc = func(key string) (io.ReadCloser, error) {
+	mockGetFunc = func(key string) (io.ReadCloser, *int64, error) {
 		if key != validS3ObjKey {
-			return nil, errors.New("wrong S3 Key")
+			return nil, nil, errors.New("wrong S3 Key")
 		}
-		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil
+		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
 	}
-	mockGetWithPskFunc = func(key string, psk []byte) (io.ReadCloser, error) {
+	mockGetWithPskFunc = func(key string, psk []byte) (io.ReadCloser, *int64, error) {
 		if key != validS3ObjKey {
-			return nil, errors.New("wrong S3 Key")
+			return nil, nil, errors.New("wrong S3 Key")
 		}
 		if hex.EncodeToString(psk) != hex.EncodeToString(validPsk) {
-			return nil, errors.New("wrong PSK")
+			return nil, nil, errors.New("wrong PSK")
 		}
-		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil
+		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
 
 	}
 	mockReadKeyFunc = func(path string, key string) (string, error) {
