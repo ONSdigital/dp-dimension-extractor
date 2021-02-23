@@ -17,34 +17,34 @@ var _ service.S3Client = &S3ClientMock{}
 
 // S3ClientMock is a mock implementation of service.S3Client.
 //
-//     func TestSomethingThatUsesS3Client(t *testing.T) {
+// 	func TestSomethingThatUsesS3Client(t *testing.T) {
 //
-//         // make and configure a mocked service.S3Client
-//         mockedS3Client := &S3ClientMock{
-//             CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
-// 	               panic("mock out the Checker method")
-//             },
-//             GetFunc: func(key string) (io.ReadCloser, error) {
-// 	               panic("mock out the Get method")
-//             },
-//             GetWithPSKFunc: func(key string, psk []byte) (io.ReadCloser, error) {
-// 	               panic("mock out the GetWithPSK method")
-//             },
-//         }
+// 		// make and configure a mocked service.S3Client
+// 		mockedS3Client := &S3ClientMock{
+// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			GetFunc: func(key string) (io.ReadCloser, *int64, error) {
+// 				panic("mock out the Get method")
+// 			},
+// 			GetWithPSKFunc: func(key string, psk []byte) (io.ReadCloser, *int64, error) {
+// 				panic("mock out the GetWithPSK method")
+// 			},
+// 		}
 //
-//         // use mockedS3Client in code that requires service.S3Client
-//         // and then make assertions.
+// 		// use mockedS3Client in code that requires service.S3Client
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type S3ClientMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
 
 	// GetFunc mocks the Get method.
-	GetFunc func(key string) (io.ReadCloser, error)
+	GetFunc func(key string) (io.ReadCloser, *int64, error)
 
 	// GetWithPSKFunc mocks the GetWithPSK method.
-	GetWithPSKFunc func(key string, psk []byte) (io.ReadCloser, error)
+	GetWithPSKFunc func(key string, psk []byte) (io.ReadCloser, *int64, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -109,7 +109,7 @@ func (mock *S3ClientMock) CheckerCalls() []struct {
 }
 
 // Get calls GetFunc.
-func (mock *S3ClientMock) Get(key string) (io.ReadCloser, error) {
+func (mock *S3ClientMock) Get(key string) (io.ReadCloser, *int64, error) {
 	if mock.GetFunc == nil {
 		panic("S3ClientMock.GetFunc: method is nil but S3Client.Get was just called")
 	}
@@ -140,7 +140,7 @@ func (mock *S3ClientMock) GetCalls() []struct {
 }
 
 // GetWithPSK calls GetWithPSKFunc.
-func (mock *S3ClientMock) GetWithPSK(key string, psk []byte) (io.ReadCloser, error) {
+func (mock *S3ClientMock) GetWithPSK(key string, psk []byte) (io.ReadCloser, *int64, error) {
 	if mock.GetWithPSKFunc == nil {
 		panic("S3ClientMock.GetWithPSKFunc: method is nil but S3Client.GetWithPSK was just called")
 	}

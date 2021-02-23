@@ -96,7 +96,7 @@ func main() {
 
 	// Get Identity client for Zebedee serviceAuthToken validation
 	zhc := health.NewClient("Zebedee", cfg.ZebedeeURL)
-	idClient := identity.NewAPIClient(zhc.Client, cfg.ZebedeeURL)
+	idClient := identity.New(cfg.ZebedeeURL)
 
 	// Dataset API Client with Max retries
 	dc := dataset.NewAPIClientWithMaxRetries(cfg.DatasetAPIURL, cfg.MaxRetries)
