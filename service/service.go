@@ -75,7 +75,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	codelistMap := make(map[string]string)
 	for _, cl := range codeLists.Dimensions {
-		codelistMap[cl.Name] = cl.ID
+		codelistMap[strings.ToLower(cl.Name)] = cl.ID
 	}
 
 	csvReader := csv.NewReader(file)
