@@ -38,9 +38,9 @@ var (
 			ID:         "versionId",
 			InstanceID: validInstanceID,
 			Dimensions: []dataset.VersionDimension{
-				dataset.VersionDimension{ID: "Time", Name: "time"},
-				dataset.VersionDimension{ID: "Geography", Name: "geography"},
-				dataset.VersionDimension{ID: "Aggregate", Name: "aggregate"},
+				{ID: "Time", Name: "time"},
+				{ID: "Geography", Name: "geography"},
+				{ID: "Aggregate", Name: "aggregate"},
 			},
 		},
 	}
@@ -247,9 +247,9 @@ func TestHandleMessage(t *testing.T) {
 				validateGetInstance(mockDatasetClient)
 				validatePostedDimensions(mockDatasetClient,
 					map[string]dataset.OptionPost{
-						"time":      dataset.OptionPost{Code: "Month", CodeList: "Time", Label: "Mar-12", Name: "time", Option: "Mar-12"},
-						"geography": dataset.OptionPost{Code: "K02000001", CodeList: "Geography", Label: "          ", Name: "geography", Option: "K02000001"},
-						"aggregate": dataset.OptionPost{Code: "cpih1dim1T80000", CodeList: "Aggregate", Label: "08 Communication", Name: "aggregate", Option: "cpih1dim1T80000"},
+						"time":      {Code: "Month", CodeList: "Time", Label: "Mar-12", Name: "time", Option: "Month"},
+						"geography": {Code: "K02000001", CodeList: "Geography", Label: "          ", Name: "geography", Option: "K02000001"},
+						"aggregate": {Code: "cpih1dim1T80000", CodeList: "Aggregate", Label: "08 Communication", Name: "aggregate", Option: "cpih1dim1T80000"},
 					},
 				)
 				validatePutInstance(mockDatasetClient, &dataset.JobInstance{
@@ -308,9 +308,9 @@ func TestHandleMessage(t *testing.T) {
 				validateGetInstance(mockDatasetClient)
 				validatePostedDimensions(mockDatasetClient,
 					map[string]dataset.OptionPost{
-						"time":      dataset.OptionPost{Code: "Month", CodeList: "Time", Label: "Mar-12", Name: "time", Option: "Mar-12"},
-						"geography": dataset.OptionPost{Code: "K02000001", CodeList: "Geography", Label: "          ", Name: "geography", Option: "K02000001"},
-						"aggregate": dataset.OptionPost{Code: "cpih1dim1T80000", CodeList: "Aggregate", Label: "08 Communication", Name: "aggregate", Option: "cpih1dim1T80000"},
+						"time":      {Code: "Month", CodeList: "Time", Label: "Mar-12", Name: "time", Option: "Month"},
+						"geography": {Code: "K02000001", CodeList: "Geography", Label: "          ", Name: "geography", Option: "K02000001"},
+						"aggregate": {Code: "cpih1dim1T80000", CodeList: "Aggregate", Label: "08 Communication", Name: "aggregate", Option: "cpih1dim1T80000"},
 					},
 				)
 				validatePutInstance(mockDatasetClient, &dataset.JobInstance{

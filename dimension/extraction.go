@@ -53,27 +53,14 @@ func (extract *Extract) Extract() (map[string]dataset.OptionPost, error) {
 		return nil, &InvalidNumberOfColumns{line}
 	}
 
+	// create dataset dimension option with first column line as code
+	// if code is not present, a MissingDimensionValues error will be returned
 	for i := dimensionColumnOffset; i < len(line); i += dimensionColumns {
-		var dimensionValue string
-
-		// If a pair of columns represents time always use the value in the second
-		// column to represent dimension value
-		if i == extract.TimeColumn || i+1 == extract.TimeColumn {
-			dimensionValue = line[i+1]
-		} else {
-			// For all other dimensons use first column in pair; if this is empty use
-			// second column and lastly if both columns are empty then throw an error
-			if len(line[i]) > 0 {
-				dimensionValue = line[i]
-			} else {
-				if len(line[i+1]) > 0 {
-					dimensionValue = line[i+1]
-				} else {
-					return nil, &MissingDimensionValues{line}
-				}
-			}
+		if len(line[i]) == 0 {
+			return nil, &MissingDimensionValues{line}
 		}
 
+		dimensionValue := line[i]
 		dimensionName := extract.HeaderRow[i+1]
 		dimensionCodeList, ok := extract.CodelistMap[strings.ToLower(dimensionName)]
 		if !ok {

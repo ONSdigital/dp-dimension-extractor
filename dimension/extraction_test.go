@@ -51,7 +51,7 @@ func TestUnitExtract(t *testing.T) {
 		Convey("where all dimensions are unique", func() {
 			dimensions, err := extract.Extract()
 			So(err, ShouldBeNil)
-			So(dimensions["Time_2016/17"], ShouldResemble, dataset.OptionPost{Name: "time", Option: "2016/17", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675"})
+			So(dimensions["Time_Year"], ShouldResemble, dataset.OptionPost{Name: "time", Option: "Year", Code: "Year", Label: "2016/17", CodeList: "1234-435435-5675"})
 			So(dimensions["League_PL01"], ShouldResemble, dataset.OptionPost{Name: "league", Option: "PL01", Code: "PL01", Label: "Premier-League", CodeList: "dgdfg-435435-5675"})
 		})
 	})
