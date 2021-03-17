@@ -88,8 +88,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 		return instanceID, err
 	}
 
-	timeColumn := checkHeaderForTime(headerRow)
-
 	metaData := strings.Split(headerRow[0], "_")
 	dimensionColumnOffset, err := strconv.Atoi(metaData[1])
 	if err != nil {
@@ -122,7 +120,6 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			HeaderRow:             headerRow,
 			InstanceID:            instanceID,
 			Line:                  line,
-			TimeColumn:            timeColumn,
 			CodelistMap:           codelistMap,
 		}
 
@@ -268,14 +265,4 @@ func readMessage(eventValue []byte) (*InputFileAvailable, error) {
 	}
 
 	return &i, nil
-}
-
-func checkHeaderForTime(headerNames []string) int {
-	for index, name := range headerNames {
-		if strings.ToLower(name) == "time" {
-			return index
-		}
-	}
-
-	return 0
 }

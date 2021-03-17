@@ -14,7 +14,6 @@ type Extract struct {
 	HeaderRow             []string
 	InstanceID            string
 	Line                  []string
-	TimeColumn            int
 	CodelistMap           map[string]string
 }
 

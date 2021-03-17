@@ -22,7 +22,6 @@ var extract = &dimension.Extract{
 	HeaderRow:             headerRow,
 	Line:                  CSVLine,
 	InstanceID:            "123",
-	TimeColumn:            2,
 	CodelistMap:           makeCodelists(),
 }
 
@@ -41,7 +40,6 @@ func TestUnitExtract(t *testing.T) {
 			HeaderRow:             headerRow,
 			InstanceID:            "123",
 			Line:                  CSVLine,
-			TimeColumn:            2,
 			CodelistMap:           makeCodelists(),
 		}
 		So(newExtract, ShouldResemble, extract)
