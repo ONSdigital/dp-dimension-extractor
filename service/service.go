@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/csv"
 	"encoding/hex"
+	"errors"
 	"io"
 	"strconv"
 	"strings"
@@ -89,6 +90,11 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 
 	metaData := strings.Split(headerRow[0], "_")
+	if len(metaData) < 2 {
+		err = errors.New("no underscore in header row")
+		log.Event(ctx, "encountered badly-formatted header row", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+		return instanceID, err
+	}
 	dimensionColumnOffset, err := strconv.Atoi(metaData[1])
 	if err != nil {
 		log.Event(ctx, "encountered error distinguishing dimension column offset", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
