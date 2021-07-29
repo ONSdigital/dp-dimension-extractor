@@ -5,7 +5,7 @@ package mock
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"sync"
 )
@@ -37,13 +37,13 @@ var _ service.DatasetClient = &DatasetClientMock{}
 //     }
 type DatasetClientMock struct {
 	// GetInstanceFunc mocks the GetInstance method.
-	GetInstanceFunc func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error)
+	GetInstanceFunc func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string, ifMatch string) (dataset.Instance, string, error)
 
 	// PostInstanceDimensionsFunc mocks the PostInstanceDimensions method.
-	PostInstanceDimensionsFunc func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost) error
+	PostInstanceDimensionsFunc func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost, ifMatch string) (string, error)
 
 	// PutInstanceDataFunc mocks the PutInstanceData method.
-	PutInstanceDataFunc func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance) error
+	PutInstanceDataFunc func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance, ifMatch string) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -59,6 +59,8 @@ type DatasetClientMock struct {
 			CollectionID string
 			// InstanceID is the instanceID argument value.
 			InstanceID string
+			// If is the instanceID argument value.
+			IfMatch string
 		}
 		// PostInstanceDimensions holds details about calls to the PostInstanceDimensions method.
 		PostInstanceDimensions []struct {
@@ -89,7 +91,7 @@ type DatasetClientMock struct {
 }
 
 // GetInstance calls GetInstanceFunc.
-func (mock *DatasetClientMock) GetInstance(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
+func (mock *DatasetClientMock) GetInstance(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string, ifMatch string) (dataset.Instance, string, error) {
 	if mock.GetInstanceFunc == nil {
 		panic("DatasetClientMock.GetInstanceFunc: method is nil but DatasetClient.GetInstance was just called")
 	}
@@ -99,17 +101,19 @@ func (mock *DatasetClientMock) GetInstance(ctx context.Context, userAuthToken st
 		ServiceAuthToken string
 		CollectionID     string
 		InstanceID       string
+		IfMatch          string
 	}{
 		Ctx:              ctx,
 		UserAuthToken:    userAuthToken,
 		ServiceAuthToken: serviceAuthToken,
 		CollectionID:     collectionID,
 		InstanceID:       instanceID,
+		IfMatch:          ifMatch,
 	}
 	mock.lockGetInstance.Lock()
 	mock.calls.GetInstance = append(mock.calls.GetInstance, callInfo)
 	mock.lockGetInstance.Unlock()
-	return mock.GetInstanceFunc(ctx, userAuthToken, serviceAuthToken, collectionID, instanceID)
+	return mock.GetInstanceFunc(ctx, userAuthToken, serviceAuthToken, collectionID, instanceID, ifMatch)
 }
 
 // GetInstanceCalls gets all the calls that were made to GetInstance.
@@ -121,6 +125,7 @@ func (mock *DatasetClientMock) GetInstanceCalls() []struct {
 	ServiceAuthToken string
 	CollectionID     string
 	InstanceID       string
+	IfMatch          string
 } {
 	var calls []struct {
 		Ctx              context.Context
@@ -128,6 +133,7 @@ func (mock *DatasetClientMock) GetInstanceCalls() []struct {
 		ServiceAuthToken string
 		CollectionID     string
 		InstanceID       string
+		IfMatch          string
 	}
 	mock.lockGetInstance.RLock()
 	calls = mock.calls.GetInstance
@@ -136,7 +142,7 @@ func (mock *DatasetClientMock) GetInstanceCalls() []struct {
 }
 
 // PostInstanceDimensions calls PostInstanceDimensionsFunc.
-func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost) error {
+func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost, ifMatch string) (string, error) {
 	if mock.PostInstanceDimensionsFunc == nil {
 		panic("DatasetClientMock.PostInstanceDimensionsFunc: method is nil but DatasetClient.PostInstanceDimensions was just called")
 	}
@@ -154,7 +160,7 @@ func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, servi
 	mock.lockPostInstanceDimensions.Lock()
 	mock.calls.PostInstanceDimensions = append(mock.calls.PostInstanceDimensions, callInfo)
 	mock.lockPostInstanceDimensions.Unlock()
-	return mock.PostInstanceDimensionsFunc(ctx, serviceAuthToken, instanceID, data)
+	return mock.PostInstanceDimensionsFunc(ctx, serviceAuthToken, instanceID, data, ifMatch)
 }
 
 // PostInstanceDimensionsCalls gets all the calls that were made to PostInstanceDimensions.
@@ -179,7 +185,7 @@ func (mock *DatasetClientMock) PostInstanceDimensionsCalls() []struct {
 }
 
 // PutInstanceData calls PutInstanceDataFunc.
-func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance) error {
+func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance, ifMatch string) (string, error) {
 	if mock.PutInstanceDataFunc == nil {
 		panic("DatasetClientMock.PutInstanceDataFunc: method is nil but DatasetClient.PutInstanceData was just called")
 	}
@@ -197,7 +203,7 @@ func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthT
 	mock.lockPutInstanceData.Lock()
 	mock.calls.PutInstanceData = append(mock.calls.PutInstanceData, callInfo)
 	mock.lockPutInstanceData.Unlock()
-	return mock.PutInstanceDataFunc(ctx, serviceAuthToken, instanceID, data)
+	return mock.PutInstanceDataFunc(ctx, serviceAuthToken, instanceID, data, ifMatch)
 }
 
 // PutInstanceDataCalls gets all the calls that were made to PutInstanceData.

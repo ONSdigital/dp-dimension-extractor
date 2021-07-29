@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
-	"github.com/ONSdigital/dp-api-clients-go/health"
-	"github.com/ONSdigital/dp-api-clients-go/identity"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
+	"github.com/ONSdigital/dp-api-clients-go/v2/identity"
 	"github.com/ONSdigital/dp-dimension-extractor/config"
 	"github.com/ONSdigital/dp-dimension-extractor/event"
 	"github.com/ONSdigital/dp-dimension-extractor/initialise"

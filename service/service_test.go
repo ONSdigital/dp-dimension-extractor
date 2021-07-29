@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-dimension-extractor/service/mock"
@@ -56,17 +56,17 @@ var ctx = context.Background()
 // mock functions for testing
 var (
 	mockChannelsFunc    = func() *kafka.ProducerChannels { return testChannels }
-	mockGetInstanceFunc = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
+	mockGetInstanceFunc = func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string, ifMatch string) (dataset.Instance, string, error) {
 		if instanceID == validInstanceID {
-			return testInstance, nil
+			return testInstance, "", nil
 		}
-		return dataset.Instance{}, errors.New("Unexpected instance ID")
+		return dataset.Instance{}, "", errors.New("Unexpected instance ID")
 	}
-	mockPostInstanceFunc = func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost) error {
-		return nil
+	mockPostInstanceFunc = func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost, ifMatch string) (string, error) {
+		return "", nil
 	}
-	mockPutInstanceFunc = func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance) error {
-		return nil
+	mockPutInstanceFunc = func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance, ifMatch string) (string, error) {
+		return "", nil
 	}
 
 	mockGetFunc = func(key string) (io.ReadCloser, *int64, error) {

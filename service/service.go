@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/headers"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
@@ -68,7 +69,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 	defer file.Close()
 
-	codeLists, err := svc.DatasetClient.GetInstance(ctx, "", svc.AuthToken, "", instanceID)
+	codeLists, _, err := svc.DatasetClient.GetInstance(ctx, "", svc.AuthToken, "", instanceID, "")
 	if err != nil {
 		log.Event(ctx, "encountered error immediately when requesting data from the dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 		return instanceID, err
@@ -157,21 +158,21 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	})
 
 	for optionKey, optionToPost := range dimensionOptions {
-		if err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost); err != nil {
+		if _, err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost, headers.IfMatchAnyETag); err != nil {
 			log.Event(ctx, "encountered error sending request to dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "dimension_option": optionKey})
 			return instanceID, err
 		}
 	}
 
 	// PUT request to dataset API to pass the header row and the number of observations that exist against this job instance
-	err = svc.DatasetClient.PutInstanceData(
+	_, err = svc.DatasetClient.PutInstanceData(
 		ctx,
 		svc.AuthToken,
 		instanceID,
 		dataset.JobInstance{
 			HeaderNames:          headerRow,
 			NumberOfObservations: numberOfObservations,
-		})
+		}, headers.IfMatchAnyETag)
 	if err != nil {
 		log.Event(ctx, "encountered error sending request to the dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID, "number_of_observations": numberOfObservations})
 		return instanceID, err

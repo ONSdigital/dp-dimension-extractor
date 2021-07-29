@@ -3,7 +3,7 @@ package service
 import (
 	"io"
 
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"golang.org/x/net/context"
@@ -28,9 +28,9 @@ type S3Client interface {
 
 // DatasetClient is an interface to represent methods called to action upon Dataset REST interface
 type DatasetClient interface {
-	GetInstance(ctx context.Context, userAuthToken, serviceAuthToken, collectionID, instanceID string) (m dataset.Instance, err error)
-	PostInstanceDimensions(ctx context.Context, serviceAuthToken, instanceID string, data dataset.OptionPost) error
-	PutInstanceData(ctx context.Context, serviceAuthToken, instanceID string, data dataset.JobInstance) error
+	GetInstance(ctx context.Context, userAuthToken, serviceAuthToken, collectionID, instanceID, ifMatch string) (m dataset.Instance, eTag string, err error)
+	PostInstanceDimensions(ctx context.Context, serviceAuthToken, instanceID string, data dataset.OptionPost, ifMatch string) (eTag string, err error)
+	PutInstanceData(ctx context.Context, serviceAuthToken, instanceID string, data dataset.JobInstance, ifMatch string) (eTag string, err error)
 }
 
 // KafkaProducer is an interface to represent methods called to action upon Kafka to produce messages

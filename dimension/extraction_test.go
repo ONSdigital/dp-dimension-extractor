@@ -3,7 +3,7 @@ package dimension_test
 import (
 	"testing"
 
-	"github.com/ONSdigital/dp-api-clients-go/dataset"
+	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	. "github.com/smartystreets/goconvey/convey"
 )
