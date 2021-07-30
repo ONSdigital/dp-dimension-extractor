@@ -69,7 +69,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 	defer file.Close()
 
-	codeLists, _, err := svc.DatasetClient.GetInstance(ctx, "", svc.AuthToken, "", instanceID, "")
+	codeLists, _, err := svc.DatasetClient.GetInstance(ctx, "", svc.AuthToken, "", instanceID, headers.IfMatchAnyETag)
 	if err != nil {
 		log.Event(ctx, "encountered error immediately when requesting data from the dataset api", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
 		return instanceID, err
