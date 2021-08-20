@@ -60,7 +60,7 @@ var (
 		if instanceID == validInstanceID {
 			return testInstance, "", nil
 		}
-		return dataset.Instance{}, "", errors.New("Unexpected instance ID")
+		return dataset.Instance{}, "", errors.New("unexpected instance ID")
 	}
 	mockPostInstanceFunc = func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost, ifMatch string) (string, error) {
 		return "", nil
@@ -165,7 +165,7 @@ func TestHandleMessage(t *testing.T) {
 			Convey("When a message with unexpected avro format is is received, HandleMessage returns an error", func() {
 				msg := kafkatest.NewMessage([]byte("wrongMessageFormat"), 1)
 				_, err := svc.HandleMessage(ctx, msg)
-				So(err, ShouldResemble, errors.New("Invalid string length"))
+				So(err, ShouldResemble, errors.New("invalid string length"))
 			})
 
 			Convey("When a valid message with unexpected fileURL format is received, HandleMessage returns an error", func() {
@@ -204,7 +204,7 @@ func TestHandleMessage(t *testing.T) {
 				So(err, ShouldBeNil)
 				msg := kafkatest.NewMessage(msgPayload, 1)
 				_, err = svc.HandleMessage(ctx, msg)
-				So(err, ShouldResemble, errors.New("Unexpected instance ID"))
+				So(err, ShouldResemble, errors.New("unexpected instance ID"))
 				validateS3Get(mockS3Client, validS3ObjKey)
 				So(len(mockVaultClient.ReadKeyCalls()), ShouldEqual, 0)
 				So(len(mockDatasetClient.GetInstanceCalls()), ShouldEqual, 1)
