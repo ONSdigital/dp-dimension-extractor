@@ -165,7 +165,9 @@ func TestHandleMessage(t *testing.T) {
 			Convey("When a message with unexpected avro format is is received, HandleMessage returns an error", func() {
 				msg := kafkatest.NewMessage([]byte("wrongMessageFormat"), 1)
 				_, err := svc.HandleMessage(ctx, msg)
-				So(err, ShouldResemble, errors.New("invalid string length"))
+				// The linter complains about the upper-casing of "Invalid" but this comes from a third-party
+				// library (https://github.com/go-avro/avro), so it will have to remain as upper-case.
+				So(err, ShouldResemble, errors.New("Invalid string length"))
 			})
 
 			Convey("When a valid message with unexpected fileURL format is received, HandleMessage returns an error", func() {
