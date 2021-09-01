@@ -20,7 +20,7 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/go-ns/server"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 )
@@ -39,7 +39,7 @@ var (
 func main() {
 	log.Namespace = "dp-dimension-extractor"
 	ctx := context.Background()
-	log.Event(ctx, "starting dimension extractor", log.INFO)
+	log.Info(ctx, "starting dimension extractor")
 
 	// Signals channel to notify only of SIGING and SIGTERM
 	signals := make(chan os.Signal, 1)
@@ -50,7 +50,7 @@ func main() {
 	exitIfError(ctx, "", err, nil)
 
 	// Sensitive fields are omitted from config.String().
-	log.Event(ctx, "config on startup", log.INFO, log.Data{"config": cfg})
+	log.Info(ctx, "config on startup", log.Data{"config": cfg})
 
 	// Attempt to parse envMax from config. Exit on failure.
 	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
@@ -120,9 +120,9 @@ func main() {
 	httpServer.HandleOSSignals = false // Disable this here to allow main to manage graceful shutdown of the entire app.
 
 	go func() {
-		log.Event(ctx, "starting api...", log.INFO)
+		log.Info(ctx, "starting api...")
 		if err := httpServer.ListenAndServe(); err != nil {
-			log.Event(ctx, "api http server returned error", log.ERROR, log.Error(err))
+			log.Error(ctx, "api http server returned error", err)
 			hc.Stop()
 			apiErrors <- err
 		}
@@ -156,7 +156,7 @@ func main() {
 	serviceIdentityValidated := make(chan bool)
 	go func() {
 		if _, err = idClient.CheckTokenIdentity(eventLoopContext, cfg.ServiceAuthToken, identity.TokenTypeService); err != nil {
-			log.Event(eventLoopContext, "could not obtain valid service account", log.ERROR, log.Error(err))
+			log.Error(eventLoopContext, "could not obtain valid service account", err)
 		} else {
 			serviceIdentityValidated <- true
 		}
@@ -174,16 +174,16 @@ func main() {
 	go func() {
 		select {
 		case apiError := <-apiErrors:
-			log.Event(ctx, "server error", log.ERROR, log.Error(apiError))
+			log.Error(ctx, "server error", apiError)
 		case <-eventLoopDone:
-			log.Event(ctx, "event loop done", log.ERROR)
+			log.Info(ctx, "event loop done")
 		}
 	}()
 
 	// Block until a fatal error occurs
 	select {
 	case signal := <-signals:
-		log.Event(ctx, "quitting after os signal received", log.INFO, log.Data{"signal": signal})
+		log.Info(ctx, "quitting after os signal received", log.Data{"signal": signal})
 	}
 
 	// give the app `Timeout` seconds to close gracefully before killing it.
@@ -193,55 +193,55 @@ func main() {
 
 		// If kafka consumer exists, stop listening to it. (Will close later)
 		if serviceList.Consumer {
-			log.Event(shutdownContext, "stopping kafka consumer listener", log.INFO)
+			log.Info(shutdownContext, "stopping kafka consumer listener")
 			syncConsumerGroup.StopListeningToConsumer(shutdownContext)
-			log.Event(shutdownContext, "stopped kafka consumer listener", log.INFO)
+			log.Info(shutdownContext, "stopped kafka consumer listener")
 		}
 
 		eventLoopCancel()
 		<-eventLoopDone
 
 		// Shutdown HTTP server
-		log.Event(shutdownContext, "closing http server", log.INFO)
+		log.Info(shutdownContext, "closing http server")
 		if err := httpServer.Shutdown(ctx); err != nil {
-			log.Event(shutdownContext, "failed to gracefully close http server", log.ERROR, log.Error(err))
+			log.Error(shutdownContext, "failed to gracefully close http server", err)
 		}
-		log.Event(ctx, "http server gracefully closed ", log.INFO)
+		log.Info(ctx, "http server gracefully closed ")
 
 		// Stop healthcheck
 		hc.Stop()
 
 		// If DimensionExtracted kafka producer exists, close it
 		if serviceList.DimensionExtractedProducer {
-			log.Event(shutdownContext, "closing kafka producer", log.INFO, log.Data{"producer": "DimensionExtracted"})
+			log.Info(shutdownContext, "closing kafka producer", log.Data{"producer": "DimensionExtracted"})
 			dimensionExtractedProducer.Close(shutdownContext)
-			log.Event(shutdownContext, "closed kafka producer", log.INFO, log.Data{"producer": "DimensionExtracted"})
+			log.Info(shutdownContext, "closed kafka producer", log.Data{"producer": "DimensionExtracted"})
 		}
 
 		// If DimensionExtractedError kafka producer exists, close it.
 		if serviceList.DimensionExtractedErrProducer {
-			log.Event(shutdownContext, "closing kafka producer", log.INFO, log.Data{"producer": "DimensionExtractedErr"})
+			log.Info(shutdownContext, "closing kafka producer", log.Data{"producer": "DimensionExtractedErr"})
 			dimensionExtractedErrProducer.Close(shutdownContext)
-			log.Event(shutdownContext, "closed kafka producer", log.INFO, log.Data{"producer": "DimensionExtractedErr"})
+			log.Info(shutdownContext, "closed kafka producer", log.Data{"producer": "DimensionExtractedErr"})
 		}
 
 		// If kafka consumer exists, close it.
 		if serviceList.Consumer {
-			log.Event(shutdownContext, "closing kafka consumer", log.INFO, log.Data{"consumer": "SyncConsumerGroup"})
+			log.Info(shutdownContext, "closing kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
 			syncConsumerGroup.Close(shutdownContext)
-			log.Event(shutdownContext, "closed kafka consumer", log.INFO, log.Data{"consumer": "SyncConsumerGroup"})
+			log.Info(shutdownContext, "closed kafka consumer", log.Data{"consumer": "SyncConsumerGroup"})
 		}
 
-		log.Event(shutdownContext, "done shutdown - cancelling timeout context", log.INFO)
+		log.Info(shutdownContext, "done shutdown - cancelling timeout context")
 		cancel() // stop timer
 	}()
 
 	// wait for timeout or success (via cancel)
 	<-shutdownContext.Done()
 	if shutdownContext.Err() == context.DeadlineExceeded {
-		log.Event(shutdownContext, "shutdown timeout", log.ERROR, log.Error(shutdownContext.Err()))
+		log.Error(shutdownContext, "shutdown timeout", shutdownContext.Err())
 	} else {
-		log.Event(shutdownContext, "done shutdown gracefully", log.ERROR, log.Data{"context": shutdownContext.Err()})
+		log.Error(shutdownContext, "done shutdown gracefully", errors.New("done shutdown gracefully"), log.Data{"context": shutdownContext.Err()})
 	}
 	os.Exit(1)
 }
@@ -261,41 +261,41 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 
 	if err := hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {
 		hasErrors = true
-		log.Event(ctx, "error adding check for kafka consumer", log.ERROR, log.Error(err))
+		log.Error(ctx, "error adding check for kafka consumer", err)
 	}
 
 	if err := hc.AddCheck("Kafka Producer", dimensionExtractedProducer.Checker); err != nil {
 		hasErrors = true
-		log.Event(ctx, "error adding check for kafka producer", log.ERROR, log.Error(err))
+		log.Error(ctx, "error adding check for kafka producer", err)
 	}
 
 	if err := hc.AddCheck("Kafka Error Producer", dimensionExtractedErrProducer.Checker); err != nil {
 		hasErrors = true
-		log.Event(ctx, "error adding check for kafka error producer", log.ERROR, log.Error(err))
+		log.Error(ctx, "error adding check for kafka error producer", err)
 	}
 
 	for bucketName, s3 := range s3Clients {
 		if err := hc.AddCheck(fmt.Sprintf("S3 bucket %s", bucketName), s3.Checker); err != nil {
 			hasErrors = true
-			log.Event(ctx, "error adding check for s3 client", log.ERROR, log.Error(err))
+			log.Error(ctx, "error adding check for s3 client", err)
 		}
 	}
 
 	if isEncryptionEnabled {
 		if err := hc.AddCheck("Vault", vc.Checker); err != nil {
 			hasErrors = true
-			log.Event(ctx, "error adding check for vault", log.ERROR, log.Error(err))
+			log.Error(ctx, "error adding check for vault", err)
 		}
 	}
 
 	if err := hc.AddCheck("Zebedee", zebedeeHealthClient.Checker); err != nil {
 		hasErrors = true
-		log.Event(ctx, "error adding check for zebedee", log.ERROR, log.Error(err))
+		log.Error(ctx, "error adding check for zebedee", err)
 	}
 
 	if err := hc.AddCheck("Dataset API", dc.Checker); err != nil {
 		hasErrors = true
-		log.Event(ctx, "error adding check for dataset api", log.ERROR, log.Error(err))
+		log.Error(ctx, "error adding check for dataset api", err)
 	}
 
 	if hasErrors {
@@ -307,7 +307,7 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 // if error is not nil, log it and exit
 func exitIfError(ctx context.Context, msg string, err error, data log.Data) {
 	if err != nil {
-		log.Event(ctx, fmt.Sprintf("fatal error %s", msg), log.ERROR, log.Error(err), data)
+		log.Error(ctx, fmt.Sprintf("fatal error %s", msg), err, data)
 		os.Exit(1)
 	}
 }
@@ -315,6 +315,6 @@ func exitIfError(ctx context.Context, msg string, err error, data log.Data) {
 // if error is not nil, log it only
 func logIfError(ctx context.Context, msg string, err error, data log.Data) {
 	if err != nil {
-		log.Event(ctx, fmt.Sprintf("error %s", msg), log.ERROR, log.Error(err), data)
+		log.Error(ctx, fmt.Sprintf("error %s", msg), err, data)
 	}
 }

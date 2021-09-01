@@ -10,7 +10,7 @@ require (
 	github.com/ONSdigital/dp-s3 v1.5.1
 	github.com/ONSdigital/dp-vault v1.1.2
 	github.com/ONSdigital/go-ns v0.0.0-20200902154605-290c8b5ba5eb
-	github.com/ONSdigital/log.go v1.0.1
+	github.com/ONSdigital/log.go/v2 v2.0.9
 	github.com/Shopify/sarama v1.28.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.1
 	github.com/gorilla/mux v1.8.0

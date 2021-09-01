@@ -9,7 +9,7 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
 	"github.com/ONSdigital/dp-reporter-client/reporter/reportertest"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/net/context"
 )
@@ -167,11 +167,11 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 func waitOrTimeout(t *testing.T, eventLoopDone chan bool, expected chan struct{}) {
 	select {
 	case <-eventLoopDone:
-		log.Event(ctx, "event loop done.", log.INFO)
+		log.Info(ctx, "event loop done.")
 	case <-expected:
-		log.Event(ctx, "expected behavior invoked", log.INFO)
+		log.Info(ctx, "expected behavior invoked")
 	case <-time.After(time.Second * 3):
-		log.Event(ctx, "test timed out", log.INFO)
+		log.Info(ctx, "test timed out")
 		t.FailNow()
 	}
 }
@@ -181,9 +181,9 @@ func closeDown(t *testing.T, cancel context.CancelFunc, eventLoopDone chan bool)
 
 	select {
 	case <-eventLoopDone:
-		log.Event(ctx, "close down successfully", log.INFO)
+		log.Info(ctx, "close down successfully")
 	case <-time.After(time.Second * 5):
-		log.Event(ctx, "consumer failed to stop.", log.INFO)
+		log.Info(ctx, "consumer failed to stop.")
 		t.FailNow()
 	}
 }
