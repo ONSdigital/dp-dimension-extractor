@@ -103,7 +103,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 
 	// Meta data for dimension column offset does not consider the observation column, so add 1 to value
-	dimensionColumnOffset = dimensionColumnOffset + 1
+	dimensionColumnOffset++
 
 	log.Info(ctx, "a list of headers", log.Data{"instance_id": instanceID, "header_row": headerRow})
 
