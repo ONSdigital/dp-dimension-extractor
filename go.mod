@@ -9,7 +9,7 @@ require (
 	github.com/ONSdigital/dp-reporter-client v1.0.1
 	github.com/ONSdigital/dp-s3 v1.5.1
 	github.com/ONSdigital/dp-vault v1.1.2
-	github.com/ONSdigital/go-ns v0.0.0-20200902154605-290c8b5ba5eb
+	github.com/ONSdigital/go-ns v0.0.0-20210831102424-ebdecc20fe9e
 	github.com/ONSdigital/log.go/v2 v2.0.9
 	github.com/Shopify/sarama v1.28.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.1
@@ -23,7 +23,6 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4
-	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670 // indirect
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
