@@ -18,8 +18,8 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/service"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
+	dphttp "github.com/ONSdigital/dp-net/http"
 	vault "github.com/ONSdigital/dp-vault"
-	"github.com/ONSdigital/go-ns/server"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
@@ -116,7 +116,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", hc.Handler)
 	hc.Start(ctx)
-	httpServer := server.New(cfg.BindAddr, router)
+	httpServer := dphttp.NewServer(cfg.BindAddr, router)
 	httpServer.HandleOSSignals = false // Disable this here to allow main to manage graceful shutdown of the entire app.
 
 	go func() {
