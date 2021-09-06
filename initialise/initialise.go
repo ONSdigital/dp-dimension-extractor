@@ -15,6 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
+const kafkaTLSProtocolFlag = "TLS"
+
 // ExternalServiceList represents a list of services
 type ExternalServiceList struct {
 	Consumer                      bool
@@ -51,7 +53,7 @@ func (e *ExternalServiceList) GetConsumer(ctx context.Context, cfg *config.Confi
 		Offset:       &kafkaOffset,
 		KafkaVersion: &cfg.KafkaVersion,
 	}
-	if cfg.KafkaSecProtocol == "TLS" {
+	if cfg.KafkaSecProtocol == kafkaTLSProtocolFlag {
 		cgConfig.SecurityConfig = kafka.GetSecurityConfig(
 			cfg.KafkaSecCACerts,
 			cfg.KafkaSecClientCert,
@@ -81,7 +83,7 @@ func (e *ExternalServiceList) GetProducer(ctx context.Context, topic string, nam
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaVersion,
 	}
-	if cfg.KafkaSecProtocol == "TLS" {
+	if cfg.KafkaSecProtocol == kafkaTLSProtocolFlag {
 		pConfig.SecurityConfig = kafka.GetSecurityConfig(
 			cfg.KafkaSecCACerts,
 			cfg.KafkaSecClientCert,
