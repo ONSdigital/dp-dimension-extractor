@@ -23,7 +23,6 @@ func TestSpec(t *testing.T) {
 			Convey("The values should be set to the expected defaults", func() {
 				So(cfg.AWSRegion, ShouldEqual, "eu-west-1")
 				So(cfg.BindAddr, ShouldEqual, ":21400")
-				So(cfg.Brokers[0], ShouldEqual, "localhost:9092")
 				So(cfg.DatasetAPIURL, ShouldEqual, "http://localhost:22000")
 				So(cfg.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
 				So(cfg.DimensionExtractorURL, ShouldEqual, "http://localhost:21400")
@@ -31,7 +30,10 @@ func TestSpec(t *testing.T) {
 				So(cfg.EventReporterTopic, ShouldEqual, "report-events")
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 				So(cfg.InputFileAvailableTopic, ShouldEqual, "input-file-available")
+				So(cfg.KafkaAddr[0], ShouldEqual, "localhost:9092")
 				So(cfg.KafkaMaxBytes, ShouldEqual, "2000000")
+				So(cfg.KafkaVersion, ShouldEqual, "1.0.2")
+				So(cfg.KafkaSecProtocol, ShouldEqual, "")
 				So(cfg.MaxRetries, ShouldEqual, 3)
 				So(cfg.VaultAddr, ShouldEqual, "http://localhost:8200")
 				So(cfg.VaultPath, ShouldEqual, "secret/shared/psk")

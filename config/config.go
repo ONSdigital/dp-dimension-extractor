@@ -10,7 +10,6 @@ import (
 // Config is the filing resource handler config
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
-	Brokers                    []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
 	DatasetAPIURL              string        `envconfig:"DATASET_API_URL"`
 	DimensionsExtractedTopic   string        `envconfig:"DIMENSIONS_EXTRACTED_TOPIC"`
 	DimensionExtractorURL      string        `envconfig:"DIMENSION_EXTRACTOR_URL"`
@@ -19,7 +18,14 @@ type Config struct {
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	InputFileAvailableGroup    string        `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
 	InputFileAvailableTopic    string        `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
+	KafkaAddr                  []string      `envconfig:"KAFKA_ADDR"                     json:"-"`
 	KafkaMaxBytes              string        `envconfig:"KAFKA_MAX_BYTES"`
+	KafkaVersion               string        `envconfig:"KAFKA_VERSION"`
+	KafkaSecProtocol           string        `envconfig:"KAFKA_SEC_PROTO"`
+	KafkaSecCACerts            string        `envconfig:"KAFKA_SEC_CA_CERTS"`
+	KafkaSecClientCert         string        `envconfig:"KAFKA_SEC_CLIENT_CERT"`
+	KafkaSecClientKey          string        `envconfig:"KAFKA_SEC_CLIENT_KEY"           json:"-"`
+	KafkaSecSkipVerify         bool          `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
 	MaxRetries                 int           `envconfig:"REQUEST_MAX_RETRIES"`
 	VaultAddr                  string        `envconfig:"VAULT_ADDR"`
 	VaultToken                 string        `envconfig:"VAULT_TOKEN"                    json:"-"`
@@ -29,8 +35,7 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	AWSRegion                  string        `envconfig:"AWS_REGION"`
-	BucketNames                []string      `envconfig:"BUCKET_NAMES"                  json:"-"`
-	KafkaVersion               string        `envconfig:"KAFKA_VERSION"`
+	BucketNames                []string      `envconfig:"BUCKET_NAMES"                   json:"-"`
 }
 
 var cfg *Config
@@ -43,7 +48,6 @@ func Get() (*Config, error) {
 
 	cfg = &Config{
 		BindAddr:                   ":21400",
-		Brokers:                    []string{"localhost:9092"},
 		DimensionsExtractedTopic:   "dimensions-extracted",
 		DimensionExtractorURL:      "http://localhost:21400",
 		DatasetAPIURL:              "http://localhost:22000",
@@ -52,7 +56,9 @@ func Get() (*Config, error) {
 		GracefulShutdownTimeout:    5 * time.Second,
 		InputFileAvailableTopic:    "input-file-available",
 		InputFileAvailableGroup:    "input-file-available",
+		KafkaAddr:                  []string{"localhost:9092"},
 		KafkaMaxBytes:              "2000000",
+		KafkaVersion:               "1.0.2",
 		MaxRetries:                 3,
 		VaultAddr:                  "http://localhost:8200",
 		VaultToken:                 "",
@@ -63,7 +69,6 @@ func Get() (*Config, error) {
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		AWSRegion:                  "eu-west-1",
 		BucketNames:                []string{"dp-frontend-florence-file-uploads"},
-		KafkaVersion:               "1.0.2",
 	}
 
 	if err := envconfig.Process("", cfg); err != nil {

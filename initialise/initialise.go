@@ -53,7 +53,7 @@ func (e *ExternalServiceList) GetConsumer(ctx context.Context, cfg *config.Confi
 	}
 	kafkaConsumer, err = kafka.NewConsumerGroup(
 		ctx,
-		cfg.Brokers,
+		cfg.KafkaAddr,
 		cfg.InputFileAvailableTopic,
 		cfg.InputFileAvailableGroup,
 		cgChannels,
@@ -73,7 +73,7 @@ func (e *ExternalServiceList) GetProducer(ctx context.Context, topic string, nam
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaVersion,
 	}
-	kafkaProducer, err = kafka.NewProducer(ctx, cfg.Brokers, topic, pChannels, pConfig)
+	kafkaProducer, err = kafka.NewProducer(ctx, cfg.KafkaAddr, topic, pChannels, pConfig)
 	if err != nil {
 		return
 	}
