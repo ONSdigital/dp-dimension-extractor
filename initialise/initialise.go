@@ -51,6 +51,14 @@ func (e *ExternalServiceList) GetConsumer(ctx context.Context, cfg *config.Confi
 		Offset:       &kafkaOffset,
 		KafkaVersion: &cfg.KafkaVersion,
 	}
+	if cfg.KafkaSecProtocol == "TLS" {
+		cgConfig.SecurityConfig = kafka.GetSecurityConfig(
+			cfg.KafkaSecCACerts,
+			cfg.KafkaSecClientCert,
+			cfg.KafkaSecClientKey,
+			cfg.KafkaSecSkipVerify,
+		)
+	}
 	kafkaConsumer, err = kafka.NewConsumerGroup(
 		ctx,
 		cfg.KafkaAddr,
@@ -72,6 +80,14 @@ func (e *ExternalServiceList) GetProducer(ctx context.Context, topic string, nam
 	pChannels := kafka.CreateProducerChannels()
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion: &cfg.KafkaVersion,
+	}
+	if cfg.KafkaSecProtocol == "TLS" {
+		pConfig.SecurityConfig = kafka.GetSecurityConfig(
+			cfg.KafkaSecCACerts,
+			cfg.KafkaSecClientCert,
+			cfg.KafkaSecClientKey,
+			cfg.KafkaSecSkipVerify,
+		)
 	}
 	kafkaProducer, err = kafka.NewProducer(ctx, cfg.KafkaAddr, topic, pChannels, pConfig)
 	if err != nil {
