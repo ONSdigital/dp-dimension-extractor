@@ -1,5 +1,4 @@
-dp-dimension-extractor
-================
+# dp-dimension-extractor
 
 Handles inserting of dimensions into database after input file becomes available;
 and creates an event by sending a message to a dimension-extracted kafka topic so further processing of the input file can take place.
@@ -9,8 +8,8 @@ and creates an event by sending a message to a dimension-extracted kafka topic s
 3. Put requests for each unique dimension onto database via the dataset API
 4. Produces a message to the DIMENSIONS_EXTRACTED_TOPIC
 
-Requirements
------------------
+## Requirements
+
 In order to run the service locally you will need the following:
 
 - [Go](https://golang.org/doc/install)
@@ -25,7 +24,7 @@ To run vault:
 - Run `brew install vault`
 - Run `vault server -dev`
 
-### Getting started
+## Getting started
 
 * Clone the repo `go get github.com/ONSdigital/dp-dimension-extractor`
 * Run kafka and zookeeper
@@ -55,6 +54,12 @@ Scripts for updating and debugging Kafka can be found [here](https://github.com/
 | INPUT_FILE_AVAILABLE_TOPIC   | input-file-available                  | The kafka topic to consume messages from
 | KAFKA_ADDR                   | localhost:9092                        | The kafka broker addresses (can be comma separated)
 | KAFKA_MAX_BYTES              | 2000000                               | The maximum permitted size of a message. Should be set equal to or smaller than the broker's `message.max.bytes`
+| KAFKA_VERSION                | "1.0.2"                               | The kafka version that this service expects to connect to
+| KAFKA_SEC_PROTO              | _unset_                               | if set to `TLS`, kafka connections will use TLS [[1]](#notes_1)
+| KAFKA_SEC_CLIENT_KEY         | _unset_                               | PEM for the client key [[1]](#notes_1)
+| KAFKA_SEC_CLIENT_CERT        | _unset_                               | PEM for the client certificate [[1]](#notes_1)
+| KAFKA_SEC_CA_CERTS           | _unset_                               | CA cert chain for the server cert [[1]](#notes_1)
+| KAFKA_SEC_SKIP_VERIFY        | false                                 | ignores server certificate issues if `true` [[1]](#notes_1)
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
 | VAULT_ADDR                   | http://localhost:8200                 | The vault address
 | VAULT_TOKEN                  | -                                     | Vault token required for the client to talk to vault. (Use `make debug` to create a vault token)
@@ -65,6 +70,10 @@ Scripts for updating and debugging Kafka can be found [here](https://github.com/
 | AWS_SECRET_ACCESS_KEY        | -                                     | The AWS secret key credential for the dimension extractor
 | HEALTHCHECK_INTERVAL         | 30s                                   | The period of time between health checks
 | HEALTHCHECK_CRITICAL_TIMEOUT | 90s                                   | The period of time after which failing checks will result in critical global check
+
+**Notes:**
+
+1. <a name="notes_1">For more info, see the [kafka TLS examples documentation](https://github.com/ONSdigital/dp-kafka/tree/main/examples#tls)</a>
 
 ### Contributing
 
