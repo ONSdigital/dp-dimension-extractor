@@ -53,14 +53,14 @@ func main() {
 	log.Info(ctx, "config on startup", log.Data{"config": cfg})
 
 	// Attempt to parse envMax from config. Exit on failure.
-	envMax, err := strconv.ParseInt(cfg.KafkaMaxBytes, 10, 32)
+	envMax, err := strconv.ParseInt(cfg.KafkaConfig.MaxBytes, 10, 32)
 	exitIfError(ctx, "encountered error parsing kafka max bytes", err, nil)
 
 	// External services and their initialization state
 	var serviceList initialise.ExternalServiceList
 
 	// Get syncConsumerGroup Kafka Consumer
-	syncConsumerGroup, err := serviceList.GetConsumer(ctx, cfg)
+	syncConsumerGroup, err := serviceList.GetConsumer(ctx, &cfg.KafkaConfig)
 	exitIfError(ctx, "could not obtain consumer", err, nil)
 
 	// Get AWS Session to access S3
@@ -70,20 +70,20 @@ func main() {
 	// Get dimensionExtracted Kafka Producer
 	dimensionExtractedProducer, err := serviceList.GetProducer(
 		ctx,
-		cfg.DimensionsExtractedTopic,
+		&cfg.KafkaConfig,
+		cfg.KafkaConfig.DimensionsExtractedTopic,
 		initialise.DimensionExtracted,
 		int(envMax),
-		cfg,
 	)
 	exitIfError(ctx, "", err, nil)
 
 	// Get dimensionExtracted Error Kafka Producer
 	dimensionExtractedErrProducer, err := serviceList.GetProducer(
 		ctx,
-		cfg.EventReporterTopic,
+		&cfg.KafkaConfig,
+		cfg.KafkaConfig.EventReporterTopic,
 		initialise.DimensionExtractedErr,
 		int(envMax),
-		cfg,
 	)
 	exitIfError(ctx, "", err, nil)
 
