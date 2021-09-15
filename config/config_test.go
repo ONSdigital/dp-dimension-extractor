@@ -9,15 +9,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func getTestConfig(t *testing.T) *Config {
-	cfg = nil
-	config, err := Get()
-	if err != nil {
-		t.Errorf("failed to get config")
-	}
-	return config
-}
-
 func TestGet(t *testing.T) {
 	Convey("Given a clean environment", t, func() {
 		os.Clearenv()
