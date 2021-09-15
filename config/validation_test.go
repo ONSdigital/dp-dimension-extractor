@@ -75,16 +75,38 @@ func TestValidateKafkaValues(t *testing.T) {
 		})
 	})
 
-	Convey("Given one of KAFKA_SEC_CLIENT_CERT or KAFKA_SEC_CLIENT_KEY has been set", t, func() {
+	Convey("Given an empty KAFKA_SEC_CLIENT_CERT", t, func() {
 		cfg = getDefaultConfig()
-		cfg.KafkaConfig.SecClientCert = "test"
+		cfg.KafkaConfig.SecClientCert = ""
 
-		Convey("When validateKafkaValues is called", func() {
-			errs := cfg.KafkaConfig.validateKafkaValues()
+		Convey("And KAFKA_SEC_CLIENT_KEY has been set", func() {
+			cfg.KafkaConfig.SecClientKey = "test key"
 
-			Convey("Then an error message should be returned", func() {
-				So(errs, ShouldNotBeEmpty)
-				So(errs, ShouldResemble, []string{"only one of KAFKA_SEC_CLIENT_CERT or KAFKA_SEC_CLIENT_KEY has been set - requires both"})
+			Convey("When validateKafkaValues is called", func() {
+				errs := cfg.KafkaConfig.validateKafkaValues()
+
+				Convey("Then an error message should be returned", func() {
+					So(errs, ShouldNotBeEmpty)
+					So(errs, ShouldResemble, []string{"no KAFKA_SEC_CLIENT_CERT given but got KAFKA_SEC_CLIENT_KEY"})
+				})
+			})
+		})
+	})
+
+	Convey("Given an empty KAFKA_SEC_CLIENT_KEY", t, func() {
+		cfg = getDefaultConfig()
+		cfg.KafkaConfig.SecClientKey = ""
+
+		Convey("And KAFKA_SEC_CLIENT_CERT has been set", func() {
+			cfg.KafkaConfig.SecClientCert = "test cert"
+
+			Convey("When validateKafkaValues is called", func() {
+				errs := cfg.KafkaConfig.validateKafkaValues()
+
+				Convey("Then an error message should be returned", func() {
+					So(errs, ShouldNotBeEmpty)
+					So(errs, ShouldResemble, []string{"no KAFKA_SEC_CLIENT_KEY given but got KAFKA_SEC_CLIENT_CERT"})
+				})
 			})
 		})
 	})

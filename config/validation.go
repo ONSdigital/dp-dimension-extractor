@@ -23,7 +23,8 @@ func (kafkaConfig KafkaConfig) validateKafkaValues() []string {
 	isKafkaClientKeySet := len(kafkaConfig.SecClientKey) != 0
 	if isKafkaClientKeySet && !isKafkaClientCertSet {
 		errs = append(errs, "no KAFKA_SEC_CLIENT_CERT given but got KAFKA_SEC_CLIENT_KEY")
-	} else if isKafkaClientCertSet && !isKafkaClientKeySet {
+	}
+	if isKafkaClientCertSet && !isKafkaClientKeySet {
 		errs = append(errs, "no KAFKA_SEC_CLIENT_KEY given but got KAFKA_SEC_CLIENT_CERT")
 	}
 
