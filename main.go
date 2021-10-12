@@ -128,7 +128,7 @@ func main() {
 		}
 	}()
 
-	service := &service.Service{
+	svc := &service.Service{
 		AuthToken:                  cfg.ServiceAuthToken,
 		DimensionExtractedProducer: dimensionExtractedProducer,
 		EncryptionDisabled:         cfg.EncryptionDisabled,
@@ -146,7 +146,7 @@ func main() {
 	// Initialize event Consumer struct with initialized kafka consumers/producers and services
 	eventConsumer := event.Consumer{
 		KafkaConsumer: syncConsumerGroup,
-		EventService:  service,
+		EventService:  svc,
 		ErrorReporter: errorReporter,
 	}
 
@@ -299,7 +299,7 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 	}
 
 	if hasErrors {
-		return errors.New("Error(s) registering checkers for healthcheck")
+		return errors.New("error(s) registering checkers for healthcheck")
 	}
 	return nil
 }
