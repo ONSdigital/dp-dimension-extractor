@@ -45,17 +45,25 @@ func (k KafkaProducerName) String() string {
 }
 
 // GetConsumer returns a kafka consumer, which might not be initialised yet.
-func (e *ExternalServiceList) GetConsumer(ctx context.Context, cfg *config.Config) (kafkaConsumer *kafka.ConsumerGroup, err error) {
+func (e *ExternalServiceList) GetConsumer(ctx context.Context, KafkaConfig *config.KafkaConfig) (kafkaConsumer *kafka.ConsumerGroup, err error) {
 	cgChannels := kafka.CreateConsumerGroupChannels(1)
 	cgConfig := &kafka.ConsumerGroupConfig{
 		Offset:       &kafkaOffset,
-		KafkaVersion: &cfg.KafkaVersion,
+		KafkaVersion: &KafkaConfig.Version,
+	}
+	if KafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
+		cgConfig.SecurityConfig = kafka.GetSecurityConfig(
+			KafkaConfig.SecCACerts,
+			KafkaConfig.SecClientCert,
+			KafkaConfig.SecClientKey,
+			KafkaConfig.SecSkipVerify,
+		)
 	}
 	kafkaConsumer, err = kafka.NewConsumerGroup(
 		ctx,
-		cfg.Brokers,
-		cfg.InputFileAvailableTopic,
-		cfg.InputFileAvailableGroup,
+		KafkaConfig.BindAddr,
+		KafkaConfig.InputFileAvailableTopic,
+		KafkaConfig.InputFileAvailableGroup,
 		cgChannels,
 		cgConfig,
 	)
@@ -68,12 +76,21 @@ func (e *ExternalServiceList) GetConsumer(ctx context.Context, cfg *config.Confi
 }
 
 // GetProducer returns a kafka producer, which might not be initialised yet.
-func (e *ExternalServiceList) GetProducer(ctx context.Context, topic string, name KafkaProducerName, envMax int, cfg *config.Config) (kafkaProducer *kafka.Producer, err error) {
+func (e *ExternalServiceList) GetProducer(ctx context.Context, kafkaConfig *config.KafkaConfig, topic string, name KafkaProducerName, envMax int) (kafkaProducer *kafka.Producer, err error) {
 	pChannels := kafka.CreateProducerChannels()
 	pConfig := &kafka.ProducerConfig{
-		KafkaVersion: &cfg.KafkaVersion,
+		KafkaVersion:    &kafkaConfig.Version,
+		MaxMessageBytes: &envMax,
 	}
-	kafkaProducer, err = kafka.NewProducer(ctx, cfg.Brokers, topic, pChannels, pConfig)
+	if kafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
+		pConfig.SecurityConfig = kafka.GetSecurityConfig(
+			kafkaConfig.SecCACerts,
+			kafkaConfig.SecClientCert,
+			kafkaConfig.SecClientKey,
+			kafkaConfig.SecSkipVerify,
+		)
+	}
+	kafkaProducer, err = kafka.NewProducer(ctx, kafkaConfig.BindAddr, topic, pChannels, pConfig)
 	if err != nil {
 		return
 	}

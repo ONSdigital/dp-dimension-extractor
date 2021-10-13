@@ -3,7 +3,7 @@ package event
 import (
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 	"golang.org/x/net/context"
 )
 
@@ -33,29 +33,29 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 		for {
 			select {
 			case <-eventLoopContext.Done():
-				log.Event(eventLoopContext, "event loop context done", log.INFO, log.Data{"eventLoopContextErr": eventLoopContext.Err()})
+				log.Info(eventLoopContext, "event loop context done", log.Data{"eventLoopContextErr": eventLoopContext.Err()})
 				return
 			case message := <-c.KafkaConsumer.Channels().Upstream:
 				// In the future, kafka message will provice the context
 				kafkaContext := context.Background()
 				instanceID, err := c.EventService.HandleMessage(kafkaContext, message)
 				if err != nil {
-					log.Event(kafkaContext, "event failed to process", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+					log.Error(kafkaContext, "event failed to process", err, log.Data{"instance_id": instanceID})
 
 					if len(instanceID) == 0 {
-						log.Event(kafkaContext, "instance_id is empty, the error will not be reported", log.ERROR, log.Error(err))
+						log.Error(kafkaContext, "instance_id is empty, the error will not be reported", err)
 					} else {
 						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
 						if err != nil {
-							log.Event(kafkaContext, "error while trying to report an error", log.ERROR, log.Error(err), log.Data{"instance_id": instanceID})
+							log.Error(kafkaContext, "error while trying to report an error", err, log.Data{"instance_id": instanceID})
 						}
 					}
 
 				} else {
-					log.Event(kafkaContext, "event successfully processed", log.INFO, log.Data{"instance_id": instanceID})
+					log.Info(kafkaContext, "event successfully processed", log.Data{"instance_id": instanceID})
 				}
 				message.CommitAndRelease()
-				log.Event(eventLoopContext, "message committed and released", log.INFO, log.Data{"instance_id": instanceID})
+				log.Info(eventLoopContext, "message committed and released", log.Data{"instance_id": instanceID})
 			}
 		}
 	}()
