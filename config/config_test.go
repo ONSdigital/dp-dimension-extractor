@@ -26,7 +26,7 @@ func TestGet(t *testing.T) {
 					So(cfg.DatasetAPIURL, ShouldEqual, "http://localhost:22000")
 					So(cfg.EncryptionDisabled, ShouldEqual, false)
 					So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
-					So(cfg.KafkaConfig.BindAddr[0], ShouldEqual, "localhost:9092")
+					So(cfg.KafkaConfig.BindAddr, ShouldResemble, []string{"localhost:9092", "localhost:9093", "localhost:9094"})
 					So(cfg.KafkaConfig.MaxBytes, ShouldEqual, "2000000")
 					So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
 					So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")

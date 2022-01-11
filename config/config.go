@@ -57,7 +57,7 @@ func getDefaultConfig() *Config {
 		EncryptionDisabled:      false,
 		GracefulShutdownTimeout: 5 * time.Second,
 		KafkaConfig: KafkaConfig{
-			BindAddr:                 []string{"localhost:9092"},
+			BindAddr:                 []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 			MaxBytes:                 "2000000",
 			Version:                  "1.0.2",
 			SecProtocol:              "",
