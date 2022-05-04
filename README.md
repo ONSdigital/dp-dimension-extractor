@@ -40,7 +40,7 @@ Scripts for updating and debugging Kafka can be found [here](https://github.com/
 ### Configuration
 
 | Environment variable         | Default                               | Description
-| ---------------------------- | ------------------------------------- | ----------------------------------------------------
+| ---------------------------- | ------------------------------------- | -----------------------------------------------------
 | AWS_REGION                   | eu-west-1                             | The AWS region to use
 | BIND_ADDR                    | :21400                                | The host and port to bind to
 | DATASET_API_URL              | http://localhost:22000                | The dataset API url
