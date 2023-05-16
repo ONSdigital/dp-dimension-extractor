@@ -12,6 +12,8 @@ import (
 // KafkaTLSProtocolFlag informs service to use TLS protocol for kafka
 const KafkaTLSProtocolFlag = "TLS"
 
+var cfg *Config
+
 // Config is the filing resource handler config
 type Config struct {
 	AWSRegion                  string        `envconfig:"AWS_REGION"`
@@ -46,8 +48,6 @@ type KafkaConfig struct {
 	InputFileAvailableGroup  string   `envconfig:"INPUT_FILE_AVAILABLE_GROUP"`
 	InputFileAvailableTopic  string   `envconfig:"INPUT_FILE_AVAILABLE_TOPIC"`
 }
-
-var cfg *Config
 
 func getDefaultConfig() *Config {
 	return &Config{
