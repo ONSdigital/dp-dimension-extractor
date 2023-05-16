@@ -10,12 +10,9 @@ import (
 
 var headerRow = []string{"Observation", "Data Marking", "Time Codelist", "Time", "League Codelist", "League"}
 var CSVLine = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League"}
-var CSVLine2 = []string{"20", "", "Year", "2015/16", "", "Championship"}
 
 var badCSVLine = []string{"20", "", "Year", "2016/17", "", ""}
 var badCSVLine2 = []string{"20", "", "Year", "2016/17", "PL01", "Premier-League", "test-failure"}
-
-var dimensionsData = make(map[string]string)
 
 var extract = &dimension.Extract{
 	DimensionColumnOffset: 2,

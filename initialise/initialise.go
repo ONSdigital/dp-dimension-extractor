@@ -101,7 +101,7 @@ func (e *ExternalServiceList) GetProducer(ctx context.Context, kafkaConfig *conf
 	case name == DimensionExtractedErr:
 		e.DimensionExtractedErrProducer = true
 	default:
-		err = fmt.Errorf("Kafka producer name not recognised: '%s'. Valid names: %v", name.String(), kafkaProducerNames)
+		err = fmt.Errorf("kafka producer name not recognised: '%s' Valid names: %v", name.String(), kafkaProducerNames)
 	}
 
 	return
@@ -141,7 +141,7 @@ func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *sess
 func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProducer reporter.KafkaProducer, serviceName string) (errorReporter reporter.ImportErrorReporter, err error) {
 	if !e.DimensionExtractedErrProducer {
 		return reporter.ImportErrorReporter{},
-			fmt.Errorf("Cannot create ImportErrorReporter because kafka producer '%s' is not available", kafkaProducerNames[DimensionExtractedErr])
+			fmt.Errorf("cannot create ImportErrorReporter because kafka producer '%s' is not available", kafkaProducerNames[DimensionExtractedErr])
 	}
 
 	errorReporter, err = reporter.NewImportErrorReporter(dimensionExtractedErrProducer, serviceName)
