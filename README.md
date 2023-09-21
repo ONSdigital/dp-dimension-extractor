@@ -60,6 +60,7 @@ Scripts for updating and debugging Kafka can be found [here](https://github.com/
 | KAFKA_SEC_CLIENT_CERT        | _unset_                               | PEM for the client certificate [[1]](#notes_1)
 | KAFKA_SEC_CA_CERTS           | _unset_                               | CA cert chain for the server cert [[1]](#notes_1)
 | KAFKA_SEC_SKIP_VERIFY        | false                                 | ignores server certificate issues if `true` [[1]](#notes_1)
+| LOCALSTACK_HOST              | ""                                    | Host for localstack for S3 usage - only for local use
 | REQUEST_MAX_RETRIES          | 3                                     | The maximum number of attempts for a single http request due to external service failure"
 | VAULT_ADDR                   | http://localhost:8200                 | The vault address
 | VAULT_TOKEN                  | -                                     | Vault token required for the client to talk to vault. (Use `make debug` to create a vault token)

@@ -12,6 +12,7 @@ import (
 	s3client "github.com/ONSdigital/dp-s3"
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
@@ -121,8 +122,19 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 // GetS3Clients returns a map of AWS S3 clients corresponding to the list of BucketNames
 // and the AWS region provided in the configuration
 func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *session.Session, s3Clients map[string]service.S3Client, err error) {
+
+	config := &aws.Config{
+		Region: aws.String(cfg.AWSRegion),
+	}
+
+	if cfg.LocalstackHost != "" {
+		config.Endpoint = aws.String(cfg.LocalstackHost)
+		config.S3ForcePathStyle = aws.Bool(true)
+		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
+	}
+
 	// establish AWS session
-	awsSession, err = session.NewSession(&aws.Config{Region: &cfg.AWSRegion})
+	awsSession, err = session.NewSession(config)
 	if err != nil {
 		return
 	}

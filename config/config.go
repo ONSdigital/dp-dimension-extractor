@@ -22,6 +22,7 @@ type Config struct {
 	EncryptionDisabled         bool          `envconfig:"ENCRYPTION_DISABLED"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	KafkaConfig                KafkaConfig
+	LocalstackHost             string        `envconfig:"LOCALSTACK_HOST"`
 	MaxRetries                 int           `envconfig:"REQUEST_MAX_RETRIES"`
 	VaultAddr                  string        `envconfig:"VAULT_ADDR"`
 	VaultToken                 string        `envconfig:"VAULT_TOKEN"                    json:"-"`
