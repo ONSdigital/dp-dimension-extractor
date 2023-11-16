@@ -35,6 +35,10 @@ build:
 debug:
 	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) HUMAN_LOG=1 go run $(LDFLAGS) main.go
 
+.PHONY: lint
+lint:
+	exit
+
 .PHONY: acceptance
 acceptance:
 	VAULT_TOKEN=$(APP_TOKEN) VAULT_ADDR=$(VAULT_ADDR) ENCRYPTION_DISABLED=false HUMAN_LOG=1 go run $(LDFLAGS) main.go
@@ -42,6 +46,10 @@ acceptance:
 .PHONY: test
 test:
 	go test -cover -race ./...
+
+.PHONY: test-component
+test-component:
+	go test -cover -coverpkg=github.com/ONSdigital/dp-dimension-extractor/... -component
 
 .PHONY: vault
 vault:
