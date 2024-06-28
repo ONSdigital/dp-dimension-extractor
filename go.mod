@@ -10,11 +10,20 @@ replace github.com/go-ldap/ldap/v3 v3.1.10 => github.com/go-ldap/ldap/v3 v3.4.3
 
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.1
 
-//to avoid  [CVE-2022-29153] CWE-918: Server-Side Request Forgery (SSRF)
+// to avoid  [CVE-2022-29153] CWE-918: Server-Side Request Forgery (SSRF)
 exclude github.com/hashicorp/consul/api v1.1.0
 
 // to fix: [CVE-2023-32731] CWE-Other
 replace google.golang.org/grpc => google.golang.org/grpc v1.55.0
+
+// [CVE-2023-48795] CWE-354: Improper Validation of Integrity Check Value
+replace golang.org/x/crypto => golang.org/x/crypto v0.17.0
+
+// [CVE-2024-24786] CWE-835: Loop with Unreachable Exit Condition ('Infinite Loop')
+replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
+
+// [CVE-2024-6104] CWE-532: Information Exposure Through Log Files
+replace github.com/hashicorp/go-retryablehttp => github.com/hashicorp/go-retryablehttp v0.7.7
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.254.0
@@ -41,7 +50,7 @@ require (
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/fatih/color v1.15.0 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -68,7 +77,7 @@ require (
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
@@ -77,8 +86,8 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/smartystreets/assertions v1.13.1 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
