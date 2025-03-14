@@ -4,9 +4,9 @@
 package mock
 
 import (
-	"context"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
-	"github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v2"
+	"golang.org/x/net/context"
 	"sync"
 )
 
@@ -16,22 +16,22 @@ var _ service.KafkaProducer = &KafkaProducerMock{}
 
 // KafkaProducerMock is a mock implementation of service.KafkaProducer.
 //
-//     func TestSomethingThatUsesKafkaProducer(t *testing.T) {
+//	func TestSomethingThatUsesKafkaProducer(t *testing.T) {
 //
-//         // make and configure a mocked service.KafkaProducer
-//         mockedKafkaProducer := &KafkaProducerMock{
-//             ChannelsFunc: func() *kafka.ProducerChannels {
-// 	               panic("mock out the Channels method")
-//             },
-//             CloseFunc: func(ctx context.Context) error {
-// 	               panic("mock out the Close method")
-//             },
-//         }
+//		// make and configure a mocked service.KafkaProducer
+//		mockedKafkaProducer := &KafkaProducerMock{
+//			ChannelsFunc: func() *kafka.ProducerChannels {
+//				panic("mock out the Channels method")
+//			},
+//			CloseFunc: func(ctx context.Context) error {
+//				panic("mock out the Close method")
+//			},
+//		}
 //
-//         // use mockedKafkaProducer in code that requires service.KafkaProducer
-//         // and then make assertions.
+//		// use mockedKafkaProducer in code that requires service.KafkaProducer
+//		// and then make assertions.
 //
-//     }
+//	}
 type KafkaProducerMock struct {
 	// ChannelsFunc mocks the Channels method.
 	ChannelsFunc func() *kafka.ProducerChannels
@@ -69,7 +69,8 @@ func (mock *KafkaProducerMock) Channels() *kafka.ProducerChannels {
 
 // ChannelsCalls gets all the calls that were made to Channels.
 // Check the length with:
-//     len(mockedKafkaProducer.ChannelsCalls())
+//
+//	len(mockedKafkaProducer.ChannelsCalls())
 func (mock *KafkaProducerMock) ChannelsCalls() []struct {
 } {
 	var calls []struct {
@@ -98,7 +99,8 @@ func (mock *KafkaProducerMock) Close(ctx context.Context) error {
 
 // CloseCalls gets all the calls that were made to Close.
 // Check the length with:
-//     len(mockedKafkaProducer.CloseCalls())
+//
+//	len(mockedKafkaProducer.CloseCalls())
 func (mock *KafkaProducerMock) CloseCalls() []struct {
 	Ctx context.Context
 } {

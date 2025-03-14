@@ -4,9 +4,9 @@
 package mock
 
 import (
-	"context"
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
 	"github.com/ONSdigital/dp-dimension-extractor/service"
+	"golang.org/x/net/context"
 	"sync"
 )
 
@@ -16,25 +16,25 @@ var _ service.DatasetClient = &DatasetClientMock{}
 
 // DatasetClientMock is a mock implementation of service.DatasetClient.
 //
-//     func TestSomethingThatUsesDatasetClient(t *testing.T) {
+//	func TestSomethingThatUsesDatasetClient(t *testing.T) {
 //
-//         // make and configure a mocked service.DatasetClient
-//         mockedDatasetClient := &DatasetClientMock{
-//             GetInstanceFunc: func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string) (dataset.Instance, error) {
-// 	               panic("mock out the GetInstance method")
-//             },
-//             PostInstanceDimensionsFunc: func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost) error {
-// 	               panic("mock out the PostInstanceDimensions method")
-//             },
-//             PutInstanceDataFunc: func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance) error {
-// 	               panic("mock out the PutInstanceData method")
-//             },
-//         }
+//		// make and configure a mocked service.DatasetClient
+//		mockedDatasetClient := &DatasetClientMock{
+//			GetInstanceFunc: func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string, ifMatch string) (dataset.Instance, string, error) {
+//				panic("mock out the GetInstance method")
+//			},
+//			PostInstanceDimensionsFunc: func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.OptionPost, ifMatch string) (string, error) {
+//				panic("mock out the PostInstanceDimensions method")
+//			},
+//			PutInstanceDataFunc: func(ctx context.Context, serviceAuthToken string, instanceID string, data dataset.JobInstance, ifMatch string) (string, error) {
+//				panic("mock out the PutInstanceData method")
+//			},
+//		}
 //
-//         // use mockedDatasetClient in code that requires service.DatasetClient
-//         // and then make assertions.
+//		// use mockedDatasetClient in code that requires service.DatasetClient
+//		// and then make assertions.
 //
-//     }
+//	}
 type DatasetClientMock struct {
 	// GetInstanceFunc mocks the GetInstance method.
 	GetInstanceFunc func(ctx context.Context, userAuthToken string, serviceAuthToken string, collectionID string, instanceID string, ifMatch string) (dataset.Instance, string, error)
@@ -59,7 +59,7 @@ type DatasetClientMock struct {
 			CollectionID string
 			// InstanceID is the instanceID argument value.
 			InstanceID string
-			// If is the instanceID argument value.
+			// IfMatch is the ifMatch argument value.
 			IfMatch string
 		}
 		// PostInstanceDimensions holds details about calls to the PostInstanceDimensions method.
@@ -72,6 +72,8 @@ type DatasetClientMock struct {
 			InstanceID string
 			// Data is the data argument value.
 			Data dataset.OptionPost
+			// IfMatch is the ifMatch argument value.
+			IfMatch string
 		}
 		// PutInstanceData holds details about calls to the PutInstanceData method.
 		PutInstanceData []struct {
@@ -83,6 +85,8 @@ type DatasetClientMock struct {
 			InstanceID string
 			// Data is the data argument value.
 			Data dataset.JobInstance
+			// IfMatch is the ifMatch argument value.
+			IfMatch string
 		}
 	}
 	lockGetInstance            sync.RWMutex
@@ -118,7 +122,8 @@ func (mock *DatasetClientMock) GetInstance(ctx context.Context, userAuthToken st
 
 // GetInstanceCalls gets all the calls that were made to GetInstance.
 // Check the length with:
-//     len(mockedDatasetClient.GetInstanceCalls())
+//
+//	len(mockedDatasetClient.GetInstanceCalls())
 func (mock *DatasetClientMock) GetInstanceCalls() []struct {
 	Ctx              context.Context
 	UserAuthToken    string
@@ -151,11 +156,13 @@ func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, servi
 		ServiceAuthToken string
 		InstanceID       string
 		Data             dataset.OptionPost
+		IfMatch          string
 	}{
 		Ctx:              ctx,
 		ServiceAuthToken: serviceAuthToken,
 		InstanceID:       instanceID,
 		Data:             data,
+		IfMatch:          ifMatch,
 	}
 	mock.lockPostInstanceDimensions.Lock()
 	mock.calls.PostInstanceDimensions = append(mock.calls.PostInstanceDimensions, callInfo)
@@ -165,18 +172,21 @@ func (mock *DatasetClientMock) PostInstanceDimensions(ctx context.Context, servi
 
 // PostInstanceDimensionsCalls gets all the calls that were made to PostInstanceDimensions.
 // Check the length with:
-//     len(mockedDatasetClient.PostInstanceDimensionsCalls())
+//
+//	len(mockedDatasetClient.PostInstanceDimensionsCalls())
 func (mock *DatasetClientMock) PostInstanceDimensionsCalls() []struct {
 	Ctx              context.Context
 	ServiceAuthToken string
 	InstanceID       string
 	Data             dataset.OptionPost
+	IfMatch          string
 } {
 	var calls []struct {
 		Ctx              context.Context
 		ServiceAuthToken string
 		InstanceID       string
 		Data             dataset.OptionPost
+		IfMatch          string
 	}
 	mock.lockPostInstanceDimensions.RLock()
 	calls = mock.calls.PostInstanceDimensions
@@ -194,11 +204,13 @@ func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthT
 		ServiceAuthToken string
 		InstanceID       string
 		Data             dataset.JobInstance
+		IfMatch          string
 	}{
 		Ctx:              ctx,
 		ServiceAuthToken: serviceAuthToken,
 		InstanceID:       instanceID,
 		Data:             data,
+		IfMatch:          ifMatch,
 	}
 	mock.lockPutInstanceData.Lock()
 	mock.calls.PutInstanceData = append(mock.calls.PutInstanceData, callInfo)
@@ -208,18 +220,21 @@ func (mock *DatasetClientMock) PutInstanceData(ctx context.Context, serviceAuthT
 
 // PutInstanceDataCalls gets all the calls that were made to PutInstanceData.
 // Check the length with:
-//     len(mockedDatasetClient.PutInstanceDataCalls())
+//
+//	len(mockedDatasetClient.PutInstanceDataCalls())
 func (mock *DatasetClientMock) PutInstanceDataCalls() []struct {
 	Ctx              context.Context
 	ServiceAuthToken string
 	InstanceID       string
 	Data             dataset.JobInstance
+	IfMatch          string
 } {
 	var calls []struct {
 		Ctx              context.Context
 		ServiceAuthToken string
 		InstanceID       string
 		Data             dataset.JobInstance
+		IfMatch          string
 	}
 	mock.lockPutInstanceData.RLock()
 	calls = mock.calls.PutInstanceData

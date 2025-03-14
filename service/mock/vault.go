@@ -14,19 +14,19 @@ var _ service.VaultClient = &VaultClientMock{}
 
 // VaultClientMock is a mock implementation of service.VaultClient.
 //
-//     func TestSomethingThatUsesVaultClient(t *testing.T) {
+//	func TestSomethingThatUsesVaultClient(t *testing.T) {
 //
-//         // make and configure a mocked service.VaultClient
-//         mockedVaultClient := &VaultClientMock{
-//             ReadKeyFunc: func(path string, key string) (string, error) {
-// 	               panic("mock out the ReadKey method")
-//             },
-//         }
+//		// make and configure a mocked service.VaultClient
+//		mockedVaultClient := &VaultClientMock{
+//			ReadKeyFunc: func(path string, key string) (string, error) {
+//				panic("mock out the ReadKey method")
+//			},
+//		}
 //
-//         // use mockedVaultClient in code that requires service.VaultClient
-//         // and then make assertions.
+//		// use mockedVaultClient in code that requires service.VaultClient
+//		// and then make assertions.
 //
-//     }
+//	}
 type VaultClientMock struct {
 	// ReadKeyFunc mocks the ReadKey method.
 	ReadKeyFunc func(path string, key string) (string, error)
@@ -64,7 +64,8 @@ func (mock *VaultClientMock) ReadKey(path string, key string) (string, error) {
 
 // ReadKeyCalls gets all the calls that were made to ReadKey.
 // Check the length with:
-//     len(mockedVaultClient.ReadKeyCalls())
+//
+//	len(mockedVaultClient.ReadKeyCalls())
 func (mock *VaultClientMock) ReadKeyCalls() []struct {
 	Path string
 	Key  string
