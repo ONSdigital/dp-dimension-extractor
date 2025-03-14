@@ -21,8 +21,8 @@ type VaultClient interface {
 
 // S3Client is an interface to represent methods called to action upon AWS S3
 type S3Client interface {
-	Get(key string) (io.ReadCloser, *int64, error)
-	GetWithPSK(key string, psk []byte) (io.ReadCloser, *int64, error)
+	Get(ctx context.Context, key string) (io.ReadCloser, *int64, error)
+	GetWithPSK(ctx context.Context, key string, psk []byte) (io.ReadCloser, *int64, error)
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
 }
 

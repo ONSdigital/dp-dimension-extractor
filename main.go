@@ -25,8 +25,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-const authorizationHeader = "Authorization"
-
 var (
 	// BuildTime represents the time in which the service was built
 	BuildTime string
@@ -63,8 +61,8 @@ func main() {
 	syncConsumerGroup, err := serviceList.GetConsumer(ctx, &cfg.KafkaConfig)
 	exitIfError(ctx, "could not obtain consumer", err, nil)
 
-	// Get AWS Session to access S3
-	awsSession, s3Clients, err := serviceList.GetS3Clients(cfg)
+	// Get AWS Config to access S3
+	awsConfig, s3Clients, err := serviceList.GetS3Clients(ctx, cfg)
 	logIfError(ctx, "", err, nil)
 
 	// Get dimensionExtracted Kafka Producer
@@ -133,7 +131,7 @@ func main() {
 		DimensionExtractedProducer: dimensionExtractedProducer,
 		EncryptionDisabled:         cfg.EncryptionDisabled,
 		DatasetClient:              dc,
-		AwsSession:                 awsSession,
+		AwsConfig:                  awsConfig,
 		S3Clients:                  s3Clients,
 		VaultClient:                vc,
 		VaultPath:                  cfg.VaultPath,
@@ -181,10 +179,8 @@ func main() {
 	}()
 
 	// Block until a fatal error occurs
-	select {
-	case signal := <-signals:
-		log.Info(ctx, "quitting after os signal received", log.Data{"signal": signal})
-	}
+	signal := <-signals
+	log.Info(ctx, "quitting after os signal received", log.Data{"signal": signal})
 
 	// give the app `Timeout` seconds to close gracefully before killing it.
 	shutdownContext, cancel := context.WithTimeout(ctx, cfg.GracefulShutdownTimeout)
@@ -194,7 +190,9 @@ func main() {
 		// If kafka consumer exists, stop listening to it. (Will close later)
 		if serviceList.Consumer {
 			log.Info(shutdownContext, "stopping kafka consumer listener")
-			syncConsumerGroup.StopListeningToConsumer(shutdownContext)
+			if err := syncConsumerGroup.StopListeningToConsumer(shutdownContext); err != nil {
+				log.Error(shutdownContext, "failed to stop listening to kafka consumer", err)
+			}
 			log.Info(shutdownContext, "stopped kafka consumer listener")
 		}
 

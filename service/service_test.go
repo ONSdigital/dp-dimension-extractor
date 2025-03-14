@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/dataset"
@@ -15,7 +14,7 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/service/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
-	s3client "github.com/ONSdigital/dp-s3"
+	s3client "github.com/ONSdigital/dp-s3/v3"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -69,20 +68,20 @@ var (
 		return "", nil
 	}
 
-	mockGetFunc = func(key string) (io.ReadCloser, *int64, error) {
+	mockGetFunc = func(ctx context.Context, key string) (io.ReadCloser, *int64, error) {
 		if key != validS3ObjKey {
 			return nil, nil, errors.New("wrong S3 Key")
 		}
-		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
+		return io.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
 	}
-	mockGetWithPskFunc = func(key string, psk []byte) (io.ReadCloser, *int64, error) {
+	mockGetWithPskFunc = func(ctx context.Context, key string, psk []byte) (io.ReadCloser, *int64, error) {
 		if key != validS3ObjKey {
 			return nil, nil, errors.New("wrong S3 Key")
 		}
 		if hex.EncodeToString(psk) != hex.EncodeToString(validPsk) {
 			return nil, nil, errors.New("wrong PSK")
 		}
-		return ioutil.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
+		return io.NopCloser(bytes.NewReader([]byte(validCsvContent))), nil, nil
 
 	}
 	mockReadKeyFunc = func(path string, key string) (string, error) {
@@ -156,7 +155,7 @@ func TestHandleMessage(t *testing.T) {
 				DimensionExtractedProducer: &mock.KafkaProducerMock{},
 				EncryptionDisabled:         true,
 				DatasetClient:              &mock.DatasetClientMock{},
-				AwsSession:                 nil,
+				AwsConfig:                  nil,
 				S3Clients:                  map[string]service.S3Client{},
 				VaultClient:                &mock.VaultClientMock{},
 				VaultPath:                  validVaultPath,
@@ -191,7 +190,7 @@ func TestHandleMessage(t *testing.T) {
 				DimensionExtractedProducer: &mock.KafkaProducerMock{ChannelsFunc: mockChannelsFunc},
 				EncryptionDisabled:         true,
 				DatasetClient:              mockDatasetClient,
-				AwsSession:                 nil,
+				AwsConfig:                  nil,
 				S3Clients:                  map[string]service.S3Client{validBucket: mockS3Client},
 				VaultClient:                mockVaultClient,
 				VaultPath:                  validVaultPath,
@@ -268,7 +267,7 @@ func TestHandleMessage(t *testing.T) {
 				DimensionExtractedProducer: &mock.KafkaProducerMock{ChannelsFunc: mockChannelsFunc},
 				EncryptionDisabled:         false,
 				DatasetClient:              mockDatasetClient,
-				AwsSession:                 nil,
+				AwsConfig:                  nil,
 				S3Clients:                  map[string]service.S3Client{validBucket: mockS3Client},
 				VaultClient:                mockVaultClient,
 				VaultPath:                  validVaultPath,

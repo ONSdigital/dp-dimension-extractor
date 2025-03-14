@@ -13,9 +13,9 @@ import (
 	"github.com/ONSdigital/dp-dimension-extractor/dimension"
 	"github.com/ONSdigital/dp-dimension-extractor/schema"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
-	s3client "github.com/ONSdigital/dp-s3"
+	s3client "github.com/ONSdigital/dp-s3/v3"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"golang.org/x/net/context"
 )
 
@@ -53,7 +53,7 @@ type Service struct {
 	DimensionExtractedProducer KafkaProducer
 	EncryptionDisabled         bool
 	DatasetClient              DatasetClient
-	AwsSession                 *session.Session
+	AwsConfig                  *aws.Config
 	S3Clients                  map[string]S3Client
 	VaultClient                VaultClient
 	VaultPath                  string
@@ -219,7 +219,7 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 	s3, ok := svc.S3Clients[s3URL.BucketName]
 	if !ok {
 		log.Warn(ctx, "retreiving data from unexpected s3 bucket", log.Data{"RequestedBucket": s3URL.BucketName})
-		s3 = s3client.NewClientWithSession(s3URL.BucketName, !svc.EncryptionDisabled, svc.AwsSession)
+		s3 = s3client.NewClientWithConfig(s3URL.BucketName, *svc.AwsConfig)
 	}
 
 	var output io.ReadCloser
@@ -237,13 +237,13 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 			return nil, event.InstanceID, nil, err
 		}
 
-		output, _, err = s3.GetWithPSK(s3URL.Key, psk)
+		output, _, err = s3.GetWithPSK(ctx, s3URL.Key, psk)
 		if err != nil {
 			log.Error(ctx, "encountered error retrieving and decrypting csv file", err, logData)
 			return nil, event.InstanceID, nil, err
 		}
 	} else {
-		output, _, err = s3.Get(s3URL.Key)
+		output, _, err = s3.Get(ctx, s3URL.Key)
 		if err != nil {
 			log.Error(ctx, "encountered error retrieving csv file", err, logData)
 			return nil, event.InstanceID, nil, err

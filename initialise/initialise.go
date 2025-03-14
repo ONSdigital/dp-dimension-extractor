@@ -9,11 +9,12 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
-	s3client "github.com/ONSdigital/dp-s3"
+	s3client "github.com/ONSdigital/dp-s3/v3"
 	vault "github.com/ONSdigital/dp-vault"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // ExternalServiceList represents a list of services
@@ -121,32 +122,42 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 
 // GetS3Clients returns a map of AWS S3 clients corresponding to the list of BucketNames
 // and the AWS region provided in the configuration
-func (e *ExternalServiceList) GetS3Clients(cfg *config.Config) (awsSession *session.Session, s3Clients map[string]service.S3Client, err error) {
-
-	config := &aws.Config{
-		Region: aws.String(cfg.AWSRegion),
-	}
-
+func (e *ExternalServiceList) GetS3Clients(ctx context.Context, cfg *config.Config) (*aws.Config, map[string]service.S3Client, error) {
 	if cfg.LocalstackHost != "" {
-		config.Endpoint = aws.String(cfg.LocalstackHost)
-		config.S3ForcePathStyle = aws.Bool(true)
-		config.Credentials = credentials.NewStaticCredentials("test", "test", "")
+		awsConfig, err := awsConfig.LoadDefaultConfig(ctx,
+			awsConfig.WithRegion(cfg.AWSRegion),
+			awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "")),
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		s3Clients := make(map[string]service.S3Client)
+		for _, bucketName := range cfg.BucketNames {
+			s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsConfig, func(o *s3.Options) {
+				o.BaseEndpoint = aws.String(cfg.LocalstackHost)
+				o.UsePathStyle = true
+			})
+		}
+		e.S3Clients = true
+
+		return &awsConfig, s3Clients, nil
 	}
 
-	// establish AWS session
-	awsSession, err = session.NewSession(config)
+	// establish AWS config
+	awsConfig, err := awsConfig.LoadDefaultConfig(ctx, awsConfig.WithRegion(cfg.AWSRegion))
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
 	// create S3 clients for expected bucket names, so that they can be health-checked
-	s3Clients = make(map[string]service.S3Client)
+	s3Clients := make(map[string]service.S3Client)
 	for _, bucketName := range cfg.BucketNames {
-		s3Clients[bucketName] = s3client.NewClientWithSession(bucketName, !cfg.EncryptionDisabled, awsSession)
+		s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsConfig)
 	}
 	e.S3Clients = true
 
-	return
+	return &awsConfig, s3Clients, nil
 }
 
 // GetImportErrorReporter returns an ErrorImportReporter to send error reports to the import-reporter (only if DimensionExtractedErrProducer is available)
