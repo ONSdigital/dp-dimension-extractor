@@ -87,8 +87,6 @@ github.com/ONSdigital/dp-net/v2 v2.9.0/go.mod h1:gJUSRWOsXPXI23WgkQzuvFmLifHLMog
 github.com/ONSdigital/dp-net/v2 v2.9.1/go.mod h1:iy1XmnqC7aKwHCpbTDhfAVrlYDGJGkZl36zeXyHq+Hw=
 github.com/ONSdigital/dp-net/v2 v2.22.0 h1:LY9C5x1+sfK9QyjNpB2G3TPvAtSuOFR9FRcXsR9twqs=
 github.com/ONSdigital/dp-net/v2 v2.22.0/go.mod h1:F6yL3jjuVwBLVMFIKgHF3zhMRbmZysAxBiu+aIAi3Z0=
-github.com/ONSdigital/dp-net/v3 v3.0.0 h1:uQvU+4kX5rH4istsaqJFhPXe8Hcz13pFmKhblUoPpQ8=
-github.com/ONSdigital/dp-net/v3 v3.0.0/go.mod h1:ki9Vcn8BuKP/3c2X3KDTFtUFFa5bemfglCbtH1IXZwA=
 github.com/ONSdigital/dp-reporter-client v1.2.0 h1:MoSj211ja1OK5zVKmDhukFFlU0ls1PhTcf20X2cy15E=
 github.com/ONSdigital/dp-reporter-client v1.2.0/go.mod h1:sNeDh9Bma+SfyGwB2j+84I7xU9xK7pJNYLLOWMG0Q98=
 github.com/ONSdigital/dp-s3/v3 v3.0.0 h1:ylW5FDoJxrA8ciG/Ohl6yqSlqO3S3a4SUNUKSxxyoSc=
