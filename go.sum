@@ -87,10 +87,12 @@ github.com/ONSdigital/dp-net/v2 v2.9.0/go.mod h1:gJUSRWOsXPXI23WgkQzuvFmLifHLMog
 github.com/ONSdigital/dp-net/v2 v2.9.1/go.mod h1:iy1XmnqC7aKwHCpbTDhfAVrlYDGJGkZl36zeXyHq+Hw=
 github.com/ONSdigital/dp-net/v2 v2.22.0 h1:LY9C5x1+sfK9QyjNpB2G3TPvAtSuOFR9FRcXsR9twqs=
 github.com/ONSdigital/dp-net/v2 v2.22.0/go.mod h1:F6yL3jjuVwBLVMFIKgHF3zhMRbmZysAxBiu+aIAi3Z0=
+github.com/ONSdigital/dp-net/v3 v3.0.0 h1:uQvU+4kX5rH4istsaqJFhPXe8Hcz13pFmKhblUoPpQ8=
+github.com/ONSdigital/dp-net/v3 v3.0.0/go.mod h1:ki9Vcn8BuKP/3c2X3KDTFtUFFa5bemfglCbtH1IXZwA=
 github.com/ONSdigital/dp-reporter-client v1.2.0 h1:MoSj211ja1OK5zVKmDhukFFlU0ls1PhTcf20X2cy15E=
 github.com/ONSdigital/dp-reporter-client v1.2.0/go.mod h1:sNeDh9Bma+SfyGwB2j+84I7xU9xK7pJNYLLOWMG0Q98=
-github.com/ONSdigital/dp-s3/v3 v3.0.0 h1:ylW5FDoJxrA8ciG/Ohl6yqSlqO3S3a4SUNUKSxxyoSc=
-github.com/ONSdigital/dp-s3/v3 v3.0.0/go.mod h1:Wga1KP8LO8nirZnwhD9s0W48Cni0KI4i8QFw5sj/1ZI=
+github.com/ONSdigital/dp-s3/v3 v3.1.0 h1:x/+1bK+2gOh53OaMZ1WcLepKtBs20IR5a+D4TUZJEwk=
+github.com/ONSdigital/dp-s3/v3 v3.1.0/go.mod h1:Wga1KP8LO8nirZnwhD9s0W48Cni0KI4i8QFw5sj/1ZI=
 github.com/ONSdigital/dp-vault v1.3.1 h1:fu56wh7FucMO9xAX4hhzlKZU6Foumd14+el7PduZNFw=
 github.com/ONSdigital/dp-vault v1.3.1/go.mod h1:7eRXvFRROZ34oMMTvRZMy/WKUSHLQTj6ocBEqo021KY=
 github.com/ONSdigital/go-ns v0.0.0-20191104121206-f144c4ec2e58/go.mod h1:iWos35il+NjbvDEqwtB736pyHru0MPFE/LqcwkV1wDc=
@@ -110,8 +112,8 @@ github.com/ONSdigital/log.go/v2 v2.2.1-0.20230419115146-bf701a393ee1/go.mod h1:f
 github.com/ONSdigital/log.go/v2 v2.2.1-0.20230419120957-e0f930f05ec6/go.mod h1:U/Q/J30lNSm6ZYZzT4lrhEIJUWX5Pwat/ub0iQ1UvV8=
 github.com/ONSdigital/log.go/v2 v2.4.0/go.mod h1:zXAuTbWKWQX8mGFFQvaw1QtI5BxzWe6HPunFr+kqW2E=
 github.com/ONSdigital/log.go/v2 v2.4.1/go.mod h1:hJTjxs9r8k49maNelGpL4SBWv8NG45vCKp15+6ce9bw=
-github.com/ONSdigital/log.go/v2 v2.4.3 h1:zTW5ZV3+ytqypS7opcDkjBP+k45I+XoTuP/IPlm5oUg=
-github.com/ONSdigital/log.go/v2 v2.4.3/go.mod h1:2TiXCcEsIlDBH9f+4D0NybZPecobd++dphJv2GqVDb0=
+github.com/ONSdigital/log.go/v2 v2.4.4 h1:yQYdZAdsuLOCzrIdWnISkFmWLJZDvqgjuwI1y+BFUb4=
+github.com/ONSdigital/log.go/v2 v2.4.4/go.mod h1:bUKxmsY+5L39ESCdEFR3+XChKUmPbYWlU6Lw3sOLS6A=
 github.com/Shopify/sarama v1.30.1/go.mod h1:hGgx05L/DiW8XYBXeJdKIN6V2QUy2H6JqME5VT1NLRw=
 github.com/Shopify/sarama v1.38.1 h1:lqqPUPQZ7zPqYlWpTh+LQ9bhYNu2xJL6k1SJN4WVe2A=
 github.com/Shopify/sarama v1.38.1/go.mod h1:iwv9a67Ha8VNa+TifujYoWGxWnu2kNVAQdSdZ4X2o5g=
@@ -1002,8 +1004,8 @@ google.golang.org/protobuf v1.24.0/go.mod h1:r/3tXBNzIEhYS9I1OUVjXDlt8tc493IdKGj
 google.golang.org/protobuf v1.25.0/go.mod h1:9JNX74DMeImyA3h4bdi1ymwjUzf21/xIlbajtzgsN7c=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
-google.golang.org/protobuf v1.36.5 h1:tPhr+woSbjfYvY6/GPufUoYizxw1cF/yFoxJ2fmpwlM=
-google.golang.org/protobuf v1.36.5/go.mod h1:9fA7Ob0pmnwhb644+1+CVWFRbNajQ6iRojtC/QF5bRE=
+google.golang.org/protobuf v1.36.6 h1:z1NpPI8ku2WgiWnf+t9wTPsn6eP1L7ksHUlkfLvd9xY=
+google.golang.org/protobuf v1.36.6/go.mod h1:jduwjTPXsFjZGTmRluh+L6NjiWu7pchiJ2/5YcXBHnY=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/avro.v0 v0.0.0-20171217001914-a730b5802183 h1:PGIdqvwfpMUyUP+QAlAnKTSWQ671SmYjoou2/5j7HXk=
 gopkg.in/avro.v0 v0.0.0-20171217001914-a730b5802183/go.mod h1:FvqrFXt+jCsyQibeRv4xxEJBL5iG2DDW5aeJwzDiq4A=

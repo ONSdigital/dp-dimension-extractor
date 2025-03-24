@@ -8,9 +8,9 @@ require (
 	github.com/ONSdigital/dp-kafka/v2 v2.8.0
 	github.com/ONSdigital/dp-net/v2 v2.22.0
 	github.com/ONSdigital/dp-reporter-client v1.2.0
-	github.com/ONSdigital/dp-s3/v3 v3.0.0
+	github.com/ONSdigital/dp-s3/v3 v3.1.0
 	github.com/ONSdigital/dp-vault v1.3.1
-	github.com/ONSdigital/log.go/v2 v2.4.3
+	github.com/ONSdigital/log.go/v2 v2.4.4
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.62
@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/ONSdigital/dp-net/v3 v3.0.0 // indirect
 	github.com/ONSdigital/go-ns v0.0.0-20241030091535-cc1b11756418 // indirect
 	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -102,5 +103,5 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )
