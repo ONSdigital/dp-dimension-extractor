@@ -94,7 +94,6 @@ var (
 
 func TestS3URL(t *testing.T) {
 	Convey("Given inputFileAvailable events with HTTP and S3 URLs", t, func() {
-
 		inputFileAvailableHTTP := &service.InputFileAvailable{
 			FileURL:    "https://s3-eu-west-1.amazonaws.com/csv-exported/dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv",
 			InstanceID: "123",
@@ -105,7 +104,6 @@ func TestS3URL(t *testing.T) {
 		}
 
 		Convey("When the s3URL function is called", func() {
-
 			s3URL, err := inputFileAvailableHTTP.S3URL()
 
 			Convey("The expected URL is returned with the S3 scheme", func() {
@@ -116,9 +114,9 @@ func TestS3URL(t *testing.T) {
 					Key:        "dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv",
 					Region:     "",
 				})
-				S3URLStr, err := s3URL.String(s3client.AliasVirtualHostedStyle)
-				So(err, ShouldBeNil)
-				So(S3URLStr, ShouldEqual, "s3://csv-exported/dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv")
+				s3URLStr, urlErr := s3URL.String(s3client.AliasVirtualHostedStyle)
+				So(urlErr, ShouldBeNil)
+				So(s3URLStr, ShouldEqual, "s3://csv-exported/dir1/2137bad0-737c-4221-b75a-ce7ffd3042e1.csv")
 			})
 
 			s3URL, err = inputFileAvailableS3.S3URL()
@@ -130,16 +128,15 @@ func TestS3URL(t *testing.T) {
 					Key:        "dir2/2137bad0-737c-4221-b75a-042e1.csv",
 					Region:     "",
 				})
-				S3URLStr, err := s3URL.String(s3client.AliasVirtualHostedStyle)
-				So(err, ShouldBeNil)
-				So(S3URLStr, ShouldEqual, "s3://csv-exported/dir2/2137bad0-737c-4221-b75a-042e1.csv")
+				s3URLStr, urlErr := s3URL.String(s3client.AliasVirtualHostedStyle)
+				So(urlErr, ShouldBeNil)
+				So(s3URLStr, ShouldEqual, "s3://csv-exported/dir2/2137bad0-737c-4221-b75a-042e1.csv")
 			})
 		})
 	})
 }
 
 func TestHandleMessage(t *testing.T) {
-
 	Convey("Given the intention to Handle a message ", t, func() {
 		mockVaultClient := &mock.VaultClientMock{ReadKeyFunc: mockReadKeyFunc}
 		mockDatasetClient := &mock.DatasetClientMock{
@@ -180,11 +177,9 @@ func TestHandleMessage(t *testing.T) {
 				_, err = svc.HandleMessage(ctx, msg)
 				So(err, ShouldResemble, errors.New("could not find bucket or filename in file path-style url wrongS3PathFormat"))
 			})
-
 		})
 
 		Convey("With a service with encryption disabled", func() {
-
 			svc := &service.Service{
 				AuthToken:                  validAuthToken,
 				DimensionExtractedProducer: &mock.KafkaProducerMock{ChannelsFunc: mockChannelsFunc},
@@ -257,11 +252,9 @@ func TestHandleMessage(t *testing.T) {
 					HeaderNames:          []string{"V4_0", "Time", "Time", "UK-only", "Geography", "Cpih1dim1aggid", "Aggregate"},
 					NumberOfObservations: 1})
 			})
-
 		})
 
 		Convey("Given a service with encryption enabled", func() {
-
 			svc := &service.Service{
 				AuthToken:                  validAuthToken,
 				DimensionExtractedProducer: &mock.KafkaProducerMock{ChannelsFunc: mockChannelsFunc},
@@ -367,7 +360,9 @@ func validatePostedDimensions(mockDatasetClient *mock.DatasetClientMock, expecte
 	So(len(mockDatasetClient.PostInstanceDimensionsCalls()), ShouldEqual, len(expected))
 	So(mockDatasetClient.PostInstanceDimensionsCalls()[0].InstanceID, ShouldEqual, validInstanceID)
 	So(mockDatasetClient.PostInstanceDimensionsCalls()[0].ServiceAuthToken, ShouldEqual, validAuthToken)
-	for _, call := range mockDatasetClient.PostInstanceDimensionsCalls() {
+	calls := mockDatasetClient.PostInstanceDimensionsCalls()
+	for index := range calls {
+		call := &calls[index]
 		So(call.Data, ShouldResemble, expected[call.Data.Name])
 	}
 }

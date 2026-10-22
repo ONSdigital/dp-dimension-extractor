@@ -1,10 +1,11 @@
 package event
 
 import (
+	"context"
+
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/dp-reporter-client/reporter"
 	"github.com/ONSdigital/log.go/v2/log"
-	"golang.org/x/net/context"
 )
 
 // KafkaConsumer represents a Kafka consumer group instance
@@ -37,12 +38,12 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 				return
 			case message := <-c.KafkaConsumer.Channels().Upstream:
 				// In the future, kafka message will provice the context
-				kafkaContext := context.Background()
+				kafkaContext := context.WithoutCancel(eventLoopContext)
 				instanceID, err := c.EventService.HandleMessage(kafkaContext, message)
 				if err != nil {
 					log.Error(kafkaContext, "event failed to process", err, log.Data{"instance_id": instanceID})
 
-					if len(instanceID) == 0 {
+					if instanceID == "" {
 						log.Error(kafkaContext, "instance_id is empty, the error will not be reported", err)
 					} else {
 						err = c.ErrorReporter.Notify(instanceID, "event failed to process", err)
@@ -50,7 +51,6 @@ func (c *Consumer) Start(eventLoopContext context.Context, eventLoopDone, servic
 							log.Error(kafkaContext, "error while trying to report an error", err, log.Data{"instance_id": instanceID})
 						}
 					}
-
 				} else {
 					log.Info(kafkaContext, "event successfully processed", log.Data{"instance_id": instanceID})
 				}

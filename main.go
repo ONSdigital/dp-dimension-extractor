@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strconv"
@@ -22,7 +23,6 @@ import (
 	vault "github.com/ONSdigital/dp-vault"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -102,7 +102,7 @@ func main() {
 	// Get HealthCheck and register checkers
 	hc, err := serviceList.GetHealthCheck(cfg, BuildTime, GitCommit, Version)
 	exitIfError(ctx, "", err, nil)
-	if err := registerCheckers(ctx, &hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
+	if err = registerCheckers(ctx, &hc, !cfg.EncryptionDisabled, syncConsumerGroup, dimensionExtractedProducer, dimensionExtractedErrProducer, s3Clients, vc, zhc, dc); err != nil {
 		os.Exit(1)
 	}
 
@@ -119,10 +119,10 @@ func main() {
 
 	go func() {
 		log.Info(ctx, "starting api...")
-		if err := httpServer.ListenAndServe(); err != nil {
-			log.Error(ctx, "api http server returned error", err)
+		if serveErr := httpServer.ListenAndServe(); serveErr != nil {
+			log.Error(ctx, "api http server returned error", serveErr)
 			hc.Stop()
-			apiErrors <- err
+			apiErrors <- serveErr
 		}
 	}()
 
@@ -179,14 +179,13 @@ func main() {
 	}()
 
 	// Block until a fatal error occurs
-	signal := <-signals
-	log.Info(ctx, "quitting after os signal received", log.Data{"signal": signal})
+	receivedSignal := <-signals
+	log.Info(ctx, "quitting after os signal received", log.Data{"signal": receivedSignal})
 
 	// give the app `Timeout` seconds to close gracefully before killing it.
 	shutdownContext, cancel := context.WithTimeout(ctx, cfg.GracefulShutdownTimeout)
 
 	go func() {
-
 		// If kafka consumer exists, stop listening to it. (Will close later)
 		if serviceList.Consumer {
 			log.Info(shutdownContext, "stopping kafka consumer listener")
@@ -254,7 +253,6 @@ func registerCheckers(ctx context.Context, hc *healthcheck.HealthCheck, isEncryp
 	vc *vault.Client,
 	zebedeeHealthClient *health.Client,
 	dc *dataset.Client) error {
-
 	hasErrors := false
 
 	if err := hc.AddCheck("Kafka Consumer", kafkaConsumer.Checker); err != nil {

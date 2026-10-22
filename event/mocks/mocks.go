@@ -1,8 +1,9 @@
 package mocks
 
 import (
+	"context"
+
 	kafka "github.com/ONSdigital/dp-kafka/v2"
-	"golang.org/x/net/context"
 )
 
 // MessageHandler provides mocked functionality for a event.MessageHandler

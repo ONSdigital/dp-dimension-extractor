@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -11,13 +12,11 @@ import (
 	"github.com/ONSdigital/dp-reporter-client/reporter/reportertest"
 	"github.com/ONSdigital/log.go/v2/log"
 	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/net/context"
 )
 
 var ctx = context.Background()
 
 func TestConsumer_Start(t *testing.T) {
-
 	Convey("Given the Consumer has been configured correctly", t, func() {
 		eventLoopDone := make(chan bool, 1)
 		serviceIdentityValidated := make(chan bool, 1)
@@ -43,11 +42,11 @@ func TestConsumer_Start(t *testing.T) {
 			ErrorReporter: errorReporter,
 		}
 
-		ctx, cancel := context.WithCancel(ctx)
+		eventLoopContext, cancel := context.WithCancel(ctx)
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When incoming receives a valid message", func() {
-			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			consumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 
@@ -73,7 +72,6 @@ func TestConsumer_Start(t *testing.T) {
 
 func TestConsumer_HandleMessageError(t *testing.T) {
 	Convey("Given a valid message", t, func() {
-
 		eventLoopDone := make(chan bool, 1)
 		serviceIdentityValidated := make(chan bool, 1)
 
@@ -89,7 +87,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 			ErrorReporter: errorReporter,
 		}
 
-		ctx, cancel := context.WithCancel(ctx)
+		eventLoopContext, cancel := context.WithCancel(ctx)
 		defer closeDown(t, cancel, eventLoopDone)
 
 		Convey("When handler.HandleMessage returns an error and an instanceID", func() {
@@ -105,7 +103,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			consumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 
@@ -140,7 +138,7 @@ func TestConsumer_HandleMessageError(t *testing.T) {
 
 			consumer.EventService = handler
 
-			consumer.Start(ctx, eventLoopDone, serviceIdentityValidated)
+			consumer.Start(eventLoopContext, eventLoopDone, serviceIdentityValidated)
 			serviceIdentityValidated <- true
 			cgChannels.Upstream <- msg
 

@@ -47,25 +47,25 @@ func (k KafkaProducerName) String() string {
 }
 
 // GetConsumer returns a kafka consumer, which might not be initialised yet.
-func (e *ExternalServiceList) GetConsumer(ctx context.Context, KafkaConfig *config.KafkaConfig) (kafkaConsumer *kafka.ConsumerGroup, err error) {
+func (e *ExternalServiceList) GetConsumer(ctx context.Context, kafkaConfig *config.KafkaConfig) (kafkaConsumer *kafka.ConsumerGroup, err error) {
 	cgChannels := kafka.CreateConsumerGroupChannels(1)
 	cgConfig := &kafka.ConsumerGroupConfig{
 		Offset:       &kafkaOffset,
-		KafkaVersion: &KafkaConfig.Version,
+		KafkaVersion: &kafkaConfig.Version,
 	}
-	if KafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
+	if kafkaConfig.SecProtocol == config.KafkaTLSProtocolFlag {
 		cgConfig.SecurityConfig = kafka.GetSecurityConfig(
-			KafkaConfig.SecCACerts,
-			KafkaConfig.SecClientCert,
-			KafkaConfig.SecClientKey,
-			KafkaConfig.SecSkipVerify,
+			kafkaConfig.SecCACerts,
+			kafkaConfig.SecClientCert,
+			kafkaConfig.SecClientKey,
+			kafkaConfig.SecSkipVerify,
 		)
 	}
 	kafkaConsumer, err = kafka.NewConsumerGroup(
 		ctx,
-		KafkaConfig.BindAddr,
-		KafkaConfig.InputFileAvailableTopic,
-		KafkaConfig.InputFileAvailableGroup,
+		kafkaConfig.BindAddr,
+		kafkaConfig.InputFileAvailableTopic,
+		kafkaConfig.InputFileAvailableGroup,
 		cgChannels,
 		cgConfig,
 	)
@@ -97,10 +97,10 @@ func (e *ExternalServiceList) GetProducer(ctx context.Context, kafkaConfig *conf
 		return
 	}
 
-	switch {
-	case name == DimensionExtracted:
+	switch name {
+	case DimensionExtracted:
 		e.DimensionExtractedProducer = true
-	case name == DimensionExtractedErr:
+	case DimensionExtractedErr:
 		e.DimensionExtractedErrProducer = true
 	default:
 		err = fmt.Errorf("kafka producer name not recognised: '%s' Valid names: %v", name.String(), kafkaProducerNames)
@@ -124,7 +124,7 @@ func (e *ExternalServiceList) GetVault(cfg *config.Config, retries int) (client 
 // and the AWS region provided in the configuration
 func (e *ExternalServiceList) GetS3Clients(ctx context.Context, cfg *config.Config) (*aws.Config, map[string]service.S3Client, error) {
 	if cfg.LocalstackHost != "" {
-		awsConfig, err := awsConfig.LoadDefaultConfig(ctx,
+		awsCfg, err := awsConfig.LoadDefaultConfig(ctx,
 			awsConfig.WithRegion(cfg.AWSRegion),
 			awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "")),
 		)
@@ -134,18 +134,18 @@ func (e *ExternalServiceList) GetS3Clients(ctx context.Context, cfg *config.Conf
 
 		s3Clients := make(map[string]service.S3Client)
 		for _, bucketName := range cfg.BucketNames {
-			s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsConfig, func(o *s3.Options) {
+			s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsCfg, func(o *s3.Options) {
 				o.BaseEndpoint = aws.String(cfg.LocalstackHost)
 				o.UsePathStyle = true
 			})
 		}
 		e.S3Clients = true
 
-		return &awsConfig, s3Clients, nil
+		return &awsCfg, s3Clients, nil
 	}
 
 	// establish AWS config
-	awsConfig, err := awsConfig.LoadDefaultConfig(ctx, awsConfig.WithRegion(cfg.AWSRegion))
+	awsCfg, err := awsConfig.LoadDefaultConfig(ctx, awsConfig.WithRegion(cfg.AWSRegion))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -153,11 +153,11 @@ func (e *ExternalServiceList) GetS3Clients(ctx context.Context, cfg *config.Conf
 	// create S3 clients for expected bucket names, so that they can be health-checked
 	s3Clients := make(map[string]service.S3Client)
 	for _, bucketName := range cfg.BucketNames {
-		s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsConfig)
+		s3Clients[bucketName] = s3client.NewClientWithConfig(bucketName, awsCfg)
 	}
 	e.S3Clients = true
 
-	return &awsConfig, s3Clients, nil
+	return &awsCfg, s3Clients, nil
 }
 
 // GetImportErrorReporter returns an ErrorImportReporter to send error reports to the import-reporter (only if DimensionExtractedErrProducer is available)
@@ -178,7 +178,6 @@ func (e *ExternalServiceList) GetImportErrorReporter(dimensionExtractedErrProduc
 
 // GetHealthCheck creates a healthcheck with versionInfo
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (healthcheck.HealthCheck, error) {
-
 	// Create healthcheck object with versionInfo
 	versionInfo, err := healthcheck.NewVersionInfo(buildTime, gitCommit, version)
 	if err != nil {

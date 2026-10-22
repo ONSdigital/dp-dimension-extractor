@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/hex"
 	"errors"
@@ -18,7 +19,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsS3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"golang.org/x/net/context"
 )
 
 // DimensionExtracted represents a kafka avro model for a dimension extracted file for an instance
@@ -64,7 +64,6 @@ type Service struct {
 // HandleMessage handles a message by sending requests to the dataset API
 // before producing a new message to confirm successful completion
 func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (string, error) {
-
 	producerMessage, instanceID, file, err := svc.retrieveData(ctx, message)
 	if err != nil {
 		return instanceID, err
@@ -78,8 +77,9 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	}
 
 	codelistMap := make(map[string]string)
-	for _, cl := range codeLists.Dimensions {
-		codelistMap[cl.Name] = cl.ID
+	for index := range codeLists.Dimensions {
+		codeList := &codeLists.Dimensions[index]
+		codelistMap[codeList.Name] = codeList.ID
 	}
 
 	csvReader := csv.NewReader(file)
@@ -115,13 +115,13 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 
 	// Iterate over csv file pulling out unique dimensions
 	for {
-		line, err := csvReader.Read()
-		if err == io.EOF {
+		line, readErr := csvReader.Read()
+		if readErr == io.EOF {
 			break
 		}
-		if err != nil {
-			log.Error(ctx, "encountered error reading csv", err, log.Data{"instance_id": instanceID, "csv_line": line})
-			return instanceID, err
+		if readErr != nil {
+			log.Error(ctx, "encountered error reading csv", readErr, log.Data{"instance_id": instanceID, "csv_line": line})
+			return instanceID, readErr
 		}
 
 		dim := dimension.Extract{
@@ -132,15 +132,14 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 			CodelistMap:           codelistMap,
 		}
 
-		lineDimensions, err := dim.Extract()
-		if err != nil {
-			log.Error(ctx, "encountered error retrieving dimensions", err, log.Data{"instance_id": instanceID, "csv_line": line})
-			return instanceID, err
+		lineDimensions, extractErr := dim.Extract()
+		if extractErr != nil {
+			log.Error(ctx, "encountered error retrieving dimensions", extractErr, log.Data{"instance_id": instanceID, "csv_line": line})
+			return instanceID, extractErr
 		}
 
 		// loop through each dimension option identified in the CSV row
 		for optionKey, optionToPost := range lineDimensions {
-
 			// if the option is already in the full map of options then do not add it
 			if _, ok := dimensionOptions[optionKey]; ok {
 				continue
@@ -160,7 +159,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	})
 
 	for optionKey, optionToPost := range dimensionOptions {
-		if _, err := svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost, headers.IfMatchAnyETag); err != nil {
+		if _, err = svc.DatasetClient.PostInstanceDimensions(ctx, svc.AuthToken, instanceID, optionToPost, headers.IfMatchAnyETag); err != nil {
 			log.Error(ctx, "encountered error sending request to dataset api", err, log.Data{"instance_id": instanceID, "dimension_option": optionKey})
 			return instanceID, err
 		}
@@ -189,8 +188,7 @@ func (svc *Service) HandleMessage(ctx context.Context, message kafka.Message) (s
 	return instanceID, nil
 }
 
-func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]byte, string, io.ReadCloser, error) {
-
+func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) (producerMessage []byte, instanceID string, output io.ReadCloser, err error) {
 	event, err := readMessage(message.GetData())
 	if err != nil {
 		log.Error(ctx, "error reading message", err, log.Data{"schema": "failed to unmarshal event"})
@@ -221,10 +219,10 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 	s3, ok := svc.S3Clients[s3URL.BucketName]
 	if !ok {
 		log.Warn(ctx, "retreiving data from unexpected s3 bucket", log.Data{"RequestedBucket": s3URL.BucketName})
-		cfg, err := config.Get()
-		if err != nil {
-			log.Error(ctx, "unable to retrieve config", err, logData)
-			return nil, event.InstanceID, nil, err
+		cfg, configErr := config.Get()
+		if configErr != nil {
+			log.Error(ctx, "unable to retrieve config", configErr, logData)
+			return nil, event.InstanceID, nil, configErr
 		}
 
 		if cfg.LocalstackHost != "" {
@@ -237,19 +235,17 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 		}
 	}
 
-	var output io.ReadCloser
-
 	if !svc.EncryptionDisabled {
 		path := svc.VaultPath + "/" + s3URL.Key
 		vaultKey := "key"
 
-		pskStr, err := svc.VaultClient.ReadKey(path, vaultKey)
-		if err != nil {
-			return nil, event.InstanceID, nil, err
+		pskStr, keyErr := svc.VaultClient.ReadKey(path, vaultKey)
+		if keyErr != nil {
+			return nil, event.InstanceID, nil, keyErr
 		}
-		psk, err := hex.DecodeString(pskStr)
-		if err != nil {
-			return nil, event.InstanceID, nil, err
+		psk, decodeErr := hex.DecodeString(pskStr)
+		if decodeErr != nil {
+			return nil, event.InstanceID, nil, decodeErr
 		}
 
 		output, _, err = s3.GetWithPSK(ctx, s3URL.Key, psk)
@@ -267,7 +263,7 @@ func (svc *Service) retrieveData(ctx context.Context, message kafka.Message) ([]
 
 	log.Info(ctx, "file successfully read from aws", logData)
 
-	producerMessage, err := schema.DimensionsExtractedSchema.Marshal(&DimensionExtracted{
+	producerMessage, err = schema.DimensionsExtractedSchema.Marshal(&DimensionExtracted{
 		FileURL:    s3URLStr,
 		InstanceID: event.InstanceID,
 	})

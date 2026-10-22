@@ -55,7 +55,7 @@ func (extract *Extract) Extract() (map[string]dataset.OptionPost, error) {
 	// create dataset dimension option with first column line as code
 	// if code is not present, a MissingDimensionValues error will be returned
 	for i := dimensionColumnOffset; i < len(line); i += dimensionColumns {
-		if len(line[i]) == 0 {
+		if line[i] == "" {
 			return nil, &MissingDimensionValues{line}
 		}
 

@@ -30,7 +30,6 @@ func makeCodelists() map[string]string {
 }
 
 func TestUnitExtract(t *testing.T) {
-
 	Convey("test creation of extract object/stuct", t, func() {
 		newExtract := &dimension.Extract{
 			DimensionColumnOffset: 2,

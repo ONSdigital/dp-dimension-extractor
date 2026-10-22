@@ -15,38 +15,38 @@ func TestGet(t *testing.T) {
 		cfg = nil
 
 		Convey("When the config values are retrieved", func() {
-			cfg, err := Get()
+			actualConfig, err := Get()
 
 			Convey("Then there should be no error returned", func() {
 				So(err, ShouldBeNil)
 
 				Convey("And values should be set to the expected defaults", func() {
-					So(cfg.AWSRegion, ShouldEqual, "eu-west-1")
-					So(cfg.BindAddr, ShouldEqual, ":21400")
-					So(cfg.DatasetAPIURL, ShouldEqual, "http://localhost:22000")
-					So(cfg.EncryptionDisabled, ShouldEqual, false)
-					So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
-					So(cfg.KafkaConfig.BindAddr, ShouldResemble, []string{"localhost:9092", "localhost:9093", "localhost:9094"})
-					So(cfg.KafkaConfig.MaxBytes, ShouldEqual, "2000000")
-					So(cfg.KafkaConfig.Version, ShouldEqual, "1.0.2")
-					So(cfg.KafkaConfig.SecProtocol, ShouldEqual, "")
-					So(cfg.KafkaConfig.SecCACerts, ShouldEqual, "")
-					So(cfg.KafkaConfig.SecClientCert, ShouldEqual, "")
-					So(cfg.KafkaConfig.SecClientKey, ShouldEqual, "")
-					So(cfg.KafkaConfig.SecSkipVerify, ShouldEqual, false)
-					So(cfg.KafkaConfig.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
-					So(cfg.KafkaConfig.EventReporterTopic, ShouldEqual, "report-events")
-					So(cfg.KafkaConfig.InputFileAvailableGroup, ShouldEqual, "input-file-available")
-					So(cfg.KafkaConfig.InputFileAvailableTopic, ShouldEqual, "input-file-available")
-					So(cfg.MaxRetries, ShouldEqual, 3)
-					So(cfg.VaultAddr, ShouldEqual, "http://localhost:8200")
-					So(cfg.VaultPath, ShouldEqual, "secret/shared/psk")
-					So(cfg.VaultToken, ShouldEqual, "")
-					So(cfg.ServiceAuthToken, ShouldEqual, "Bearer E45F9BFC-3854-46AE-8187-11326A4E00F4")
-					So(cfg.ZebedeeURL, ShouldEqual, "http://localhost:8082")
-					So(cfg.HealthCheckInterval, ShouldEqual, 30*time.Second)
-					So(cfg.HealthCheckCriticalTimeout, ShouldEqual, 90*time.Second)
-					So(cfg.BucketNames, ShouldResemble, []string{"dp-frontend-florence-file-uploads"})
+					So(actualConfig.AWSRegion, ShouldEqual, "eu-west-1")
+					So(actualConfig.BindAddr, ShouldEqual, ":21400")
+					So(actualConfig.DatasetAPIURL, ShouldEqual, "http://localhost:22000")
+					So(actualConfig.EncryptionDisabled, ShouldEqual, false)
+					So(actualConfig.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
+					So(actualConfig.KafkaConfig.BindAddr, ShouldResemble, []string{"localhost:9092", "localhost:9093", "localhost:9094"})
+					So(actualConfig.KafkaConfig.MaxBytes, ShouldEqual, "2000000")
+					So(actualConfig.KafkaConfig.Version, ShouldEqual, "1.0.2")
+					So(actualConfig.KafkaConfig.SecProtocol, ShouldEqual, "")
+					So(actualConfig.KafkaConfig.SecCACerts, ShouldEqual, "")
+					So(actualConfig.KafkaConfig.SecClientCert, ShouldEqual, "")
+					So(actualConfig.KafkaConfig.SecClientKey, ShouldEqual, "")
+					So(actualConfig.KafkaConfig.SecSkipVerify, ShouldEqual, false)
+					So(actualConfig.KafkaConfig.DimensionsExtractedTopic, ShouldEqual, "dimensions-extracted")
+					So(actualConfig.KafkaConfig.EventReporterTopic, ShouldEqual, "report-events")
+					So(actualConfig.KafkaConfig.InputFileAvailableGroup, ShouldEqual, "input-file-available")
+					So(actualConfig.KafkaConfig.InputFileAvailableTopic, ShouldEqual, "input-file-available")
+					So(actualConfig.MaxRetries, ShouldEqual, 3)
+					So(actualConfig.VaultAddr, ShouldEqual, "http://localhost:8200")
+					So(actualConfig.VaultPath, ShouldEqual, "secret/shared/psk")
+					So(actualConfig.VaultToken, ShouldEqual, "")
+					So(actualConfig.ServiceAuthToken, ShouldEqual, "Bearer E45F9BFC-3854-46AE-8187-11326A4E00F4")
+					So(actualConfig.ZebedeeURL, ShouldEqual, "http://localhost:8082")
+					So(actualConfig.HealthCheckInterval, ShouldEqual, 30*time.Second)
+					So(actualConfig.HealthCheckCriticalTimeout, ShouldEqual, 90*time.Second)
+					So(actualConfig.BucketNames, ShouldResemble, []string{"dp-frontend-florence-file-uploads"})
 				})
 			})
 		})
@@ -54,10 +54,10 @@ func TestGet(t *testing.T) {
 		Convey("When configuration is called with an invalid security setting", func() {
 			defer os.Clearenv()
 			os.Setenv("KAFKA_SEC_PROTO", "ssl")
-			cfg, err := Get()
+			actualConfig, err := Get()
 
 			Convey("Then an error should be returned", func() {
-				So(cfg, ShouldBeNil)
+				So(actualConfig, ShouldBeNil)
 				So(err, ShouldNotBeNil)
 				So(err, ShouldResemble, errors.New("kafka config validation errors: KAFKA_SEC_PROTO has invalid value"))
 			})
@@ -67,11 +67,11 @@ func TestGet(t *testing.T) {
 
 func TestString(t *testing.T) {
 	Convey("Given the config values", t, func() {
-		cfg, err := Get()
+		actualConfig, err := Get()
 		So(err, ShouldBeNil)
 
 		Convey("When String is called", func() {
-			cfgStr := cfg.String()
+			cfgStr := actualConfig.String()
 
 			Convey("Then the string format of config should not contain any sensitive configurations", func() {
 				So(cfgStr, ShouldNotContainSubstring, "BindAddr:[localhost:9092]") // KafkaConfig.BindAddr
